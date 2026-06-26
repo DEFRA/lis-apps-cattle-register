@@ -1,0 +1,84 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    {{ appHeading({
+      text: "Calf details"
+    }) }}
+
+    {% if errorList %}
+    {{ govukErrorSummary({
+      titleText: "There is a problem",
+      errorList: errorList
+    }) }}
+    {% endif %}
+
+    <form class="form" action="{{ postBackUrl }}" method="post">
+      {{ govukInput({
+        id: "tag",
+        name: "tag",
+        label: {
+          text: "Animal ear tag number",
+          classes: "govuk-label--m"
+        },
+        prefix: {
+          text: "UK 123456"
+        }
+      }) }}
+
+      {{ govukDateInput({
+        id: "dob",
+        namePrefix: "dob",
+        fieldset: {
+          legend: {
+            text: "Date of birth",
+            classes: "govuk-fieldset__legend--m"
+          }
+        },
+        hint: {
+          text: "For example, 27 3 2007"
+        }
+      }) }}
+
+      {{ govukRadios({
+        classes: "govuk-radios--inline",
+        name: "sex",
+        fieldset: {
+          legend: {
+            text: "What is the sex?",
+            classes: "govuk-fieldset__legend--m"
+          }
+        },
+        hint: {
+          text: "Select an option"
+        },
+        items: [
+          {
+            value: "male",
+            text: "Male"
+          },
+          {
+            value: "female",
+            text: "Female"
+          }
+        ]
+      }) }}
+
+      {{ govukSelect({
+        id: "breed",
+        name: "breed",
+        label: {
+          text: "Breed of calf",
+          classes: 'govuk-label--m'
+        },
+        items: breeds
+      }) }}
+      
+      {{ govukButton({
+        text: "Continue"
+      }) }}
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    {{ appHeading({
+      text: "Dam details"
+    }) }}
+
+    <form class="form" action="{{ postBackUrl }}" method="post">
+      {% set embrioHtml %}
+        {{ govukInput({
+          id: "embrio",
+          name: "embrio",
+          hint: {
+            text: 'Add the individual tag number'
+          },
+          prefix: {
+            text: "UK 123456"
+          },
+          label: {
+            text: "Link to surrogate dam",
+            class: 'govuk-heading-m'
+          }
+        }) }}
+      {% endset %}
+
+      {{ govukRadios({
+        name: "transfer",
+        fieldset: {
+          legend: {
+            text: "Was the calf born as a result of an embryo transfer?",
+            classes: "govuk-fieldset__legend--m"
+          }
+        },
+        items: [
+          {
+            value: "yes",
+            text: "Yes",
+            conditional: {
+              html: embrioHtml
+            }
+          },
+          {
+            value: "no",
+            text: "No"
+          }
+        ]
+      }) }}
+
+      {{ govukInput({
+        label: {
+          text: "Link to the genetic dam",
+          classes: "govuk-label--m"
+        },
+        hint:{
+          text: 'Add the individual tag number'
+        },
+        prefix: {
+          text: "UK 123456"
+        },
+        id: "genetic_dam",
+        name: "genetic_dam"
+      }) }}
+
+      {{ govukSelect({
+        id: "dam_breed",
+        name: "dam_breed",
+        label: {
+          text: "Breed of dam",
+          classes: 'govuk-label--m'
+        },
+        items: breeds
+      }) }}
+
+      {{ govukRadios({
+        name: "assistance",
+        fieldset: {
+          legend: {
+            text: "What level of assistance was required for the calf to be born?",
+            classes: "govuk-fieldset__legend--m"
+          }
+        },
+        hint: {
+          text: "Select an option"
+        },
+        items: [
+          {
+            value: "normal",
+            text: "Normal delivery - no assistance required"
+          },
+          {
+            value: "assisted",
+            text: "Assisted delivery"
+          },
+          {
+            value: "jack",
+            text: "Jack assisted delivery - significant assistance required"
+          },
+          {
+            value: "vet",
+            text: "Veterinary assistance required"
+          },
+          {
+            value: "caesarean",
+            text: "Caesarean section"
+          }
+        ]
+      }) }}
+
+      {{ govukButton({
+        text: "Continue"
+      }) }}
+   </form>
+  </div>
+</div>
+{% endblock %}

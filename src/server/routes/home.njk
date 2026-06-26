@@ -1,0 +1,29 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h2 class="govuk-heading-l">
+      Before you begin.
+    </h2>
+    <p>
+      The following details will be required to be able to register a new calf.
+    </p>
+    <h3 class="govuk-heading-m">Mandatory</h3>
+    <ul class="govuk-list govuk-list--bullet">
+      <li>A list of things</li>
+    </ul>
+    <h3 class="govuk-heading-m">Optional</h3>
+    <ul class="govuk-list govuk-list--bullet">
+      <li>A list of things</li>
+    </ul>
+
+    {{ govukButton({
+        text: "Start now",
+        href: nextUrl,
+        isStartButton: true
+      }) }}
+  </div>
+</div>
+
+{% endblock %}
