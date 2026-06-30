@@ -6,13 +6,8 @@ import {
 } from '@livestock/ui-services/auth'
 import { createModuleAccessGuard } from '@livestock/ui-services/module-access'
 
-import { home } from '../routes/home/index.js'
-import { basic } from '../routes/basic/index.js'
-import { dam } from '../routes/dam/index.js'
-import { sire } from '../routes/sire/index.js'
-import { summary } from '../routes/summary/index.js'
-import { result } from '../routes/result/result.js'
 import { health } from '../routes/health/index.js'
+import { register } from '../routes/register/index.js'
 
 import { serveStaticFiles } from './serve-static-files.js'
 import { createBasePathHelpersForConfig } from '@livestock/ui-services/base-path'
@@ -47,15 +42,11 @@ export const router = {
     async register(server) {
       await server.register([inert])
       await server.register([health])
+      await server.register([register])
+
       await server.register([
         authGuard,
-        moduleAccessGuard,
-        home,
-        basic,
-        dam,
-        sire,
-        summary,
-        result
+        moduleAccessGuard
       ])
 
       if (!config.get('isProduction') && !config.get('isTest')) {

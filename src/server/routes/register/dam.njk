@@ -4,14 +4,23 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
     {{ appHeading({
-      text: "Dam details"
+      text: heading
     }) }}
+
+    {% if errorList %}
+    {{ govukErrorSummary({
+      titleText: "There is a problem",
+      errorList: errorList
+    }) }}
+    {% endif %}
 
     <form class="form" action="{{ postBackUrl }}" method="post">
       {% set embrioHtml %}
         {{ govukInput({
           id: "embrio",
           name: "embrio",
+          value: formValues.embrio,
+          errorMessage: errors.embrio ? { text: errors.embrio } : null,
           hint: {
             text: 'Add the individual tag number'
           },
@@ -26,7 +35,9 @@
       {% endset %}
 
       {{ govukRadios({
+        idPrefix: "transfer",
         name: "transfer",
+        errorMessage: errors.transfer ? { text: errors.transfer } : null,
         fieldset: {
           legend: {
             text: "Was the calf born as a result of an embryo transfer?",
@@ -37,13 +48,15 @@
           {
             value: "yes",
             text: "Yes",
+            checked: formValues.transfer === "yes",
             conditional: {
               html: embrioHtml
             }
           },
           {
             value: "no",
-            text: "No"
+            text: "No",
+            checked: formValues.transfer === "no"
           }
         ]
       }) }}
@@ -59,6 +72,8 @@
         prefix: {
           text: "UK 123456"
         },
+        errorMessage: errors.genetic_dam ? { text: errors.genetic_dam } : null,
+        value: formValues.genetic_dam,
         id: "genetic_dam",
         name: "genetic_dam"
       }) }}
@@ -66,6 +81,7 @@
       {{ govukSelect({
         id: "dam_breed",
         name: "dam_breed",
+        errorMessage: errors.dam_breed ? { text: errors.dam_breed } : null,
         label: {
           text: "Breed of dam",
           classes: 'govuk-label--m'
@@ -75,6 +91,7 @@
 
       {{ govukRadios({
         name: "assistance",
+        errorMessage: errors.assistance ? { text: errors.assistance } : null,
         fieldset: {
           legend: {
             text: "What level of assistance was required for the calf to be born?",
@@ -87,23 +104,28 @@
         items: [
           {
             value: "normal",
-            text: "Normal delivery - no assistance required"
+            text: "Normal delivery - no assistance required",
+            checked: formValues.assistance === "normal"
           },
           {
             value: "assisted",
-            text: "Assisted delivery"
+            text: "Assisted delivery",
+            checked: formValues.assistance === "assisted"
           },
           {
             value: "jack",
-            text: "Jack assisted delivery - significant assistance required"
+            text: "Jack assisted delivery - significant assistance required",
+            checked: formValues.assistance === "jack"
           },
           {
             value: "vet",
-            text: "Veterinary assistance required"
+            text: "Veterinary assistance required",
+            checked: formValues.assistance === "vet"
           },
           {
             value: "caesarean",
-            text: "Caesarean section"
+            text: "Caesarean section",
+            checked: formValues.assistance === "caesarean"
           }
         ]
       }) }}

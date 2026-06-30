@@ -4,14 +4,23 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ appHeading({
-        text: "Sire details"
+        text: heading
       }) }}
+
+      {% if errorList %}
+      {{ govukErrorSummary({
+        titleText: "There is a problem",
+        errorList: errorList
+      }) }}
+      {% endif %}
 
       <form class="form" action="{{ postBackUrl }}" method="post">
         {% set tagHtml %}
           {{ govukInput({
             id: "uniqueTag",
             name: "uniqueTag",
+            value: formValues.uniqueTag,
+            errorMessage: errors.uniqueTag ? { text: errors.uniqueTag } : null,
             hint:{
               text: 'Add the individual tag number'
             },
@@ -25,6 +34,8 @@
           {{ govukInput({
             id: "aiRef",
             name: "aiRef",
+            value: formValues.aiRef,
+            errorMessage: errors.aiRef ? { text: errors.aiRef } : null,
             hint: {
               text: 'Enter the AI reference number'
             }
@@ -35,6 +46,8 @@
           {{ govukInput({
             id: "pedigreeRef",
             name: "pedigreeRef",
+            value: formValues.pedigreeRef,
+            errorMessage: errors.pedigreeRef ? { text: errors.pedigreeRef } : null,
             hint: {
               text: 'Pedigree information'
             }
@@ -43,6 +56,7 @@
 
         {{ govukRadios({
           name: "identifySire",
+          errorMessage: errors.identifySire ? { text: errors.identifySire } : null,
           fieldset: {
             legend: {
               text: "Can you identify the sire?",
@@ -56,6 +70,7 @@
             {
               value: "uniqueTag",
               text: "Unique tag number",
+              checked: formValues.identifySire === "uniqueTag",
               conditional: {
                 html: tagHtml
               }
@@ -63,6 +78,7 @@
             {
               value: "aiRef",
               text: "AI reference number",
+              checked: formValues.identifySire === "aiRef",
               conditional: {
                 html: aiHtml
               }
@@ -70,13 +86,15 @@
             {
               value: "pedigree",
               text: "Pedigree",
+              checked: formValues.identifySire === "pedigree",
               conditional: {
                 html: pedigreeHtml
               }
             },
             {
               value: "none",
-              text: "I don't have any details"
+              text: "I don't have any details",
+              checked: formValues.identifySire === "none"
             }
           ]
         }) }}
