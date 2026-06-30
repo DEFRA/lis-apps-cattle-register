@@ -1,21 +1,24 @@
-import { getController, postController } from './basic-controller.js'
+import {
+  getController,
+  postController
+} from '../controllers/basic-controller.js'
 
 export const basic = {
   plugin: {
-    name: "basic",
+    name: 'basic',
     register(server) {
       server.route([
         {
-          method: "GET",
-          path: "/basic",
-          ...getController,
+          method: 'GET',
+          path: '/basic',
+          ...getController
         },
         {
-          method: "POST",
-          path: "/basic",
-          ...postController,
-        },
-      ]);
-    },
-  },
-};
+          method: 'POST',
+          path: '/basic',
+          ...postController
+        }
+      ])
+    }
+  }
+}

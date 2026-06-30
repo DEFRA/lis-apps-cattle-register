@@ -1,7 +1,10 @@
 import path from 'path'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
-import { getLoggerForConfig, getRequestLoggerPluginForConfig } from '@livestock/ui-services/logging'
+import {
+  getLoggerForConfig,
+  getRequestLoggerPluginForConfig
+} from '@livestock/ui-services/logging'
 import { createNunjucksConfig } from '@livestock/ui-services/nunjucks/plugin'
 
 import { router } from './plugins/router.js'

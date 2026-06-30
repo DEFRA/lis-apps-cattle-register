@@ -1,16 +1,16 @@
-import { getController } from "./result-controller.js";
+import { getController } from '../controllers/result-controller.js'
 
 export const result = {
   plugin: {
-    name: "result",
+    name: 'result',
     register(server) {
       server.route([
         {
-          method: "GET",
-          path: "/result",
-          ...getController,
+          method: 'GET',
+          path: '/result',
+          ...getController
         }
       ])
-    },
+    }
   }
 }

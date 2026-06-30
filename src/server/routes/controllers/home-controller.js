@@ -6,7 +6,7 @@ export const getController = {
   handler(request, h) {
     const payload = {
       nextUrl: `${buildMicrositePath(taxonomy.id, species.id)}/basic`
-    };
-    return h.view("home/index", payload);
+    }
+    return h.view('home.njk', payload)
   }
 }

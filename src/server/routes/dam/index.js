@@ -1,21 +1,21 @@
-import { getController, postController } from "./dam-controller.js";
+import { getController, postController } from '../controllers/dam-controller.js'
 
 export const dam = {
   plugin: {
-    name: "dam",
+    name: 'dam',
     register(server) {
       server.route([
         {
-          method: "GET",
-          path: "/dam",
-          ...getController,
+          method: 'GET',
+          path: '/dam',
+          ...getController
         },
         {
-          method: "POST",
-          path: "/dam",
-          ...postController,
-        },
-      ]);
-    },
-  },
-};
+          method: 'POST',
+          path: '/dam',
+          ...postController
+        }
+      ])
+    }
+  }
+}
