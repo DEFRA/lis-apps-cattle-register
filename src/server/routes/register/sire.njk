@@ -1,0 +1,31 @@
+{% extends 'layouts/data-page.njk' %}
+
+{% block pageContent %}
+    <form class="form" action="{{ postBackUrl }}" method="post">
+      {{ govukInput({
+        id: "sire_tag",
+        name: "sire_tag",
+        value: formValues.sire_tag,
+        errorMessage: { text: errors.sire_tag } if errors.sire_tag,
+        label: {
+          text: "Sire ear tag number (optional)",
+          classes: "govuk-label--m"
+        }
+      }) }}
+
+      {{ govukInput({
+        id: "sire_name",
+        name: "sire_name",
+        value: formValues.sire_name,
+        errorMessage: { text: errors.sire_name } if errors.sire_name,
+        label: {
+          text: "Sire ear tag number (optional)",
+          classes: "govuk-label--m"
+        }
+      }) }}
+
+      {{ govukButton({
+        text: "Continue"
+      }) }}
+    </form>
+{% endblock %}

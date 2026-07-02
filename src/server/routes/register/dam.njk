@@ -1,0 +1,26 @@
+{% extends 'layouts/data-page.njk' %}
+
+{% block pageContent %}
+    <form class="form" action="{{ postBackUrl }}" method="post">
+      {{ govukRadios({
+        name: "dam_type",
+        errorMessage: { text: errors.dam_type } if errors.dam_type,
+        items: [
+          {
+            value: "genetic",
+            text: "Genetic dam",
+            checked: formValues.dam_type === "genetic"
+          },
+          {
+            value: "surrogate",
+            text: "Surrogate dam",
+            checked: formValues.dam_type === "surrogate"
+          }
+        ]
+      }) }}
+
+      {{ govukButton({
+        text: "Continue"
+      }) }}
+   </form>
+{% endblock %}

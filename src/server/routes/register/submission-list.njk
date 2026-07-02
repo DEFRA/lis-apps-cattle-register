@@ -1,0 +1,53 @@
+{% extends 'layouts/data-page.njk' %}
+
+{% block pageContent %}
+  <form class="form" action="{{ postBackUrl }}" method="post">
+    <p class="govuk-body">
+      Select the tag number from the list to update calf, dam and sire details. You can use the status indicator to check which animals are ready to submit.
+    </p>
+
+    {{ govukTable({
+      firstCellIsHeader: false,
+      classes: "govuk-table--small-text-until-tablet",
+      head: [
+        {
+          text: "Tag number"
+        },
+        {
+          text: "Status",
+          classes: "govuk-table__header--numeric"
+        }
+      ],
+      rows: rows
+    }) }}
+
+    {{ govukRadios({
+      classes: "govuk-radios--inline",
+      name: "add_more",
+      errorMessage: { text: errors.add_more } if errors.add_more,
+      fieldset: {
+        legend: {
+          text: "Do you need to add additional animals?",
+          classes: "govuk-fieldset__legend--m"
+        }
+      },
+      hint: {
+        text: "Additional animals can include calves from different dams, or siblings from a multiple birth."
+      },
+      items: [
+        {
+          value: "yes",
+          text: "Yes"
+        },
+        {
+          value: "no",
+          text: "No"
+        }
+      ]
+    }) }}
+
+    {{ govukButton({
+      text: "Continue"
+    }) }}
+  </form>
+{% endblock %}

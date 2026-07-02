@@ -1,7 +1,10 @@
 import path from 'path'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
-import { getLoggerForConfig, getRequestLoggerPluginForConfig } from '@livestock/ui-services/logging'
+import {
+  getLoggerForConfig,
+  getRequestLoggerPluginForConfig
+} from '@livestock/ui-services/logging'
 import { createNunjucksConfig } from '@livestock/ui-services/nunjucks/plugin'
 
 import { router } from './plugins/router.js'
@@ -26,6 +29,29 @@ const nunjucksConfig = createNunjucksConfig({
   logger,
   getRequestBasePath
 })
+
+function getSupportedRoutes(server) {
+  return server
+    .table()
+    .map(({ method, path }) => ({
+      method: method.toUpperCase(),
+      path
+    }))
+    .sort(
+      (left, right) =>
+        left.path.localeCompare(right.path) ||
+        left.method.localeCompare(right.method)
+    )
+}
+
+function dumpSupportedRoutes() {
+  const routes = getSupportedRoutes(this)
+
+  console.info('Supported routes:')
+  console.table(routes)
+
+  return routes
+}
 
 export async function createServer() {
   setupProxy({
@@ -85,6 +111,7 @@ export async function createServer() {
     router
   ])
 
+  server.decorate('server', 'dumpSupportedRoutes', dumpSupportedRoutes)
   server.ext('onPreResponse', catchAll)
 
   return server

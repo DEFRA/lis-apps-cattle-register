@@ -49,6 +49,9 @@
     "@hapi/scooter": "8.0.0",
     "@hapi/vision": "7.0.3",
     "@hapi/yar": "11.0.3",
+    "@livestock/species-cattle": "file:../../species/cattle",
+    "@livestock/taxonomy-register": "file:../../taxonomy/register",
+    "@livestock/ui-services": "file:../../infra/ui-services",
     "blankie": "5.0.0",
     "convict": "6.2.5",
     "convict-format-with-validator": "6.2.0",
@@ -62,10 +65,7 @@
     "lodash": "4.18.1",
     "node-fetch": "3.3.2",
     "nunjucks": "3.2.4",
-    "semver": "7.7.4",
-    "@livestock/ui-services": "file:../../infra/ui-services",
-    "@livestock/species-cattle": "file:../../species/cattle",
-    "@livestock/taxonomy-register": "file:../../taxonomy/register"
+    "semver": "7.7.4"
   },
   "devDependencies": {
     "@babel/preset-env": "7.29.2",
@@ -73,6 +73,7 @@
     "@vitest/coverage-v8": "4.1.4",
     "cheerio": "1.2.0",
     "eslint": "9.39.2",
+    "eslint-plugin-sonarjs": "4.0.3",
     "husky": "9.1.7",
     "neostandard": "0.13.0",
     "nodemon": "3.1.14",

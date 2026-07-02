@@ -1,14 +1,10 @@
-import { healthController } from './controller.js'
+import { routes } from './routes.js'
 
 export const health = {
   plugin: {
     name: 'health',
     register(server) {
-      server.route({
-        method: 'GET',
-        path: '/health',
-        ...healthController
-      })
+      server.route(routes())
     }
   }
 }

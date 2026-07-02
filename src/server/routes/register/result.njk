@@ -1,0 +1,16 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        titleText: heading,
+        html: message
+      }) }}
+
+      <p class="govuk-body">
+        <a class="govuk-link" href="{{ nextUrl }}">Start another cattle birth report</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    {% call govukFieldset({
+      html: "<span class='govuk-caption-l'>" ~ tagHeading ~ "</span>",
+      legend: {
+        text: heading,
+        classes: "govuk-fieldset__legend--l",
+        isPageHeading: true
+      }
+    }) %}
+
+    {% if errorList.length %}
+    {{ govukErrorSummary({
+      titleText: "There is a problem",
+      errorList: errorList
+    }) }}
+    {% endif %}
+
+    {% block pageContent %}
+
+    {% endblock %}
+
+    {% endcall %}
+  </div>
+</div>
+{% endblock %}

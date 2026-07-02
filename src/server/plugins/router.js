@@ -1,18 +1,18 @@
 import path from 'node:path'
 import inert from '@hapi/inert'
-import { createSpokeGuard, getHubJwtCookieOptions } from '@livestock/ui-services/auth'
+import {
+  createSpokeGuard,
+  getHubJwtCookieOptions
+} from '@livestock/ui-services/auth'
+import { createModuleAccessGuard } from '@livestock/ui-services/module-access'
 
-import { home } from '../routes/home/index.js'
-import { basic } from '../routes/basic/index.js'
-import { dam } from '../routes/dam/index.js'
-import { sire } from '../routes/sire/index.js'
-import { summary } from '../routes/summary/index.js'
-import { result } from '../routes/result/result.js'
 import { health } from '../routes/health/index.js'
+import { register } from '../routes/register/index.js'
 
 import { serveStaticFiles } from './serve-static-files.js'
 import { createBasePathHelpersForConfig } from '@livestock/ui-services/base-path'
 import { config } from '#config/config.js'
+import { moduleAccess } from '../../../module-access.js'
 
 const { getAssetPaths } = createBasePathHelpersForConfig(config)
 
@@ -31,20 +31,23 @@ const authGuard = createSpokeGuard({
   audience: config.get('auth.hubJwt.audience')
 })
 
+const moduleAccessGuard = createModuleAccessGuard({
+  assetPath: config.get('assetPath'),
+  moduleAccess
+})
+
 export const router = {
   plugin: {
     name: 'router',
     async register(server) {
       await server.register([inert])
       await server.register([health])
+      await server.register([register])
+
       await server.register([
         authGuard,
-        home,
-        basic,
-        dam,
-        sire,
-        summary,
-        result])
+        moduleAccessGuard
+      ])
 
       if (!config.get('isProduction') && !config.get('isTest')) {
         await (async () => {
