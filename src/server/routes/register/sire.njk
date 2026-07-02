@@ -1,108 +1,31 @@
-{% extends 'layouts/page.njk' %}
+{% extends 'layouts/data-page.njk' %}
 
-{% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      {{ appHeading({
-        text: heading
+{% block pageContent %}
+    <form class="form" action="{{ postBackUrl }}" method="post">
+      {{ govukInput({
+        id: "sire_tag",
+        name: "sire_tag",
+        value: formValues.sire_tag,
+        errorMessage: { text: errors.sire_tag } if errors.sire_tag,
+        label: {
+          text: "Sire ear tag number (optional)",
+          classes: "govuk-label--m"
+        }
       }) }}
 
-      {% if errorList %}
-      {{ govukErrorSummary({
-        titleText: "There is a problem",
-        errorList: errorList
+      {{ govukInput({
+        id: "sire_name",
+        name: "sire_name",
+        value: formValues.sire_name,
+        errorMessage: { text: errors.sire_name } if errors.sire_name,
+        label: {
+          text: "Sire ear tag number (optional)",
+          classes: "govuk-label--m"
+        }
       }) }}
-      {% endif %}
 
-      <form class="form" action="{{ postBackUrl }}" method="post">
-        {% set tagHtml %}
-          {{ govukInput({
-            id: "uniqueTag",
-            name: "uniqueTag",
-            value: formValues.uniqueTag,
-            errorMessage: errors.uniqueTag ? { text: errors.uniqueTag } : null,
-            hint:{
-              text: 'Add the individual tag number'
-            },
-            prefix: {
-              text: "UK 123456"
-            }
-          }) }}
-        {% endset %}
-
-        {% set aiHtml %}
-          {{ govukInput({
-            id: "aiRef",
-            name: "aiRef",
-            value: formValues.aiRef,
-            errorMessage: errors.aiRef ? { text: errors.aiRef } : null,
-            hint: {
-              text: 'Enter the AI reference number'
-            }
-          }) }}
-        {% endset %}
-
-        {% set pedigreeHtml %}
-          {{ govukInput({
-            id: "pedigreeRef",
-            name: "pedigreeRef",
-            value: formValues.pedigreeRef,
-            errorMessage: errors.pedigreeRef ? { text: errors.pedigreeRef } : null,
-            hint: {
-              text: 'Pedigree information'
-            }
-          }) }}
-        {% endset %}
-
-        {{ govukRadios({
-          name: "identifySire",
-          errorMessage: errors.identifySire ? { text: errors.identifySire } : null,
-          fieldset: {
-            legend: {
-              text: "Can you identify the sire?",
-              classes: "govuk-fieldset__legend--l"
-            }
-          },
-          hint: {
-            text: 'Select an option'
-          },
-          items: [
-            {
-              value: "uniqueTag",
-              text: "Unique tag number",
-              checked: formValues.identifySire === "uniqueTag",
-              conditional: {
-                html: tagHtml
-              }
-            },
-            {
-              value: "aiRef",
-              text: "AI reference number",
-              checked: formValues.identifySire === "aiRef",
-              conditional: {
-                html: aiHtml
-              }
-            },
-            {
-              value: "pedigree",
-              text: "Pedigree",
-              checked: formValues.identifySire === "pedigree",
-              conditional: {
-                html: pedigreeHtml
-              }
-            },
-            {
-              value: "none",
-              text: "I don't have any details",
-              checked: formValues.identifySire === "none"
-            }
-          ]
-        }) }}
-
-        {{ govukButton({
-          text: "Continue"
-        }) }}
-      </form>
-    </div>
-  </div>
+      {{ govukButton({
+        text: "Continue"
+      }) }}
+    </form>
 {% endblock %}

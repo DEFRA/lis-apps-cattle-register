@@ -30,6 +30,29 @@ const nunjucksConfig = createNunjucksConfig({
   getRequestBasePath
 })
 
+function getSupportedRoutes(server) {
+  return server
+    .table()
+    .map(({ method, path }) => ({
+      method: method.toUpperCase(),
+      path
+    }))
+    .sort(
+      (left, right) =>
+        left.path.localeCompare(right.path) ||
+        left.method.localeCompare(right.method)
+    )
+}
+
+function dumpSupportedRoutes() {
+  const routes = getSupportedRoutes(this)
+
+  console.info('Supported routes:')
+  console.table(routes)
+
+  return routes
+}
+
 export async function createServer() {
   setupProxy({
     proxyUrl: config.get('httpProxy'),
@@ -88,6 +111,7 @@ export async function createServer() {
     router
   ])
 
+  server.decorate('server', 'dumpSupportedRoutes', dumpSupportedRoutes)
   server.ext('onPreResponse', catchAll)
 
   return server

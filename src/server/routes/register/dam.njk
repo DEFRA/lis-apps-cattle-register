@@ -1,131 +1,20 @@
-{% extends 'layouts/page.njk' %}
+{% extends 'layouts/data-page.njk' %}
 
-{% block content %}
-<div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds">
-    {{ appHeading({
-      text: heading
-    }) }}
-
-    {% if errorList %}
-    {{ govukErrorSummary({
-      titleText: "There is a problem",
-      errorList: errorList
-    }) }}
-    {% endif %}
-
+{% block pageContent %}
     <form class="form" action="{{ postBackUrl }}" method="post">
-      {% set embrioHtml %}
-        {{ govukInput({
-          id: "embrio",
-          name: "embrio",
-          value: formValues.embrio,
-          errorMessage: errors.embrio ? { text: errors.embrio } : null,
-          hint: {
-            text: 'Add the individual tag number'
-          },
-          prefix: {
-            text: "UK 123456"
-          },
-          label: {
-            text: "Link to surrogate dam",
-            class: 'govuk-heading-m'
-          }
-        }) }}
-      {% endset %}
-
       {{ govukRadios({
-        idPrefix: "transfer",
-        name: "transfer",
-        errorMessage: errors.transfer ? { text: errors.transfer } : null,
-        fieldset: {
-          legend: {
-            text: "Was the calf born as a result of an embryo transfer?",
-            classes: "govuk-fieldset__legend--m"
-          }
-        },
+        name: "dam_type",
+        errorMessage: { text: errors.dam_type } if errors.dam_type,
         items: [
           {
-            value: "yes",
-            text: "Yes",
-            checked: formValues.transfer === "yes",
-            conditional: {
-              html: embrioHtml
-            }
+            value: "genetic",
+            text: "Genetic dam",
+            checked: formValues.dam_type === "genetic"
           },
           {
-            value: "no",
-            text: "No",
-            checked: formValues.transfer === "no"
-          }
-        ]
-      }) }}
-
-      {{ govukInput({
-        label: {
-          text: "Link to the genetic dam",
-          classes: "govuk-label--m"
-        },
-        hint:{
-          text: 'Add the individual tag number'
-        },
-        prefix: {
-          text: "UK 123456"
-        },
-        errorMessage: errors.genetic_dam ? { text: errors.genetic_dam } : null,
-        value: formValues.genetic_dam,
-        id: "genetic_dam",
-        name: "genetic_dam"
-      }) }}
-
-      {{ govukSelect({
-        id: "dam_breed",
-        name: "dam_breed",
-        errorMessage: errors.dam_breed ? { text: errors.dam_breed } : null,
-        label: {
-          text: "Breed of dam",
-          classes: 'govuk-label--m'
-        },
-        items: breeds
-      }) }}
-
-      {{ govukRadios({
-        name: "assistance",
-        errorMessage: errors.assistance ? { text: errors.assistance } : null,
-        fieldset: {
-          legend: {
-            text: "What level of assistance was required for the calf to be born?",
-            classes: "govuk-fieldset__legend--m"
-          }
-        },
-        hint: {
-          text: "Select an option"
-        },
-        items: [
-          {
-            value: "normal",
-            text: "Normal delivery - no assistance required",
-            checked: formValues.assistance === "normal"
-          },
-          {
-            value: "assisted",
-            text: "Assisted delivery",
-            checked: formValues.assistance === "assisted"
-          },
-          {
-            value: "jack",
-            text: "Jack assisted delivery - significant assistance required",
-            checked: formValues.assistance === "jack"
-          },
-          {
-            value: "vet",
-            text: "Veterinary assistance required",
-            checked: formValues.assistance === "vet"
-          },
-          {
-            value: "caesarean",
-            text: "Caesarean section",
-            checked: formValues.assistance === "caesarean"
+            value: "surrogate",
+            text: "Surrogate dam",
+            checked: formValues.dam_type === "surrogate"
           }
         ]
       }) }}
@@ -134,6 +23,4 @@
         text: "Continue"
       }) }}
    </form>
-  </div>
-</div>
 {% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'layouts/data-page.njk' %}
+
+{% block pageContent %}
+  <form class="form" action="{{ postBackUrl }}" method="post">
+    {{ govukInput({
+      id: "genetic_dam_tag",
+      name: "genetic_dam_tag",
+      value: formValues.genetic_dam_tag,
+      label: {
+        text: "Animal ear tag number",
+        classes: "govuk-label--m"
+      },
+      hint: {
+        text: "Start typing the last 6 digits of the ear tag number and select from the list"
+      },
+      errorMessage: { text: errors.genetic_dam_tag } if errors.genetic_dam_tag
+    }) }}
+
+    {{ govukButton({
+      text: "Continue"
+    }) }}
+ </form>
+{% endblock %}

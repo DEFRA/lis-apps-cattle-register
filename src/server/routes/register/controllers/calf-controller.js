@@ -4,7 +4,7 @@ import { statusCodes } from '@livestock/ui-services/status-codes'
 import { taxonomy } from '@livestock/taxonomy-register'
 import { comboBreeds, species } from '@livestock/species-cattle'
 
-const TEMPLATE = 'calf.njk'
+const TEMPLATE = './register/calf.njk'
 const PAGE_TITLE = 'Calf details'
 const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
@@ -18,7 +18,7 @@ export const calfSubmitController = {
   options: {
     validate: {
       payload: Joi.object({
-        tag: Joi.string().trim().min(1).required(),
+        calf_tag: Joi.string().trim().min(1).required(),
         'dob-day': Joi.string().trim().min(1).required(),
         'dob-month': Joi.string().trim().min(1).required(),
         'dob-year': Joi.string().trim().min(1).required(),
@@ -48,7 +48,7 @@ function errorsFromValidation(validationError) {
 
   for (const detail of details) {
     switch (detail?.path?.[0]) {
-      case 'tag':
+      case 'calf_tag':
         errors.tag = 'Enter the animal ear tag number'
         break
       case 'dob-day':
@@ -78,7 +78,7 @@ function viewModel(overrides = {}) {
     pageTitle: withErrorPageTitle(PAGE_TITLE, errors),
     heading: PAGE_TITLE,
     breeds: breedsWithSelection(formValues.breed),
-    postBackUrl: `${ROOT_PATH}/basic`,
+    postBackUrl: `${ROOT_PATH}/calf`,
     formValues,
     errors,
     errorList: errorListFromErrors(errors)
@@ -87,7 +87,7 @@ function viewModel(overrides = {}) {
 
 function defaultFormValues() {
   return {
-    tag: '',
+    calf_tag: '',
     'dob-day': '',
     'dob-month': '',
     'dob-year': '',
@@ -98,7 +98,7 @@ function defaultFormValues() {
 
 function formValuesFromPayload(payload = {}) {
   return {
-    tag: (payload.tag ?? '').trim(),
+    calf_tag: (payload.calf_tag ?? '').trim(),
     'dob-day': (payload['dob-day'] ?? '').trim(),
     'dob-month': (payload['dob-month'] ?? '').trim(),
     'dob-year': (payload['dob-year'] ?? '').trim(),

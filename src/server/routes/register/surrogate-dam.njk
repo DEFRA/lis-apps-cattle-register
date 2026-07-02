@@ -1,0 +1,34 @@
+{% extends 'layouts/data-page.njk' %}
+
+{% block pageContent %}
+    <form class="form" action="{{ postBackUrl }}" method="post">
+      {{ govukInput({
+        id: "genetic_dam_tag",
+        name: "genetic_dam_tag",
+        value: formValues.genetic_dam_tag,
+        errorMessage: { text: errors.genetic_dam_tag } if errors.genetic_dam_tag,
+        label: {
+          text: "Genetic dam ear tag number",
+          class: 'govuk-heading-m'
+        }
+      }) }}
+
+      {{ govukInput({
+        id: "surrogate_tag",
+        name: "surrogate_tag",
+        value: formValues.surrogate_tag,
+        label: {
+          text: "Surrogate dam ear tag number",
+          classes: "govuk-label--m"
+        },
+        hint: {
+          text: "Start typing the last 6 digits of the ear tag number and select from the list"
+        },
+        errorMessage: { text: errors.surrogate_tag } if errors.surrogate_tag
+      }) }}
+
+      {{ govukButton({
+        text: "Continue"
+      }) }}
+   </form>
+{% endblock %}

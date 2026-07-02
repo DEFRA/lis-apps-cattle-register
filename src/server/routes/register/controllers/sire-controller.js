@@ -1,10 +1,11 @@
+
 import Joi from 'joi'
 import { buildMicrositePath } from '@livestock/ui-services'
 import { statusCodes } from '@livestock/ui-services/status-codes'
 import { taxonomy } from '@livestock/taxonomy-register'
 import { species } from '@livestock/species-cattle'
 
-const TEMPLATE = 'sire.njk'
+const TEMPLATE = './register/sire.njk'
 const PAGE_TITLE = 'Sire details'
 const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
@@ -18,22 +19,8 @@ export const sireSubmitController = {
   options: {
     validate: {
       payload: Joi.object({
-        identifySire: Joi.string()
-          .trim()
-          .valid('uniqueTag', 'aiRef', 'pedigree', 'none')
-          .required(),
-        uniqueTag: Joi.string().trim().allow('').when('identifySire', {
-          is: 'uniqueTag',
-          then: Joi.string().trim().min(1).required()
-        }),
-        aiRef: Joi.string().trim().allow('').when('identifySire', {
-          is: 'aiRef',
-          then: Joi.string().trim().min(1).required()
-        }),
-        pedigreeRef: Joi.string().trim().allow('').when('identifySire', {
-          is: 'pedigree',
-          then: Joi.string().trim().min(1).required()
-        })
+        sire_tag: Joi.string().trim().allow(''),
+        sire_name: Joi.string().trim().allow('')
       }),
       failAction(request, h, err) {
         const formValues = formValuesFromPayload(request.payload)
@@ -47,7 +34,7 @@ export const sireSubmitController = {
     }
   },
   handler(_request, h) {
-    return h.redirect(`${ROOT_PATH}/summary`)
+    return h.redirect(`${ROOT_PATH}/check`)
   }
 }
 

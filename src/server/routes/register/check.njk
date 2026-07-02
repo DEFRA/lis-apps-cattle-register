@@ -1,0 +1,13 @@
+{% extends 'layouts/data-page.njk' %}
+
+{% block pageContent %}
+    <form class="form" action="{{ postBackUrl }}" method="post">
+      {{ govukSummaryList({
+          rows: formValues.rows
+      }) }}
+
+      {{ govukButton({
+        text: "Continue"
+      }) }}
+    </form>
+{% endblock %}

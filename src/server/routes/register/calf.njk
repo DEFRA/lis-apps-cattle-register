@@ -1,38 +1,25 @@
-{% extends 'layouts/page.njk' %}
+{% extends 'layouts/data-page.njk' %}
 
-{% block content %}
-<div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds">
-    {{ appHeading({
-      text: heading
-    }) }}
-
-    {% if errorList %}
-    {{ govukErrorSummary({
-      titleText: "There is a problem",
-      errorList: errorList
-    }) }}
-    {% endif %}
-
+{% block pageContent %}
     <form class="form" action="{{ postBackUrl }}" method="post">
       {{ govukInput({
-        id: "tag",
-        name: "tag",
-        value: formValues.tag,
+        id: "calf_tag",
+        name: "calf_tag",
+        value: formValues.calf_tag,
         label: {
           text: "Animal ear tag number",
           classes: "govuk-label--m"
         },
-        errorMessage: errors.tag ? { text: errors.tag } : null,
-        prefix: {
-          text: "UK 123456"
-        }
+        hint: {
+          text: "Start typing the last 6 digits of the ear tag number and select from the list"
+        },
+        errorMessage: { text: errors.calf_tag } if errors.calf_tag
       }) }}
 
       {{ govukDateInput({
         id: "dob",
         namePrefix: "dob",
-        errorMessage: errors.dob ? { text: errors.dob } : null,
+        errorMessage: { text: errors.dob } if errors.dob,
         fieldset: {
           legend: {
             text: "Date of birth",
@@ -45,15 +32,18 @@
         items: [
           {
             name: "day",
-            value: formValues["dob-day"]
+            value: formValues["dob-day"],
+            classes: "govuk-input--width-2"
           },
           {
             name: "month",
-            value: formValues["dob-month"]
+            value: formValues["dob-month"],
+            classes: "govuk-input--width-2"
           },
           {
             name: "year",
-            value: formValues["dob-year"]
+            value: formValues["dob-year"],
+            classes: "govuk-input--width-4"
           }
         ]
       }) }}
@@ -61,10 +51,10 @@
       {{ govukRadios({
         classes: "govuk-radios--inline",
         name: "sex",
-        errorMessage: errors.sex ? { text: errors.sex } : null,
+        errorMessage: { text: errors.sex } if errors.sex,
         fieldset: {
           legend: {
-            text: "What is the sex?",
+            text: "Sex of the calf",
             classes: "govuk-fieldset__legend--m"
           }
         },
@@ -88,10 +78,13 @@
       {{ govukSelect({
         id: "breed",
         name: "breed",
-        errorMessage: errors.breed ? { text: errors.breed } : null,
+        errorMessage: { text: errors.breed } if errors.breed,
         label: {
           text: "Breed of calf",
           classes: 'govuk-label--m'
+        },
+        hint:{
+          text: "Start typing the breed or enter the breed code to select from the list"
         },
         items: breeds
       }) }}
@@ -100,6 +93,4 @@
         text: "Continue"
       }) }}
     </form>
-  </div>
-</div>
 {% endblock %}

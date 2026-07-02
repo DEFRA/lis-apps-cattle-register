@@ -1,7 +1,4 @@
 import {
-  homeController
-} from './controllers/home-controller.js'
-import {
   calfController,
   calfSubmitController
 } from './controllers/calf-controller.js'
@@ -10,44 +7,68 @@ import {
   damSubmitController
 } from './controllers/dam-controller.js'
 import {
+  geneticDamController,
+  geneticDamSubmitController
+} from './controllers/genetic-dam-controller.js'
+import {
+  surrogateDamController,
+  surrogateDamSubmitController
+} from './controllers/surrogate-dam-controller.js'
+import {
   sireController,
   sireSubmitController
 } from './controllers/sire-controller.js'
 import {
-  summaryController,
-  summarySubmitController
-} from './controllers/summary-controller.js'
+  checkController,
+  checkSubmitController
+} from './controllers/check-controller.js'
 import {
-  resultController
-} from './controllers/result-controller.js'
+  submissionListController,
+  submissionListSubmitController
+} from './controllers/submission-list-controller.js'
+import {
+  submitController,
+  submitSubmitController
+} from './controllers/submit-controller.js'
 
-export const registerRoutes = (options = {}) => {
-  const {rootPath = '/cattle-register', userService} = options
+import { confirmationController } from './controllers/confirmation-controller.js'
+
+export const routes = (options = {}) => {
+  const { rootPath = '/' } = options
+
   return [
-    {
-      method: 'GET',
-      path: `${rootPath}/home`,
-      options: sessionAuth,
-      ...homeController(userService)
-    },
-    ...calfRoutes(rootPath, userService),
-    ...damRoutes(rootPath, userService),
-    ...sireRoutes(rootPath, userService),
-    ...summaryRoutes(rootPath, userService),
-    ...resultRoutes(rootPath, userService),
+    ...calfRoutes(rootPath),
+    ...damRoutes(rootPath),
+    ...geneticDamRoutes(rootPath),
+    ...surrogateDamRoutes(rootPath),
+    ...sireRoutes(rootPath),
+    ...checkRoutes(rootPath),
+    ...submissionListRoutes(rootPath),
+    ...submitRoutes(rootPath),
+    ...confirmationRoutes(rootPath)
   ]
 }
 
-function calfRoutes(path, options) {
+function routePath(rootPath, childPath = '') {
+  const normalizedRootPath = rootPath === '/' ? '' : rootPath.replace(/\/$/, '')
+
+  if (!childPath) {
+    return normalizedRootPath || '/'
+  }
+
+  return `${normalizedRootPath}/${childPath}`
+}
+
+function calfRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: `${rootPath}/calf`,
+      path: routePath(rootPath),
       ...calfController
     },
     {
       method: 'POST',
-      path: `${rootPath}/calf`,
+      path: routePath(rootPath, 'calf'),
       options: {
         ...calfSubmitController.options
       },
@@ -56,16 +77,16 @@ function calfRoutes(path, options) {
   ]
 }
 
-function damRoutes(path, options) {
+function damRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: `${rootPath}/dam`,
+      path: routePath(rootPath, 'dam'),
       ...damController
     },
     {
       method: 'POST',
-      path: `${rootPath}/dam`,
+      path: routePath(rootPath, 'dam'),
       options: {
         ...damSubmitController.options
       },
@@ -74,16 +95,52 @@ function damRoutes(path, options) {
   ]
 }
 
-function sireRoutes(path, options) {
+function geneticDamRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: `${rootPath}/sire`,
+      path: routePath(rootPath, 'genetic-dam'),
+      ...geneticDamController
+    },
+    {
+      method: 'POST',
+      path: routePath(rootPath, 'genetic-dam'),
+      options: {
+        ...geneticDamSubmitController.options
+      },
+      handler: geneticDamSubmitController.handler
+    }
+  ]
+}
+
+function surrogateDamRoutes(rootPath) {
+  return [
+    {
+      method: 'GET',
+      path: routePath(rootPath, 'surrogate-dam'),
+      ...surrogateDamController
+    },
+    {
+      method: 'POST',
+      path: routePath(rootPath, 'surrogate-dam'),
+      options: {
+        ...surrogateDamSubmitController.options
+      },
+      handler: surrogateDamSubmitController.handler
+    }
+  ]
+}
+
+function sireRoutes(rootPath) {
+  return [
+    {
+      method: 'GET',
+      path: routePath(rootPath, 'sire'),
       ...sireController
     },
     {
       method: 'POST',
-      path: `${rootPath}/sire`,
+      path: routePath(rootPath, 'sire'),
       options: {
         ...sireSubmitController.options
       },
@@ -92,30 +149,66 @@ function sireRoutes(path, options) {
   ]
 }
 
-function summaryRoutes(path, options) {
+function checkRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: `${rootPath}/summary`,
-      ...summaryController
+      path: routePath(rootPath, 'check'),
+      ...checkController
     },
     {
       method: 'POST',
-      path: `${rootPath}/summary`,
+      path: routePath(rootPath, 'check'),
       options: {
-        ...summarySubmitController.options
+        ...checkSubmitController.options
       },
-      handler: summarySubmitController.handler
+      handler: checkSubmitController.handler
     }
   ]
 }
 
-function resultRoutes(path, options) {
+function submissionListRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: `${rootPath}/result`,
-      ...resultController
+      path: routePath(rootPath, 'submission-list'),
+      ...submissionListController
+    },
+    {
+      method: 'POST',
+      path: routePath(rootPath, 'submission-list'),
+      options: {
+        ...submissionListSubmitController.options
+      },
+      handler: submissionListSubmitController.handler
+    }
+  ]
+}
+
+function submitRoutes(rootPath) {
+  return [
+    {
+      method: 'GET',
+      path: routePath(rootPath, 'submit'),
+      ...submitController
+    },
+    {
+      method: 'POST',
+      path: routePath(rootPath, 'submit'),
+      options: {
+        ...submitSubmitController.options
+      },
+      handler: submitSubmitController.handler
+    }
+  ]
+}
+
+function confirmationRoutes(rootPath) {
+  return [
+    {
+      method: 'GET',
+      path: routePath(rootPath, 'confirmation'),
+      ...confirmationController
     }
   ]
 }

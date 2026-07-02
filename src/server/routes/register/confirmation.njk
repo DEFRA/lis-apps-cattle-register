@@ -1,0 +1,26 @@
+{% extends 'layouts/data-page.njk' %}
+
+{% block pageContent %}
+  {% call govukPanel({
+    titleText: titleText
+  }) %}
+    Your reference number<br>
+    <strong>{{ txn_ref }}</strong>
+  {% endcall %}
+
+  <p class="govuk-body govuk-!-margin-top-6">
+    You will receive a confirmation email.
+  </p>
+  <h2 class="govuk-heading-m">What happens next</h2>
+  <p class="govuk-body">
+    The details are now recorded in your cattle livestock list.
+  </p>
+  <p class="govuk-body">
+    We will contact you if we require any further information.
+  </p>
+
+  {{ govukButton({
+    text: "Return to the homepage",
+    href: "/cattle"
+  }) }}
+{% endblock %}
