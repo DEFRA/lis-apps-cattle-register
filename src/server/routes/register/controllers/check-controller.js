@@ -1,8 +1,6 @@
-import Joi from 'joi'
-import {buildMicrositePath} from '@livestock/ui-services'
-import {statusCodes} from '@livestock/ui-services/status-codes'
-import {taxonomy} from '@livestock/taxonomy-register'
-import {species} from '@livestock/species-cattle'
+import { buildMicrositePath } from '@livestock/ui-services'
+import { taxonomy } from '@livestock/taxonomy-register'
+import { species } from '@livestock/species-cattle'
 
 const TEMPLATE = './register/check.njk'
 const PAGE_TITLE = 'Check calf details'
@@ -36,35 +34,34 @@ function viewModel(overrides = {}) {
 }
 
 function defaultFormValues() {
-  const dam_details = []
-  const dam_type = 'surrogate'
-  if (dam_type == 'surrogate') {
-    dam_details.push(buildRow("Genetic dam ear tag number", 'X', `${ROOT_PATH}/genetic-dam`))
+  const damDetails = []
+  const damType = 'surrogate'
+  if (damType === 'surrogate') {
+    damDetails.push(
+      buildRow('Genetic dam ear tag number', 'X', `${ROOT_PATH}/genetic-dam`)
+    )
   } else {
-    dam_details.push(buildRow("Genetic dam ear tag number", 'X', `${ROOT_PATH}/surrogate-dam`))
-    dam_details.push(buildRow("Surrogate dam ear tag number", 'X', `${ROOT_PATH}/surrogate-dam`))
+    damDetails.push(
+      buildRow('Genetic dam ear tag number', 'X', `${ROOT_PATH}/surrogate-dam`),
+      buildRow(
+        'Surrogate dam ear tag number',
+        'X',
+        `${ROOT_PATH}/surrogate-dam`
+      )
+    )
   }
 
   return {
     rows: [
-      buildRow("Animal ear tag number", 'X', `${ROOT_PATH}/calf`),
-      buildRow("Date of birth", 'X', `${ROOT_PATH}/calf`),
-      buildRow("Sex", 'X', `${ROOT_PATH}/calf`),
-      buildRow("Breed", 'X', `${ROOT_PATH}/calf`),
-      buildRow("Dam type", 'X', `${ROOT_PATH}/dam`),
-      ...dam_details,
-      buildRow("Sire ear tag number", 'X', `${ROOT_PATH}/sire`),
-      buildRow("Sire name", 'X', `${ROOT_PATH}/sire`),
+      buildRow('Animal ear tag number', 'X', `${ROOT_PATH}/calf`),
+      buildRow('Date of birth', 'X', `${ROOT_PATH}/calf`),
+      buildRow('Sex', 'X', `${ROOT_PATH}/calf`),
+      buildRow('Breed', 'X', `${ROOT_PATH}/calf`),
+      buildRow('Dam type', 'X', `${ROOT_PATH}/dam`),
+      ...damDetails,
+      buildRow('Sire ear tag number', 'X', `${ROOT_PATH}/sire`),
+      buildRow('Sire name', 'X', `${ROOT_PATH}/sire`)
     ]
-  }
-}
-
-function formValuesFromPayload(payload = {}) {
-  return {
-    identifySire: (payload.identifySire ?? '').trim(),
-    uniqueTag: (payload.uniqueTag ?? '').trim(),
-    aiRef: (payload.aiRef ?? '').trim(),
-    pedigreeRef: (payload.pedigreeRef ?? '').trim()
   }
 }
 
@@ -91,7 +88,7 @@ function buildRow(key, text, url) {
       items: [
         {
           href: `${url}?change=true`,
-          text: "Change"
+          text: 'Change'
         }
       ]
     }

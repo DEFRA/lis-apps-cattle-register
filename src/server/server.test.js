@@ -15,8 +15,12 @@ describe('#createServer', () => {
   })
 
   test('Should dump supported routes to the console', () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
-    const tableSpy = vi.spyOn(console, 'table').mockImplementation(() => {})
+    const infoSpy = vi
+      .spyOn(console, 'info')
+      .mockImplementation(() => undefined)
+    const tableSpy = vi
+      .spyOn(console, 'table')
+      .mockImplementation(() => undefined)
 
     const routes = server.dumpSupportedRoutes()
 
@@ -25,14 +29,20 @@ describe('#createServer', () => {
       expect.arrayContaining([
         expect.objectContaining({ method: 'GET', path: '/health' }),
         expect.objectContaining({ method: 'GET', path: '/cattle/register' }),
-        expect.objectContaining({ method: 'POST', path: '/cattle/register/calf' })
+        expect.objectContaining({
+          method: 'POST',
+          path: '/cattle/register/calf'
+        })
       ])
     )
     expect(routes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ method: 'GET', path: '/health' }),
         expect.objectContaining({ method: 'GET', path: '/cattle/register' }),
-        expect.objectContaining({ method: 'POST', path: '/cattle/register/calf' })
+        expect.objectContaining({
+          method: 'POST',
+          path: '/cattle/register/calf'
+        })
       ])
     )
   })

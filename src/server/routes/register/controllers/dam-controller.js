@@ -1,8 +1,8 @@
 import Joi from 'joi'
-import {buildMicrositePath} from '@livestock/ui-services'
-import {statusCodes} from '@livestock/ui-services/status-codes'
-import {taxonomy} from '@livestock/taxonomy-register'
-import {species} from '@livestock/species-cattle'
+import { buildMicrositePath } from '@livestock/ui-services'
+import { statusCodes } from '@livestock/ui-services/status-codes'
+import { taxonomy } from '@livestock/taxonomy-register'
+import { species } from '@livestock/species-cattle'
 
 const TEMPLATE = './register/dam.njk'
 const PAGE_TITLE = 'Dam details'
@@ -26,7 +26,7 @@ export const damSubmitController = {
         const errors = errorsFromValidation(err)
 
         return h
-          .view(TEMPLATE, viewModel({formValues, errors}))
+          .view(TEMPLATE, viewModel({ formValues, errors }))
           .code(statusCodes.badRequest)
           .takeover()
       }
@@ -43,12 +43,8 @@ function errorsFromValidation(validationError) {
     validationError?.details ?? validationError?.data?.details ?? []
 
   for (const detail of details) {
-    switch (detail?.path?.[0]) {
-      case 'dam_type':
-        errors.dam_type = 'Select the type of the dam'
-        break
-      default:
-        break
+    if (detail?.path?.[0] === 'dam_type') {
+      errors.dam_type = 'Select the type of the dam'
     }
   }
 
@@ -62,16 +58,12 @@ function viewModel(overrides = {}) {
   return {
     pageTitle: withErrorPageTitle(PAGE_TITLE, errors),
     heading: PAGE_TITLE,
-    tagHeading: TAG_HEADING + "UK2134",
-    postBackUrl
-:
-  `${ROOT_PATH}/dam`,
+    tagHeading: `${TAG_HEADING}UK2134`,
+    postBackUrl: `${ROOT_PATH}/dam`,
     formValues,
     errors,
-    errorList
-:
-  errorListFromErrors(errors)
-}
+    errorList: errorListFromErrors(errors)
+  }
 }
 
 function defaultFormValues() {
@@ -82,7 +74,7 @@ function defaultFormValues() {
 
 function formValuesFromPayload(payload = {}) {
   return {
-    dam_type: (payload.dam_type ?? '').trim(),
+    dam_type: (payload.dam_type ?? '').trim()
   }
 }
 

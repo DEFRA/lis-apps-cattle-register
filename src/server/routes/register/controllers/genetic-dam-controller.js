@@ -42,12 +42,8 @@ function errorsFromValidation(validationError) {
     validationError?.details ?? validationError?.data?.details ?? []
 
   for (const detail of details) {
-    switch (detail?.path?.[0]) {
-      case 'genetic_dam_tag':
-        errors.genetic_dam_tag = 'Enter the ear tag number of the genetic dam'
-        break
-      default:
-        break
+    if (detail?.path?.[0] === 'genetic_dam_tag') {
+      errors.genetic_dam_tag = 'Enter the ear tag number of the genetic dam'
     }
   }
 
@@ -76,7 +72,7 @@ function defaultFormValues() {
 
 function formValuesFromPayload(payload = {}) {
   return {
-    genetic_dam_tag: (payload.genetic_dam_tag ?? '').trim(),
+    genetic_dam_tag: (payload.genetic_dam_tag ?? '').trim()
   }
 }
 

@@ -1,3 +1,4 @@
+/** @import { Server } from '@hapi/hapi' */
 import path from 'path'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
@@ -33,9 +34,9 @@ const nunjucksConfig = createNunjucksConfig({
 function getSupportedRoutes(server) {
   return server
     .table()
-    .map(({ method, path }) => ({
+    .map(({ method, path: routePath }) => ({
       method: method.toUpperCase(),
-      path
+      path: routePath
     }))
     .sort(
       (left, right) =>
@@ -53,6 +54,9 @@ function dumpSupportedRoutes() {
   return routes
 }
 
+/**
+ * @returns {Promise<Server>}
+ */
 export async function createServer() {
   setupProxy({
     proxyUrl: config.get('httpProxy'),
