@@ -1,15 +1,14 @@
 import hapiPulse from 'hapi-pulse'
 import { getLoggerForConfig } from '@livestock/ui-services/logging'
+import { milliseconds } from '@livestock/ui-services/duration'
 
 import { config } from '#config/config.js'
-
-const tenSeconds = 10 * 1000
 
 const pulse = {
   plugin: hapiPulse,
   options: {
     logger: getLoggerForConfig(config),
-    timeout: tenSeconds
+    timeout: milliseconds.tenSeconds
   }
 }
 

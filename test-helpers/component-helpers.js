@@ -1,3 +1,4 @@
+/** @import { CheerioAPI } from 'cheerio' */
 import { fileURLToPath } from 'node:url'
 import path from 'path'
 import nunjucks from 'nunjucks'
@@ -6,6 +7,8 @@ import { camelCase } from 'lodash'
 
 import * as filters from '#config/nunjucks/filters/filters.js'
 import * as globals from '#config/nunjucks/globals/globals.js'
+
+const JSON_INDENT_SPACES = 2
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 const nunjucksTestEnv = nunjucks.configure(
@@ -28,12 +31,18 @@ Object.entries(filters).forEach(([name, filter]) => {
   nunjucksTestEnv.addFilter(name, filter)
 })
 
+/**
+ * @param {string} componentName
+ * @param {object} params
+ * @param {string} [callBlock]
+ * @returns {CheerioAPI}
+ */
 export function renderComponent(componentName, params, callBlock) {
   const macroPath = `${componentName}/macro.njk`
   const macroName = `app${
     componentName.charAt(0).toUpperCase() + camelCase(componentName.slice(1))
   }`
-  const macroParams = JSON.stringify(params, null, 2)
+  const macroParams = JSON.stringify(params, null, JSON_INDENT_SPACES)
   let macroString = `{%- from "${macroPath}" import ${macroName} -%}`
 
   if (callBlock) {

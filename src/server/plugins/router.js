@@ -44,10 +44,7 @@ export const router = {
       await server.register([health])
       await server.register([register])
 
-      await server.register([
-        authGuard,
-        moduleAccessGuard
-      ])
+      await server.register([authGuard, moduleAccessGuard])
 
       if (!config.get('isProduction') && !config.get('isTest')) {
         await (async () => {

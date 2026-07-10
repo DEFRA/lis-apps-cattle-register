@@ -13,12 +13,12 @@ export const submitController = {
 }
 
 export const submitSubmitController = {
-  options: {
-  },
+  options: {},
   handler(_request, h) {
     // do the submit to api
     return h.redirect(`${ROOT_PATH}/result`)
-  }}
+  }
+}
 
 function viewModel() {
   return {

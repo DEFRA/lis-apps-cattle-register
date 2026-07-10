@@ -1,8 +1,9 @@
+/** @import { Plugin } from '@hapi/hapi' */
 import Blankie from 'blankie'
 
 /**
  * Manage content security policies.
- * @satisfies {import('@hapi/hapi').Plugin}
+ * @satisfies {Plugin}
  */
 const contentSecurityPolicy = {
   plugin: Blankie,

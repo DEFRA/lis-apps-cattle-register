@@ -31,8 +31,13 @@ import {
   submitSubmitController
 } from './controllers/submit-controller.js'
 
+/** @import { ServerRoute } from '@hapi/hapi' */
 import { confirmationController } from './controllers/confirmation-controller.js'
 
+/**
+ * @param {{ rootPath?: string }} [options]
+ * @returns {ServerRoute[]}
+ */
 export const routes = (options = {}) => {
   const { rootPath = '/' } = options
 

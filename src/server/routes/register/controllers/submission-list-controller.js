@@ -20,7 +20,7 @@ export const submissionListSubmitController = {
       payload: Joi.object({
         add_more: Joi.string().trim().valid('yes', 'no').required()
       }),
-      failAction(request, h, err) {
+      failAction(_request, h, err) {
         const errors = errorsFromValidation(err)
 
         return h
@@ -62,9 +62,9 @@ function createSummaryItems() {
 
 function createSummaryItem(tagRef) {
   const anchor =
-  `<form class="form" id="form${tagRef}" action="${ROOT_PATH}/summary" method="post"><input type="hidden" name="tagRef" value="${tagRef}">` +
-  `<a href="#" onclick='document.getElementById("form${tagRef}").submit()'>${tagRef}</a>` +
-  `</form>`
+    `<form class="form" id="form${tagRef}" action="${ROOT_PATH}/summary" method="post"><input type="hidden" name="tagRef" value="${tagRef}">` +
+    `<a href="#" onclick='document.getElementById("form${tagRef}").submit()'>${tagRef}</a>` +
+    `</form>`
 
   return [
     {
@@ -83,12 +83,8 @@ function errorsFromValidation(validationError) {
     validationError?.details ?? validationError?.data?.details ?? []
 
   for (const detail of details) {
-    switch (detail?.path?.[0]) {
-      case 'add_more':
-        errors.add_more = 'Select yes to add additional animals or no to continue'
-        break
-      default:
-        break
+    if (detail?.path?.[0] === 'add_more') {
+      errors.add_more = 'Select yes to add additional animals or no to continue'
     }
   }
 
