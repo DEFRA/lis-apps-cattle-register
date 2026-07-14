@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { issueHubJwt } from '@livestock/ui-services/auth'
+import { issueHubJwt } from '@livestock/hubs-infra-access/auth'
 
 import { createServer } from '../../server.js'
 
