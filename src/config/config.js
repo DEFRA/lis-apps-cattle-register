@@ -38,7 +38,7 @@ export const config = convict({
   basePath: {
     doc: 'Optional mount path for the application when it is hosted behind the hub.',
     format: String,
-    default: '',
+    default: '/cattle/register',
     env: 'BASE_PATH'
   },
   staticCacheTimeout: {
@@ -246,7 +246,7 @@ export const config = convict({
     hubOrigin: {
       doc: 'Public origin for the coordinating hub',
       format: String,
-      default: 'http://localhost:3000',
+      default: 'https://front-office.lis.defra',
       env: 'HUB_ORIGIN'
     },
     hubJwt: {
@@ -272,7 +272,7 @@ export const config = convict({
       issuer: {
         doc: 'Issuer claim for the hub-issued JWT',
         format: String,
-        default: 'http://localhost:3000',
+        default: 'https://front-office.lis.defra',
         env: 'HUB_JWT_ISSUER'
       },
       audience: {
