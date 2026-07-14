@@ -46,6 +46,7 @@ export default defineConfig({
   },
   // Dev server
   server: {
+    allowedHosts: ['front-office.lis.defra', 'back-office.lis.defra'],
     hmr: {
       port: 0
     }

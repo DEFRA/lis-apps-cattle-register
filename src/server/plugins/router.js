@@ -2,9 +2,9 @@ import path from 'node:path'
 import inert from '@hapi/inert'
 import {
   createSpokeGuard,
-  getHubJwtCookieOptions
-} from '@livestock/ui-services/auth'
-import { createModuleAccessGuard } from '@livestock/ui-services/module-access'
+  getHubJwtCookieOptions,
+  createModuleAccessGuard
+} from '@livestock/hubs-infra-access/auth'
 
 import { health } from '../routes/health/index.js'
 import { register } from '../routes/register/index.js'
@@ -26,6 +26,7 @@ const authGuard = createSpokeGuard({
   }),
   assetPath: config.get('assetPath'),
   port: config.get('port'),
+  basePath: config.get('basePath'),
   secret: config.get('auth.hubJwt.secret'),
   issuer: config.get('auth.hubJwt.issuer'),
   audience: config.get('auth.hubJwt.audience')

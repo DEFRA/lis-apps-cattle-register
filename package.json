@@ -38,6 +38,7 @@
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
   "dependencies": {
+    "@livestock/hubs-infra-access": "file:../../hubs/infra-access",
     "@defra/cdp-auditing": "0.6.0",
     "@defra/cdp-metrics": "0.6.0",
     "@defra/hapi-secure-context": "0.4.0",
