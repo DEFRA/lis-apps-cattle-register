@@ -26,6 +26,7 @@ const authGuard = createSpokeGuard({
   }),
   assetPath: config.get('assetPath'),
   port: config.get('port'),
+  basePath: config.get('basePath'),
   secret: config.get('auth.hubJwt.secret'),
   issuer: config.get('auth.hubJwt.issuer'),
   audience: config.get('auth.hubJwt.audience')
