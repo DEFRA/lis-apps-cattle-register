@@ -33,6 +33,11 @@ import {
 
 /** @import { ServerRoute } from '@hapi/hapi' */
 import { confirmationController } from './controllers/confirmation-controller.js'
+import {
+  bundleCreateController,
+  bundleLandingController,
+  bundleSummaryController
+} from './controllers/bundle-controller.js'
 
 /**
  * @param {{ rootPath?: string }} [options]
@@ -42,6 +47,7 @@ export const routes = (options = {}) => {
   const { rootPath = '/' } = options
 
   return [
+    ...bundleRoutes(rootPath),
     ...calfRoutes(rootPath),
     ...damRoutes(rootPath),
     ...geneticDamRoutes(rootPath),
@@ -51,6 +57,22 @@ export const routes = (options = {}) => {
     ...submissionListRoutes(rootPath),
     ...submitRoutes(rootPath),
     ...confirmationRoutes(rootPath)
+  ]
+}
+
+function bundleRoutes(rootPath) {
+  return [
+    { method: 'GET', path: routePath(rootPath), ...bundleLandingController },
+    {
+      method: 'POST',
+      path: routePath(rootPath, 'bundles'),
+      ...bundleCreateController
+    },
+    {
+      method: 'GET',
+      path: routePath(rootPath, 'bundles/{bundleId}'),
+      ...bundleSummaryController
+    }
   ]
 }
 
@@ -68,12 +90,12 @@ function calfRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: routePath(rootPath),
+      path: routePath(rootPath, 'bundles/{bundleId}/calf'),
       ...calfController
     },
     {
       method: 'POST',
-      path: routePath(rootPath, 'calf'),
+      path: routePath(rootPath, 'bundles/{bundleId}/calf'),
       options: {
         ...calfSubmitController.options
       },
@@ -86,12 +108,12 @@ function damRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: routePath(rootPath, 'dam'),
+      path: routePath(rootPath, 'bundles/{bundleId}/dam'),
       ...damController
     },
     {
       method: 'POST',
-      path: routePath(rootPath, 'dam'),
+      path: routePath(rootPath, 'bundles/{bundleId}/dam'),
       options: {
         ...damSubmitController.options
       },
@@ -104,12 +126,12 @@ function geneticDamRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: routePath(rootPath, 'genetic-dam'),
+      path: routePath(rootPath, 'bundles/{bundleId}/genetic-dam'),
       ...geneticDamController
     },
     {
       method: 'POST',
-      path: routePath(rootPath, 'genetic-dam'),
+      path: routePath(rootPath, 'bundles/{bundleId}/genetic-dam'),
       options: {
         ...geneticDamSubmitController.options
       },
@@ -122,12 +144,12 @@ function surrogateDamRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: routePath(rootPath, 'surrogate-dam'),
+      path: routePath(rootPath, 'bundles/{bundleId}/surrogate-dam'),
       ...surrogateDamController
     },
     {
       method: 'POST',
-      path: routePath(rootPath, 'surrogate-dam'),
+      path: routePath(rootPath, 'bundles/{bundleId}/surrogate-dam'),
       options: {
         ...surrogateDamSubmitController.options
       },
@@ -140,12 +162,12 @@ function sireRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: routePath(rootPath, 'sire'),
+      path: routePath(rootPath, 'bundles/{bundleId}/sire'),
       ...sireController
     },
     {
       method: 'POST',
-      path: routePath(rootPath, 'sire'),
+      path: routePath(rootPath, 'bundles/{bundleId}/sire'),
       options: {
         ...sireSubmitController.options
       },
@@ -158,12 +180,12 @@ function checkRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: routePath(rootPath, 'check'),
+      path: routePath(rootPath, 'bundles/{bundleId}/check'),
       ...checkController
     },
     {
       method: 'POST',
-      path: routePath(rootPath, 'check'),
+      path: routePath(rootPath, 'bundles/{bundleId}/check'),
       options: {
         ...checkSubmitController.options
       },
@@ -176,12 +198,12 @@ function submissionListRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: routePath(rootPath, 'submission-list'),
+      path: routePath(rootPath, 'bundles/{bundleId}/submission-list'),
       ...submissionListController
     },
     {
       method: 'POST',
-      path: routePath(rootPath, 'submission-list'),
+      path: routePath(rootPath, 'bundles/{bundleId}/submission-list'),
       options: {
         ...submissionListSubmitController.options
       },
@@ -194,12 +216,12 @@ function submitRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: routePath(rootPath, 'submit'),
+      path: routePath(rootPath, 'bundles/{bundleId}/submit'),
       ...submitController
     },
     {
       method: 'POST',
-      path: routePath(rootPath, 'submit'),
+      path: routePath(rootPath, 'bundles/{bundleId}/submit'),
       options: {
         ...submitSubmitController.options
       },
@@ -212,7 +234,7 @@ function confirmationRoutes(rootPath) {
   return [
     {
       method: 'GET',
-      path: routePath(rootPath, 'confirmation'),
+      path: routePath(rootPath, 'bundles/{bundleId}/confirmation'),
       ...confirmationController
     }
   ]

@@ -40,6 +40,12 @@ export const config = convict({
     default: '/cattle/register',
     env: 'BASE_PATH'
   },
+  bundleHistoryMonths: {
+    doc: 'Number of months of registration bundle history to show.',
+    format: 'nat',
+    default: 12,
+    env: 'BUNDLE_HISTORY_MONTHS'
+  },
   staticCacheTimeout: {
     doc: 'Static cache timeout in milliseconds',
     format: Number,

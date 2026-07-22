@@ -9,8 +9,8 @@ const PAGE_TITLE = 'Genetic Dam details'
 const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
 export const geneticDamController = {
-  handler(_request, h) {
-    return h.view(TEMPLATE, viewModel())
+  handler(request, h) {
+    return h.view(TEMPLATE, viewModel({ bundleId: request.params.bundleId }))
   }
 }
 
@@ -25,14 +25,17 @@ export const geneticDamSubmitController = {
         const errors = errorsFromValidation(err)
 
         return h
-          .view(TEMPLATE, viewModel({ formValues, errors }))
+          .view(
+            TEMPLATE,
+            viewModel({ formValues, errors, bundleId: request.params.bundleId })
+          )
           .code(statusCodes.badRequest)
           .takeover()
       }
     }
   },
-  handler(_request, h) {
-    return h.redirect(`${ROOT_PATH}/sire`)
+  handler(request, h) {
+    return h.redirect(bundlePath(request.params.bundleId, 'sire'))
   }
 }
 
@@ -57,11 +60,15 @@ function viewModel(overrides = {}) {
   return {
     pageTitle: withErrorPageTitle(PAGE_TITLE, errors),
     heading: PAGE_TITLE,
-    postBackUrl: `${ROOT_PATH}/genetic-dam`,
+    postBackUrl: bundlePath(overrides.bundleId, 'genetic-dam'),
     formValues,
     errors,
     errorList: errorListFromErrors(errors)
   }
+}
+
+function bundlePath(bundleId, page) {
+  return `${ROOT_PATH}/bundles/${encodeURIComponent(bundleId)}/${page}`
 }
 
 function defaultFormValues() {

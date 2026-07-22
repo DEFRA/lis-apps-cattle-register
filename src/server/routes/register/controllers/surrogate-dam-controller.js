@@ -9,8 +9,8 @@ const PAGE_TITLE = 'Surrogate Dam details'
 const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
 export const surrogateDamController = {
-  handler(_request, h) {
-    return h.view(TEMPLATE, viewModel())
+  handler(request, h) {
+    return h.view(TEMPLATE, viewModel({ bundleId: request.params.bundleId }))
   }
 }
 
@@ -26,14 +26,17 @@ export const surrogateDamSubmitController = {
         const errors = errorsFromValidation(err)
 
         return h
-          .view(TEMPLATE, viewModel({ formValues, errors }))
+          .view(
+            TEMPLATE,
+            viewModel({ formValues, errors, bundleId: request.params.bundleId })
+          )
           .code(statusCodes.badRequest)
           .takeover()
       }
     }
   },
-  handler(_request, h) {
-    return h.redirect(`${ROOT_PATH}/sire`)
+  handler(request, h) {
+    return h.redirect(bundlePath(request.params.bundleId, 'sire'))
   }
 }
 
@@ -65,11 +68,15 @@ function viewModel(overrides = {}) {
   return {
     pageTitle: withErrorPageTitle(PAGE_TITLE, errors),
     heading: PAGE_TITLE,
-    postBackUrl: `${ROOT_PATH}/surrogate-dam`,
+    postBackUrl: bundlePath(overrides.bundleId, 'surrogate-dam'),
     formValues,
     errors,
     errorList: errorListFromErrors(errors)
   }
+}
+
+function bundlePath(bundleId, page) {
+  return `${ROOT_PATH}/bundles/${encodeURIComponent(bundleId)}/${page}`
 }
 
 function defaultFormValues() {

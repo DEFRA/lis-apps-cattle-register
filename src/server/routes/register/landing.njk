@@ -1,0 +1,43 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+    <h1 class="govuk-heading-xl">{{ heading }}</h1>
+    <p class="govuk-body-l">Register cattle births and return to registrations that you have already started.</p>
+    <p class="govuk-body">Registrations from the last {{ historyMonths }} months are shown below.</p>
+
+    <form action="{{ startUrl }}" method="post" class="govuk-!-margin-bottom-8">
+      {{ govukButton({ text: "Start a new registration", isStartButton: true }) }}
+    </form>
+
+    <h2 class="govuk-heading-l">Your registrations</h2>
+    {% if rows.length %}
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">Registration</th>
+            {% if showCph %}<th scope="col" class="govuk-table__header">CPH</th>{% endif %}
+            <th scope="col" class="govuk-table__header">Status</th>
+            <th scope="col" class="govuk-table__header govuk-table__header--numeric">Calves</th>
+            <th scope="col" class="govuk-table__header">Last activity</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for row in rows %}
+          <tr class="govuk-table__row">
+            <th scope="row" class="govuk-table__header"><a class="govuk-link" href="{{ row.href }}">{{ row.id }}</a></th>
+            {% if showCph %}<td class="govuk-table__cell">{{ row.cph }}</td>{% endif %}
+            <td class="govuk-table__cell"><strong class="govuk-tag {{ row.statusClass }}">{{ row.statusText }}</strong></td>
+            <td class="govuk-table__cell govuk-table__cell--numeric">{{ row.animalCount }}</td>
+            <td class="govuk-table__cell">{{ row.activityDate }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="govuk-body">There are no registrations to show.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

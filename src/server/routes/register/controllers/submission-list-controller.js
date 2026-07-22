@@ -9,8 +9,8 @@ const PAGE_TITLE = 'Register new cattle births'
 const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
 export const submissionListController = {
-  handler(_request, h) {
-    return h.view(TEMPLATE, viewModel())
+  handler(request, h) {
+    return h.view(TEMPLATE, viewModel({}, request.params.bundleId))
   }
 }
 
@@ -24,45 +24,44 @@ export const submissionListSubmitController = {
         const errors = errorsFromValidation(err)
 
         return h
-          .view(TEMPLATE, viewModel(errors))
+          .view(TEMPLATE, viewModel(errors, _request.params.bundleId))
           .code(statusCodes.badRequest)
           .takeover()
       }
     }
   },
   handler(_request, h) {
-    console.log(_request.payload)
     if (_request.payload.add_more === 'yes') {
       // save and reset
-      return h.redirect(`${ROOT_PATH}/calf`)
+      return h.redirect(bundlePath(_request.params.bundleId, 'calf'))
     } else {
-      return h.redirect(`${ROOT_PATH}/submit`)
+      return h.redirect(bundlePath(_request.params.bundleId, 'submit'))
     }
   }
 }
 
-function viewModel(errors) {
+function viewModel(errors, bundleId) {
   return {
     pageTitle: PAGE_TITLE,
     heading: PAGE_TITLE,
-    rows: createSummaryItems(),
-    postBackUrl: `${ROOT_PATH}/submission-list`,
+    rows: createSummaryItems(bundleId),
+    postBackUrl: bundlePath(bundleId, 'submission-list'),
     errors: errors ?? {},
     errorList: errorListFromErrors(errors ?? {})
   }
 }
 
-function createSummaryItems() {
+function createSummaryItems(bundleId) {
   return [
-    createSummaryItem('UK123123'),
-    createSummaryItem('UK123124'),
-    createSummaryItem('UK123125')
+    createSummaryItem('UK123123', bundleId),
+    createSummaryItem('UK123124', bundleId),
+    createSummaryItem('UK123125', bundleId)
   ]
 }
 
-function createSummaryItem(tagRef) {
+function createSummaryItem(tagRef, bundleId) {
   const anchor =
-    `<form class="form" id="form${tagRef}" action="${ROOT_PATH}/summary" method="post"><input type="hidden" name="tagRef" value="${tagRef}">` +
+    `<form class="form" id="form${tagRef}" action="${bundlePath(bundleId, 'check')}" method="get"><input type="hidden" name="tagRef" value="${tagRef}">` +
     `<a href="#" onclick='document.getElementById("form${tagRef}").submit()'>${tagRef}</a>` +
     `</form>`
 
@@ -75,6 +74,10 @@ function createSummaryItem(tagRef) {
       classes: 'govuk-table__header--numeric'
     }
   ]
+}
+
+function bundlePath(bundleId, page) {
+  return `${ROOT_PATH}/bundles/${encodeURIComponent(bundleId)}/${page}`
 }
 
 function errorsFromValidation(validationError) {

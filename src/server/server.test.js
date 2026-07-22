@@ -31,7 +31,7 @@ describe('#createServer', () => {
         expect.objectContaining({ method: 'GET', path: '/cattle/register' }),
         expect.objectContaining({
           method: 'POST',
-          path: '/cattle/register/calf'
+          path: '/cattle/register/bundles/{bundleId}/calf'
         })
       ])
     )
@@ -41,7 +41,7 @@ describe('#createServer', () => {
         expect.objectContaining({ method: 'GET', path: '/cattle/register' }),
         expect.objectContaining({
           method: 'POST',
-          path: '/cattle/register/calf'
+          path: '/cattle/register/bundles/{bundleId}/calf'
         })
       ])
     )
