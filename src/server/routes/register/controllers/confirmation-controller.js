@@ -7,16 +7,18 @@ const PAGE_TITLE = 'Cattle birth report sent'
 const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
 export const confirmationController = {
-  handler(_request, h) {
-    return h.view(TEMPLATE, viewModel())
+  handler(request, h) {
+    return h.view(TEMPLATE, viewModel(request.params.bundleId))
   }
 }
 
-function viewModel() {
+function viewModel(bundleId) {
   return {
     pageTitle: PAGE_TITLE,
     heading: PAGE_TITLE,
+    titleText: PAGE_TITLE,
+    txn_ref: bundleId,
     message: 'Your cattle birth report has been submitted.',
-    nextUrl: `${ROOT_PATH}/home`
+    nextUrl: ROOT_PATH
   }
 }

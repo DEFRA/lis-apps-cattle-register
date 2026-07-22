@@ -5,7 +5,7 @@ import { createServer } from '../../server.js'
 
 const hubJwtConfig = {
   secret: 'local-dev-hub-jwt-signing-secret-please-change-1234567890',
-  issuer: 'http://localhost:3000',
+  issuer: 'https://front-office.lis.defra',
   audience: 'livestock-spokes',
   ttlSeconds: 3600
 }
@@ -21,12 +21,12 @@ describe('register routes', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('GET /cattle/register renders the calf details page for an authorised user', async () => {
+  test('GET /cattle/register renders the registrations page for an authorised user', async () => {
     const hubJwt = await issueHubJwt(
       {
         sub: 'test-user',
         email: 'test.user@example.com',
-        permissions: ['lis-perm-front-office', 'lis-perm-cattle-register-write']
+        roles: ['lis-role-front-office', 'lis-role-caseworker-super']
       },
       hubJwtConfig
     )
@@ -40,6 +40,7 @@ describe('register routes', () => {
     })
 
     expect(response.statusCode).toBe(200)
-    expect(response.payload).toContain('Calf details')
+    expect(response.payload).toContain('Cattle registrations')
+    expect(response.payload).toContain('Start a new registration')
   })
 })

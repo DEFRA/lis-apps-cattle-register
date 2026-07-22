@@ -10,8 +10,8 @@ const TAG_HEADING = 'Official animal ear tag number: '
 const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
 export const damController = {
-  handler(_request, h) {
-    return h.view(TEMPLATE, viewModel())
+  handler(request, h) {
+    return h.view(TEMPLATE, viewModel({ bundleId: request.params.bundleId }))
   }
 }
 
@@ -26,14 +26,19 @@ export const damSubmitController = {
         const errors = errorsFromValidation(err)
 
         return h
-          .view(TEMPLATE, viewModel({ formValues, errors }))
+          .view(
+            TEMPLATE,
+            viewModel({ formValues, errors, bundleId: request.params.bundleId })
+          )
           .code(statusCodes.badRequest)
           .takeover()
       }
     }
   },
-  handler(_request, h) {
-    return h.redirect(`${ROOT_PATH}/${_request.payload.dam_type}-dam`)
+  handler(request, h) {
+    return h.redirect(
+      bundlePath(request.params.bundleId, `${request.payload.dam_type}-dam`)
+    )
   }
 }
 
@@ -59,11 +64,15 @@ function viewModel(overrides = {}) {
     pageTitle: withErrorPageTitle(PAGE_TITLE, errors),
     heading: PAGE_TITLE,
     tagHeading: `${TAG_HEADING}UK2134`,
-    postBackUrl: `${ROOT_PATH}/dam`,
+    postBackUrl: bundlePath(overrides.bundleId, 'dam'),
     formValues,
     errors,
     errorList: errorListFromErrors(errors)
   }
+}
+
+function bundlePath(bundleId, page) {
+  return `${ROOT_PATH}/bundles/${encodeURIComponent(bundleId)}/${page}`
 }
 
 function defaultFormValues() {

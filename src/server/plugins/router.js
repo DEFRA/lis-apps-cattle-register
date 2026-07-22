@@ -43,7 +43,10 @@ export const router = {
     async register(server) {
       await server.register([inert])
       await server.register([health])
-      await server.register([register])
+      await server.register({
+        ...register,
+        options: { rootPath: "/" } // config.get('basePath') }
+      })
 
       await server.register([authGuard, moduleAccessGuard])
 

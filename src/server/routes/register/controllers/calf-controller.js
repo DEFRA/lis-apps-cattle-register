@@ -9,8 +9,8 @@ const PAGE_TITLE = 'Calf details'
 const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
 export const calfController = {
-  handler(_request, h) {
-    return h.view(TEMPLATE, viewModel())
+  handler(request, h) {
+    return h.view(TEMPLATE, viewModel({ bundleId: request.params.bundleId }))
   }
 }
 
@@ -30,14 +30,17 @@ export const calfSubmitController = {
         const errors = errorsFromValidation(err)
 
         return h
-          .view(TEMPLATE, viewModel({ formValues, errors }))
+          .view(
+            TEMPLATE,
+            viewModel({ formValues, errors, bundleId: request.params.bundleId })
+          )
           .code(statusCodes.badRequest)
           .takeover()
       }
     }
   },
-  handler(_request, h) {
-    return h.redirect(`${ROOT_PATH}/dam`)
+  handler(request, h) {
+    return h.redirect(bundlePath(request.params.bundleId, 'dam'))
   }
 }
 
@@ -78,11 +81,15 @@ function viewModel(overrides = {}) {
     pageTitle: withErrorPageTitle(PAGE_TITLE, errors),
     heading: PAGE_TITLE,
     breeds: breedsWithSelection(formValues.breed),
-    postBackUrl: `${ROOT_PATH}/calf`,
+    postBackUrl: bundlePath(overrides.bundleId, 'calf'),
     formValues,
     errors,
     errorList: errorListFromErrors(errors)
   }
+}
+
+function bundlePath(bundleId, page) {
+  return `${ROOT_PATH}/bundles/${encodeURIComponent(bundleId)}/${page}`
 }
 
 function defaultFormValues() {

@@ -1,0 +1,36 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <span class="govuk-caption-l">{{ bundle.id }}</span>
+    <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+    {{ govukSummaryList({ rows: [
+      { key: { text: "Status" }, value: { text: statusText } },
+      { key: { text: "CPH" }, value: { text: bundle.cph } },
+      { key: { text: eventLabel }, value: { text: eventDate } }
+    ] }) }}
+
+    <h2 class="govuk-heading-l">Calves</h2>
+    {% if bundle.calves.length %}
+      <table class="govuk-table">
+        <thead class="govuk-table__head"><tr class="govuk-table__row"><th class="govuk-table__header">Ear tag number</th>{% if isDraft %}<th class="govuk-table__header">Action</th>{% endif %}</tr></thead>
+        <tbody class="govuk-table__body">
+        {% for calf in bundle.calves %}
+          <tr class="govuk-table__row"><td class="govuk-table__cell">{{ calf.tag }}</td>{% if isDraft %}<td class="govuk-table__cell"><a class="govuk-link" href="{{ addCalfUrl }}">Change<span class="govuk-visually-hidden"> {{ calf.tag }}</span></a></td>{% endif %}</tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="govuk-body">No calves have been added to this registration.</p>
+    {% endif %}
+
+    {% if isDraft %}
+      <p class="govuk-body"><a class="govuk-link" href="{{ addCalfUrl }}">Add another calf</a></p>
+      {% if bundle.calves.length %}{{ govukButton({ text: "Continue to declaration", href: submitUrl }) }}{% endif %}
+    {% endif %}
+    <p class="govuk-body"><a class="govuk-link" href="{{ backUrl }}">Back to registrations</a></p>
+  </div>
+</div>
+{% endblock %}
