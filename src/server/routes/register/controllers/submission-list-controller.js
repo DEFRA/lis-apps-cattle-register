@@ -1,16 +1,21 @@
 import Joi from 'joi'
-import { buildMicrositePath } from '@livestock/ui-services'
 import { statusCodes } from '@livestock/ui-services/status-codes'
-import { taxonomy } from '@livestock/taxonomy-register'
-import { species } from '@livestock/species-cattle'
+import { bundlePath, cphFromParams } from '../paths.js'
 
 const TEMPLATE = './register/submission-list.njk'
 const PAGE_TITLE = 'Register new cattle births'
-const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
 export const submissionListController = {
   handler(request, h) {
-    return h.view(TEMPLATE, viewModel({}, request.params.bundleId))
+    return h.view(
+      TEMPLATE,
+      viewModel(
+        {},
+        request.app.cph,
+        request.params.bundleId,
+        request.app.bundle
+      )
+    )
   }
 }
 
@@ -24,7 +29,15 @@ export const submissionListSubmitController = {
         const errors = errorsFromValidation(err)
 
         return h
-          .view(TEMPLATE, viewModel(errors, _request.params.bundleId))
+          .view(
+            TEMPLATE,
+            viewModel(
+              errors,
+              _request.app.cph ?? cphFromParams(_request.params),
+              _request.params.bundleId,
+              _request.app.bundle
+            )
+          )
           .code(statusCodes.badRequest)
           .takeover()
       }
@@ -33,37 +46,37 @@ export const submissionListSubmitController = {
   handler(_request, h) {
     if (_request.payload.add_more === 'yes') {
       // save and reset
-      return h.redirect(bundlePath(_request.params.bundleId, 'calf'))
+      return h.redirect(
+        bundlePath(_request.app.cph, _request.params.bundleId, 'calf')
+      )
     } else {
-      return h.redirect(bundlePath(_request.params.bundleId, 'submit'))
+      return h.redirect(
+        bundlePath(_request.app.cph, _request.params.bundleId, 'submit')
+      )
     }
   }
 }
 
-function viewModel(errors, bundleId) {
+function viewModel(errors, cph, bundleId, bundle) {
   return {
     pageTitle: PAGE_TITLE,
     heading: PAGE_TITLE,
-    rows: createSummaryItems(bundleId),
-    postBackUrl: bundlePath(bundleId, 'submission-list'),
+    rows: createSummaryItems(cph, bundleId, bundle?.calves),
+    postBackUrl: bundlePath(cph, bundleId, 'submission-list'),
     errors: errors ?? {},
     errorList: errorListFromErrors(errors ?? {})
   }
 }
 
-function createSummaryItems(bundleId) {
-  return [
-    createSummaryItem('UK123123', bundleId),
-    createSummaryItem('UK123124', bundleId),
-    createSummaryItem('UK123125', bundleId)
-  ]
+function createSummaryItems(cph, bundleId, calves = []) {
+  return calves.map((calf) => createSummaryItem(calf, cph, bundleId))
 }
 
-function createSummaryItem(tagRef, bundleId) {
-  const anchor =
-    `<form class="form" id="form${tagRef}" action="${bundlePath(bundleId, 'check')}" method="get"><input type="hidden" name="tagRef" value="${tagRef}">` +
-    `<a href="#" onclick='document.getElementById("form${tagRef}").submit()'>${tagRef}</a>` +
-    `</form>`
+function createSummaryItem(calf, cph, bundleId) {
+  const calfId = calf.id ?? calf.tag
+  const tagRef = calf.tag
+  const checkPath = `calves/${encodeURIComponent(calfId)}/check`
+  const anchor = `<a href="${bundlePath(cph, bundleId, checkPath)}">${tagRef}</a>`
 
   return [
     {
@@ -74,10 +87,6 @@ function createSummaryItem(tagRef, bundleId) {
       classes: 'govuk-table__header--numeric'
     }
   ]
-}
-
-function bundlePath(bundleId, page) {
-  return `${ROOT_PATH}/bundles/${encodeURIComponent(bundleId)}/${page}`
 }
 
 function errorsFromValidation(validationError) {

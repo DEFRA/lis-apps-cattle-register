@@ -28,20 +28,20 @@ describe('#createServer', () => {
     expect(tableSpy).toHaveBeenCalledWith(
       expect.arrayContaining([
         expect.objectContaining({ method: 'GET', path: '/health' }),
-        expect.objectContaining({ method: 'GET', path: '/cattle/register' }),
+        expect.objectContaining({ method: 'GET', path: '/' }),
         expect.objectContaining({
           method: 'POST',
-          path: '/cattle/register/bundles/{bundleId}/calf'
+          path: '/{county}/{parish}/{holding}/bundles/{bundleId}/calf'
         })
       ])
     )
     expect(routes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ method: 'GET', path: '/health' }),
-        expect.objectContaining({ method: 'GET', path: '/cattle/register' }),
+        expect.objectContaining({ method: 'GET', path: '/' }),
         expect.objectContaining({
           method: 'POST',
-          path: '/cattle/register/bundles/{bundleId}/calf'
+          path: '/{county}/{parish}/{holding}/bundles/{bundleId}/calf'
         })
       ])
     )

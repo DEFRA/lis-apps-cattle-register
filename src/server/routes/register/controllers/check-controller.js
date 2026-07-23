@@ -1,15 +1,12 @@
-import { buildMicrositePath } from '@livestock/ui-services'
-import { taxonomy } from '@livestock/taxonomy-register'
-import { species } from '@livestock/species-cattle'
 import { addDemoCalf } from '../bundle-store.js'
+import { bundlePath, bundleRoot } from '../paths.js'
 
 const TEMPLATE = './register/check.njk'
 const PAGE_TITLE = 'Check calf details'
-const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
 export const checkController = {
   handler(request, h) {
-    return h.view(TEMPLATE, viewModel({ bundleId: request.params.bundleId }))
+    return h.view(TEMPLATE, viewModel(requestContext(request)))
   }
 }
 
@@ -17,27 +14,28 @@ export const checkSubmitController = {
   options: {},
   handler(request, h) {
     addDemoCalf(request.params.bundleId, request.app.hubAuth)
-    return h.redirect(bundleRoot(request.params.bundleId))
+    return h.redirect(bundleRoot(request.app.cph, request.params.bundleId))
   }
 }
 
 function viewModel(overrides = {}) {
   const formValues =
-    overrides.formValues ?? defaultFormValues(overrides.bundleId)
+    overrides.formValues ?? defaultFormValues(overrides.cph, overrides.bundleId)
   const errors = overrides.errors ?? {}
 
   return {
     pageTitle: withErrorPageTitle(PAGE_TITLE, errors),
     heading: PAGE_TITLE,
-    postBackUrl: `${bundleRoot(overrides.bundleId)}/check`,
+    backUrl: bundlePath(overrides.cph, overrides.bundleId, 'sire'),
+    postBackUrl: bundlePath(overrides.cph, overrides.bundleId, 'check'),
     formValues,
     errors,
     errorList: errorListFromErrors(errors)
   }
 }
 
-function defaultFormValues(bundleId) {
-  const root = bundleRoot(bundleId)
+function defaultFormValues(cph, bundleId) {
+  const root = bundleRoot(cph, bundleId)
   const damDetails = []
   const damType = 'surrogate'
   if (damType === 'surrogate') {
@@ -65,8 +63,8 @@ function defaultFormValues(bundleId) {
   }
 }
 
-function bundleRoot(bundleId) {
-  return `${ROOT_PATH}/bundles/${encodeURIComponent(bundleId)}`
+function requestContext(request) {
+  return { cph: request.app.cph, bundleId: request.params.bundleId }
 }
 
 function errorListFromErrors(errors) {

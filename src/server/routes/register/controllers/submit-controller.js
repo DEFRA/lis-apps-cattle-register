@@ -1,15 +1,12 @@
-import { buildMicrositePath } from '@livestock/ui-services'
-import { taxonomy } from '@livestock/taxonomy-register'
-import { species } from '@livestock/species-cattle'
 import { submitBundle } from '../bundle-store.js'
+import { bundlePath, holdingRoot } from '../paths.js'
 
 const TEMPLATE = './register/submit.njk'
 const PAGE_TITLE = 'Now submit your cattle registration'
-const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
 export const submitController = {
   handler(request, h) {
-    return h.view(TEMPLATE, viewModel(request.params.bundleId))
+    return h.view(TEMPLATE, viewModel(request.app.cph, request.params.bundleId))
   }
 }
 
@@ -18,20 +15,18 @@ export const submitSubmitController = {
   handler(request, h) {
     // do the submit to api
     submitBundle(request.params.bundleId, request.app.hubAuth)
-    return h.redirect(bundlePath(request.params.bundleId, 'confirmation'))
+    return h.redirect(
+      bundlePath(request.app.cph, request.params.bundleId, 'confirmation')
+    )
   }
 }
 
-function viewModel(bundleId) {
+function viewModel(cph, bundleId) {
   return {
     pageTitle: PAGE_TITLE,
     heading: PAGE_TITLE,
     message: 'Your cattle birth report has been submitted.',
-    postBackUrl: bundlePath(bundleId, 'submit'),
-    nextUrl: ROOT_PATH
+    postBackUrl: bundlePath(cph, bundleId, 'submit'),
+    nextUrl: holdingRoot(cph)
   }
-}
-
-function bundlePath(bundleId, page) {
-  return `${ROOT_PATH}/bundles/${encodeURIComponent(bundleId)}/${page}`
 }

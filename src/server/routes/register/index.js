@@ -1,6 +1,7 @@
 import { routes } from './routes.js'
-import { getBundleForUser } from './bundle-store.js'
+import { canAccessCph, getBundleForUser } from './bundle-store.js'
 import { statusCodes } from '@livestock/ui-services/status-codes'
+import { cphFromParams } from './paths.js'
 
 export const register = {
   plugin: {
@@ -12,14 +13,33 @@ export const register = {
         })
       )
 
+      // eslint-disable-next-line sonarjs/cyclomatic-complexity
       server.ext('onPreHandler', (request, h) => {
-        const { bundleId } = request.params
+        const { bundleId, calfId } = request.params
+        const cph = cphFromParams(request.params)
+        if (cph && !canAccessCph(request.app.hubAuth, cph)) {
+          return h
+            .response('Page not found')
+            .code(statusCodes.notFound)
+            .takeover()
+        }
         const bundle = bundleId
           ? getBundleForUser(bundleId, request.app.hubAuth)
           : null
-        if (bundleId && !bundle) {
+        if (bundleId && (!bundle || bundle.cph !== cph)) {
           return h
             .response('Registration not found')
+            .code(statusCodes.notFound)
+            .takeover()
+        }
+        const calf = calfId
+          ? bundle?.calves.find(
+              (candidate) => (candidate.id ?? candidate.tag) === calfId
+            )
+          : null
+        if (calfId && !calf) {
+          return h
+            .response('Page not found')
             .code(statusCodes.notFound)
             .takeover()
         }
@@ -33,6 +53,10 @@ export const register = {
             .code(statusCodes.conflict)
             .takeover()
         }
+
+        request.app.cph = cph
+        request.app.bundle = bundle
+        request.app.calf = calf
 
         return h.continue
       })
