@@ -1,18 +1,10 @@
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import { NodePackageImporter } from 'sass-embedded'
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
 const assetBasePath = '/public'
 
-function resolveSpokeBasePath() {
-  const [species, taxonomy] = path.basename(dirname).split('-')
-  return `/${species}/${taxonomy}`
-}
-
 export default defineConfig({
-  base: `${resolveSpokeBasePath()}${assetBasePath}`,
+  base: assetBasePath,
   build: {
     outDir: '.public',
     manifest: true,
@@ -29,7 +21,7 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         api: 'modern-compiler',
-        importers: [new NodePackageImporter(dirname)],
+        importers: [new NodePackageImporter()],
         loadPaths: [
           'node_modules',
           'src/client/stylesheets',

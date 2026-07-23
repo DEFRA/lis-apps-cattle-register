@@ -11,6 +11,14 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
+const frontOfficeOrigin = 'https://front-office.lis.defra'
+const backOfficeOrigin = 'https://back-office.lis.defra'
+const trustedHubOrigins = [
+  frontOfficeOrigin,
+  backOfficeOrigin,
+  'http://localhost:3101',
+  'http://localhost:3102'
+]
 
 convict.addFormats(convictFormatWithValidator)
 
@@ -251,8 +259,14 @@ export const config = convict({
     hubOrigin: {
       doc: 'Public origin for the coordinating hub',
       format: String,
-      default: 'https://front-office.lis.defra',
+      default: frontOfficeOrigin,
       env: 'HUB_ORIGIN'
+    },
+    hubOrigins: {
+      doc: 'Public origins allowed to coordinate this shared spoke',
+      format: Array,
+      default: trustedHubOrigins,
+      env: 'HUB_ORIGINS'
     },
     hubJwt: {
       cookieName: {
@@ -277,8 +291,14 @@ export const config = convict({
       issuer: {
         doc: 'Issuer claim for the hub-issued JWT',
         format: String,
-        default: 'https://front-office.lis.defra',
+        default: frontOfficeOrigin,
         env: 'HUB_JWT_ISSUER'
+      },
+      trustedIssuers: {
+        doc: 'Issuer claims accepted from hubs sharing this spoke',
+        format: Array,
+        default: trustedHubOrigins,
+        env: 'HUB_JWT_TRUSTED_ISSUERS'
       },
       audience: {
         doc: 'Audience claim for the hub-issued JWT',

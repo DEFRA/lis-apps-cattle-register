@@ -1,16 +1,13 @@
 import Joi from 'joi'
-import { buildMicrositePath } from '@livestock/ui-services'
 import { statusCodes } from '@livestock/ui-services/status-codes'
-import { taxonomy } from '@livestock/taxonomy-register'
-import { species } from '@livestock/species-cattle'
+import { bundlePath, cphFromParams } from '../paths.js'
 
 const TEMPLATE = './register/sire.njk'
 const PAGE_TITLE = 'Sire details'
-const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
 export const sireController = {
   handler(request, h) {
-    return h.view(TEMPLATE, viewModel({ bundleId: request.params.bundleId }))
+    return h.view(TEMPLATE, viewModel(requestContext(request)))
   }
 }
 
@@ -28,7 +25,7 @@ export const sireSubmitController = {
         return h
           .view(
             TEMPLATE,
-            viewModel({ formValues, errors, bundleId: request.params.bundleId })
+            viewModel({ ...requestContext(request), formValues, errors })
           )
           .code(statusCodes.badRequest)
           .takeover()
@@ -36,7 +33,9 @@ export const sireSubmitController = {
     }
   },
   handler(request, h) {
-    return h.redirect(bundlePath(request.params.bundleId, 'check'))
+    return h.redirect(
+      bundlePath(request.app.cph, request.params.bundleId, 'check')
+    )
   }
 }
 
@@ -74,15 +73,19 @@ function viewModel(overrides = {}) {
   return {
     pageTitle: withErrorPageTitle(PAGE_TITLE, errors),
     heading: PAGE_TITLE,
-    postBackUrl: bundlePath(overrides.bundleId, 'sire'),
+    backUrl: bundlePath(overrides.cph, overrides.bundleId, 'dam'),
+    postBackUrl: bundlePath(overrides.cph, overrides.bundleId, 'sire'),
     formValues,
     errors,
     errorList: errorListFromErrors(errors)
   }
 }
 
-function bundlePath(bundleId, page) {
-  return `${ROOT_PATH}/bundles/${encodeURIComponent(bundleId)}/${page}`
+function requestContext(request) {
+  return {
+    cph: request.app.cph ?? cphFromParams(request.params),
+    bundleId: request.params.bundleId
+  }
 }
 
 function defaultFormValues() {

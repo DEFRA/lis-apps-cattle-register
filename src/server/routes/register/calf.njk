@@ -75,9 +75,10 @@
         ]
       }) }}
 
-      {{ govukSelect({
+      {{ appAutocomplete({
         id: "breed",
         name: "breed",
+        value: formValues.breed,
         errorMessage: { text: errors.breed } if errors.breed,
         label: {
           text: "Breed of calf",
@@ -86,7 +87,9 @@
         hint:{
           text: "Start typing the breed or enter the breed code to select from the list"
         },
-        items: breeds
+        items: breeds,
+        minLength: 1,
+        displayMenu: "overlay"
       }) }}
 
       {{ govukButton({

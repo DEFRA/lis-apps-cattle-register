@@ -1,16 +1,14 @@
 import Joi from 'joi'
-import { buildMicrositePath } from '@livestock/ui-services'
 import { statusCodes } from '@livestock/ui-services/status-codes'
-import { taxonomy } from '@livestock/taxonomy-register'
-import { comboBreeds, species } from '@livestock/species-cattle'
+import { comboBreeds } from '@livestock/species-cattle'
+import { bundlePath, cphFromParams, holdingRoot } from '../paths.js'
 
 const TEMPLATE = './register/calf.njk'
 const PAGE_TITLE = 'Calf details'
-const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 
 export const calfController = {
   handler(request, h) {
-    return h.view(TEMPLATE, viewModel({ bundleId: request.params.bundleId }))
+    return h.view(TEMPLATE, viewModel(requestContext(request)))
   }
 }
 
@@ -32,7 +30,7 @@ export const calfSubmitController = {
         return h
           .view(
             TEMPLATE,
-            viewModel({ formValues, errors, bundleId: request.params.bundleId })
+            viewModel({ ...requestContext(request), formValues, errors })
           )
           .code(statusCodes.badRequest)
           .takeover()
@@ -40,7 +38,9 @@ export const calfSubmitController = {
     }
   },
   handler(request, h) {
-    return h.redirect(bundlePath(request.params.bundleId, 'dam'))
+    return h.redirect(
+      bundlePath(request.app.cph, request.params.bundleId, 'dam')
+    )
   }
 }
 
@@ -80,16 +80,20 @@ function viewModel(overrides = {}) {
   return {
     pageTitle: withErrorPageTitle(PAGE_TITLE, errors),
     heading: PAGE_TITLE,
-    breeds: breedsWithSelection(formValues.breed),
-    postBackUrl: bundlePath(overrides.bundleId, 'calf'),
+    backUrl: holdingRoot(overrides.cph),
+    breeds: comboBreeds.filter(({ text }) => text),
+    postBackUrl: bundlePath(overrides.cph, overrides.bundleId, 'calf'),
     formValues,
     errors,
     errorList: errorListFromErrors(errors)
   }
 }
 
-function bundlePath(bundleId, page) {
-  return `${ROOT_PATH}/bundles/${encodeURIComponent(bundleId)}/${page}`
+function requestContext(request) {
+  return {
+    cph: request.app.cph ?? cphFromParams(request.params),
+    bundleId: request.params.bundleId
+  }
 }
 
 function defaultFormValues() {
@@ -112,13 +116,6 @@ function formValuesFromPayload(payload = {}) {
     sex: (payload.sex ?? '').trim(),
     breed: (payload.breed ?? '').trim()
   }
-}
-
-function breedsWithSelection(selectedBreed) {
-  return comboBreeds.map((breed) => ({
-    ...breed,
-    selected: breed.value === selectedBreed
-  }))
 }
 
 function errorListFromErrors(errors) {
