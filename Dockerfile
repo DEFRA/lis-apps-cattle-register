@@ -13,7 +13,7 @@ ARG PORT_DEBUG
 ENV PORT=${PORT}
 EXPOSE ${PORT} ${PORT_DEBUG}
 
-COPY --chown=node:node --chmod=755 package*.json ./
+COPY --chown=node:node --chmod=755 package*.json .npmrc* ./
 RUN npm install
 COPY --chown=node:node --chmod=755 . .
 RUN npm run build:frontend
@@ -38,7 +38,7 @@ USER root
 RUN apk add --no-cache curl
 USER node
 
-COPY --from=production_build /home/node/package*.json ./
+COPY --from=production_build /home/node/package*.json /home/node/.npmrc* ./
 COPY --from=production_build /home/node/src ./src/
 COPY --from=production_build /home/node/.public/ ./.public/
 

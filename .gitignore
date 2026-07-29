@@ -10,3 +10,6 @@ coverage
 .envrc
 tsconfig.tsbuildinfo
 .env
+
+# TODO: remove once @livestock deps are published to a proper registry.
+package-lock.json
