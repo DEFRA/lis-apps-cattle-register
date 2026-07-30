@@ -1,6 +1,3 @@
-import { existsSync } from 'node:fs'
-import path from 'node:path'
-
 import inert from '@hapi/inert'
 import {
   createSpokeGuard,
@@ -12,11 +9,8 @@ import { health } from '../routes/health/index.js'
 import { register } from '../routes/register/index.js'
 
 import { serveStaticFiles } from './serve-static-files.js'
-import { createBasePathHelpersForConfig } from '@livestock/ui-services/base-path'
 import { config } from '#config/config.js'
 import { moduleAccess } from '../../../module-access.js'
-
-const { getAssetPaths } = createBasePathHelpersForConfig(config)
 
 const authGuard = createSpokeGuard({
   spokeId: 'cattle-register',
@@ -40,13 +34,6 @@ const moduleAccessGuard = createModuleAccessGuard({
   moduleAccess
 })
 
-// The frontend is pre-built in Docker images regardless of NODE_ENV, so serve
-// the built assets whenever they exist rather than always falling back to
-// Vite's dev middleware, which doesn't know how to serve them.
-const hasBuiltAssets = existsSync(
-  path.join(config.get('root'), '.public/.vite/manifest.json')
-)
-
 export const router = {
   plugin: {
     name: 'router',
@@ -59,37 +46,7 @@ export const router = {
       })
 
       await server.register([authGuard, moduleAccessGuard])
-
-      if (
-        config.get('isProduction') ||
-        config.get('isTest') ||
-        hasBuiltAssets
-      ) {
-        server.register(serveStaticFiles)
-      } else {
-        await (async () => {
-          const createViteServer = (await import('vite')).createServer
-          const vite = await createViteServer({
-            server: { middlewareMode: true },
-            appType: 'custom'
-          })
-
-          const connectPlugin = (await import('@defra/hapi-connect')).default
-
-          for (const assetPath of getAssetPaths()) {
-            await server.register({
-              plugin: {
-                ...connectPlugin,
-                name: `connect-${assetPath.replaceAll('/', '-').replace(/^-+/, '') || 'root'}`
-              },
-              options: {
-                path: assetPath,
-                middleware: [vite.middlewares]
-              }
-            })
-          }
-        })()
-      }
+      await server.register(serveStaticFiles)
     }
   }
 }

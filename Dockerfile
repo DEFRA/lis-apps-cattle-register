@@ -41,6 +41,7 @@ USER node
 COPY --from=production_build /home/node/package*.json /home/node/.npmrc* ./
 COPY --from=production_build /home/node/src ./src/
 COPY --from=production_build /home/node/.public/ ./.public/
+COPY --from=production_build /home/node/module-access.js ./module-access.js
 
 RUN npm ci --omit=dev
 
