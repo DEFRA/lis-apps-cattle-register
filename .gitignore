@@ -13,3 +13,4 @@ tsconfig.tsbuildinfo
 
 # TODO: remove once @livestock deps are published to a proper registry.
 package-lock.json
+.npmrc
