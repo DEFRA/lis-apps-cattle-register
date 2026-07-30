@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs'
+import path from 'node:path'
+
 import inert from '@hapi/inert'
 import {
   createSpokeGuard,
@@ -37,6 +40,13 @@ const moduleAccessGuard = createModuleAccessGuard({
   moduleAccess
 })
 
+// The frontend is pre-built in Docker images regardless of NODE_ENV, so serve
+// the built assets whenever they exist rather than always falling back to
+// Vite's dev middleware, which doesn't know how to serve them.
+const hasBuiltAssets = existsSync(
+  path.join(config.get('root'), '.public/.vite/manifest.json')
+)
+
 export const router = {
   plugin: {
     name: 'router',
@@ -50,7 +60,13 @@ export const router = {
 
       await server.register([authGuard, moduleAccessGuard])
 
-      if (!config.get('isProduction') && !config.get('isTest')) {
+      if (
+        config.get('isProduction') ||
+        config.get('isTest') ||
+        hasBuiltAssets
+      ) {
+        server.register(serveStaticFiles)
+      } else {
         await (async () => {
           const createViteServer = (await import('vite')).createServer
           const vite = await createViteServer({
@@ -73,8 +89,6 @@ export const router = {
             })
           }
         })()
-      } else {
-        server.register(serveStaticFiles)
       }
     }
   }
