@@ -9,11 +9,8 @@ import { health } from '../routes/health/index.js'
 import { register } from '../routes/register/index.js'
 
 import { serveStaticFiles } from './serve-static-files.js'
-import { createBasePathHelpersForConfig } from '@livestock/ui-services/base-path'
 import { config } from '#config/config.js'
 import { moduleAccess } from '../../../module-access.js'
-
-const { getAssetPaths } = createBasePathHelpersForConfig(config)
 
 const authGuard = createSpokeGuard({
   spokeId: 'cattle-register',
@@ -49,33 +46,7 @@ export const router = {
       })
 
       await server.register([authGuard, moduleAccessGuard])
-
-      if (!config.get('isProduction') && !config.get('isTest')) {
-        await (async () => {
-          const createViteServer = (await import('vite')).createServer
-          const vite = await createViteServer({
-            server: { middlewareMode: true },
-            appType: 'custom'
-          })
-
-          const connectPlugin = (await import('@defra/hapi-connect')).default
-
-          for (const assetPath of getAssetPaths()) {
-            await server.register({
-              plugin: {
-                ...connectPlugin,
-                name: `connect-${assetPath.replaceAll('/', '-').replace(/^-+/, '') || 'root'}`
-              },
-              options: {
-                path: assetPath,
-                middleware: [vite.middlewares]
-              }
-            })
-          }
-        })()
-      } else {
-        server.register(serveStaticFiles)
-      }
+      await server.register(serveStaticFiles)
     }
   }
 }
