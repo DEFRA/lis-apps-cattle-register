@@ -14,7 +14,6 @@ import { moduleAccess } from '../../../module-access.js'
 
 const authGuard = createSpokeGuard({
   spokeId: 'cattle-register',
-  hubOrigin: config.get('auth.hubOrigin'),
   hubOrigins: config.get('auth.hubOrigins'),
   cookieName: config.get('auth.hubJwt.cookieName'),
   cookieOptions: getHubJwtCookieOptions({
@@ -25,7 +24,6 @@ const authGuard = createSpokeGuard({
   port: config.get('port'),
   basePath: config.get('basePath'),
   secret: config.get('auth.hubJwt.secret'),
-  issuer: config.get('auth.hubJwt.trustedIssuers'),
   audience: config.get('auth.hubJwt.audience')
 })
 

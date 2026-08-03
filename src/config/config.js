@@ -256,14 +256,8 @@ export const config = convict({
     }
   },
   auth: {
-    hubOrigin: {
-      doc: 'Public origin for the coordinating hub',
-      format: String,
-      default: frontOfficeOrigin,
-      env: 'HUB_ORIGIN'
-    },
     hubOrigins: {
-      doc: 'Public origins allowed to coordinate this shared spoke',
+      doc: 'Public origins allowed to coordinate this shared spoke; also the accepted issuer set for hub-issued JWTs',
       format: Array,
       default: trustedHubOrigins,
       env: 'HUB_ORIGINS'
@@ -287,18 +281,6 @@ export const config = convict({
         format: Number,
         default: 14400,
         env: 'HUB_JWT_TTL_SECONDS'
-      },
-      issuer: {
-        doc: 'Issuer claim for the hub-issued JWT',
-        format: String,
-        default: frontOfficeOrigin,
-        env: 'HUB_JWT_ISSUER'
-      },
-      trustedIssuers: {
-        doc: 'Issuer claims accepted from hubs sharing this spoke',
-        format: Array,
-        default: trustedHubOrigins,
-        env: 'HUB_JWT_TRUSTED_ISSUERS'
       },
       audience: {
         doc: 'Audience claim for the hub-issued JWT',
