@@ -119,4 +119,23 @@ describe('bundle store ownership', () => {
 
     expect(bundle.cph).toBe('10/081/1234')
   })
+
+  test('denies access safely when authorization is absent', () => {
+    expect(canAccessCph(undefined, '10/081/1234')).toBeFalsy()
+    expect(isBackOffice()).toBeFalsy()
+    expect(getBundleForUser('REG-MNBX4Q2A', undefined)).toBeNull()
+    expect(createBundleForUser(undefined)).toBeNull()
+  })
+
+  test('uses a holding id when a holding has no CPH property', () => {
+    expect(
+      canAccessCph(
+        {
+          permissions: ['lis-perm-front-office'],
+          holdings: [{ id: '33/444/5555' }]
+        },
+        '33/444/5555'
+      )
+    ).toBe(true)
+  })
 })

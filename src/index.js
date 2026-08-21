@@ -1,6 +1,6 @@
 import process from 'node:process'
 
-import { getLoggerForConfig } from '@livestock/ui-services/logging'
+import { getLoggerForConfig } from '@defra/lis-infra-ui-services/logging'
 
 import { config } from '#config/config.js'
 import { startServer } from '#server/common/helpers/start-server.js'

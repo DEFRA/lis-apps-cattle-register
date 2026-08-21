@@ -1,5 +1,5 @@
 import { createServer } from '#server/server.js'
-import { statusCodes } from '@livestock/ui-services/status-codes'
+import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
 describe('#healthController', () => {
   let server

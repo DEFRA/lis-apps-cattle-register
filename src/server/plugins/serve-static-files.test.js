@@ -1,12 +1,13 @@
-import { startServer } from '#server/common/helpers/start-server.js'
-import { statusCodes } from '@livestock/ui-services/status-codes'
+import { createServer } from '#server/server.js'
+import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
 describe('#serveStaticFiles', () => {
   let server
 
   describe('When secure context is disabled', () => {
     beforeEach(async () => {
-      server = await startServer()
+      server = await createServer()
+      await server.initialize()
     })
 
     afterEach(async () => {

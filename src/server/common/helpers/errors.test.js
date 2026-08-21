@@ -1,8 +1,8 @@
 import { vi } from 'vitest'
-import { statusCodes } from '@livestock/ui-services/status-codes'
+import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import { config } from '#config/config.js'
 
-import { catchAll } from '@livestock/ui-services/errors'
+import { catchAll } from '@defra/lis-infra-ui-services/errors'
 import { createServer } from '../../server.js'
 
 describe('#errors', () => {

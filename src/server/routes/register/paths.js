@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc, no-magic-numbers */
-import { buildMicrositePath } from '@livestock/ui-services'
-import { taxonomy } from '@livestock/taxonomy-register'
-import { species } from '@livestock/species-cattle'
+import { buildMicrositePath } from '@defra/lis-infra-ui-services'
+import { taxonomy } from '@defra/lis-taxonomy-register'
+import { species } from '@defra/lis-species-cattle'
 
 export const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
 export const CPH_ROUTE = '{county}/{parish}/{holding}'

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 
 import convictFormatWithValidator from 'convict-format-with-validator'
 
-import { milliseconds } from '@livestock/ui-services/duration'
+import { milliseconds } from '@defra/lis-infra-ui-services/duration'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -39,7 +39,7 @@ export const config = convict({
   port: {
     doc: 'The port to bind.',
     format: 'port',
-    default: 3000,
+    default: 3201,
     env: 'PORT'
   },
   basePath: {

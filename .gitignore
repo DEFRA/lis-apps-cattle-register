@@ -4,13 +4,13 @@
 .idea
 .public
 node_modules
+tools/
 npm-debug.log
 coverage
 .cache
 .envrc
 tsconfig.tsbuildinfo
 .env
-
-# TODO: remove once @livestock deps are published to a proper registry.
-package-lock.json
 .npmrc
+.cake/
+artifacts
