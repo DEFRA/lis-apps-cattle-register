@@ -5,8 +5,8 @@ import nunjucks from 'nunjucks'
 import { load } from 'cheerio'
 import { camelCase } from 'lodash'
 
-import * as filters from '#config/nunjucks/filters/filters.js'
-import * as globals from '#config/nunjucks/globals/globals.js'
+import * as filters from '@defra/lis-infra-ui-services/nunjucks/filters'
+import * as globals from '@defra/lis-infra-ui-services/nunjucks/globals'
 
 const JSON_INDENT_SPACES = 2
 

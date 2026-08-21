@@ -1,0 +1,17 @@
+node_modules
+coverage
+.git
+Dockerfile
+.cache
+.cake
+.env
+.env.*
+.github
+.idea
+.npm
+.npmrc
+.public
+.scannerwork
+.vscode
+artifacts
+npm-debug.log*

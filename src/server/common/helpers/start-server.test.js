@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { statusCodes } from '@livestock/ui-services/status-codes'
+import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
 import hapi from '@hapi/hapi'
 

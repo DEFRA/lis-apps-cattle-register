@@ -1,6 +1,6 @@
 import Joi from 'joi'
-import { statusCodes } from '@livestock/ui-services/status-codes'
-import { comboBreeds } from '@livestock/species-cattle'
+import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
+import { comboBreeds } from '@defra/lis-species-cattle'
 import { bundlePath, cphFromParams, holdingRoot } from '../paths.js'
 
 const TEMPLATE = './register/calf.njk'

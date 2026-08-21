@@ -1,5 +1,5 @@
 import Joi from 'joi'
-import { statusCodes } from '@livestock/ui-services/status-codes'
+import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import { bundlePath, cphFromParams } from '../paths.js'
 
 const TEMPLATE = './register/genetic-dam.njk'

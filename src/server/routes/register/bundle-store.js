@@ -1,4 +1,4 @@
-import { milliseconds } from '@livestock/ui-services/duration'
+import { milliseconds } from '@defra/lis-infra-ui-services/duration'
 
 const DEFAULT_CPH = '10/081/1234'
 const ID_RADIX = 36

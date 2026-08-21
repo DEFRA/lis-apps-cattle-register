@@ -1,6 +1,6 @@
 import { routes } from './routes.js'
 import { canAccessCph, getBundleForUser } from './bundle-store.js'
-import { statusCodes } from '@livestock/ui-services/status-codes'
+import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import { cphFromParams } from './paths.js'
 
 export const register = {

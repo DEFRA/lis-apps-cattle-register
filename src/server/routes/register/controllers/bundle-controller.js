@@ -1,5 +1,5 @@
 import { config } from '#config/config.js'
-import { statusCodes } from '@livestock/ui-services/status-codes'
+import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import {
   createBundleForUser,
   getBundleForUser,

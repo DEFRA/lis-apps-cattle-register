@@ -1,5 +1,5 @@
 import Joi from 'joi'
-import { statusCodes } from '@livestock/ui-services/status-codes'
+import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import { bundlePath, cphFromParams } from '../paths.js'
 
 const TEMPLATE = './register/sire.njk'
@@ -46,17 +46,11 @@ function errorsFromValidation(validationError) {
 
   for (const detail of details) {
     switch (detail?.path?.[0]) {
-      case 'identifySire':
-        errors.identifySire = 'Select how you can identify the sire'
+      case 'sire_tag':
+        errors.sire_tag = 'Enter the sire ear tag number as text'
         break
-      case 'uniqueTag':
-        errors.uniqueTag = 'Enter the unique tag number'
-        break
-      case 'aiRef':
-        errors.aiRef = 'Enter the AI reference number'
-        break
-      case 'pedigreeRef':
-        errors.pedigreeRef = 'Enter the pedigree information'
+      case 'sire_name':
+        errors.sire_name = 'Enter the sire name as text'
         break
       default:
         break
@@ -90,19 +84,15 @@ function requestContext(request) {
 
 function defaultFormValues() {
   return {
-    identifySire: '',
-    uniqueTag: '',
-    aiRef: '',
-    pedigreeRef: ''
+    sire_tag: '',
+    sire_name: ''
   }
 }
 
 function formValuesFromPayload(payload = {}) {
   return {
-    identifySire: (payload.identifySire ?? '').trim(),
-    uniqueTag: (payload.uniqueTag ?? '').trim(),
-    aiRef: (payload.aiRef ?? '').trim(),
-    pedigreeRef: (payload.pedigreeRef ?? '').trim()
+    sire_tag: (payload.sire_tag ?? '').trim(),
+    sire_name: (payload.sire_name ?? '').trim()
   }
 }
 
