@@ -46,7 +46,7 @@
     "@defra/cdp-auditing": "0.6.1",
     "@defra/cdp-metrics": "0.6.0",
     "@defra/hapi-secure-context": "0.4.0",
-    "@defra/lis-hubs-infra-access": "^0.9.0",
+    "@defra/lis-hubs-infra-access": "^0.11.0",
     "@defra/lis-hubs-infra-core": "^0.2.0",
     "@defra/lis-infra-ui-services": "^0.2.0",
     "@defra/lis-species-cattle": "0.2.0",
