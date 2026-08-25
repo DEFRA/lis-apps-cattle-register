@@ -226,14 +226,6 @@ export const config = convict({
       default: isDevelopment
     }
   },
-  tracing: {
-    header: {
-      doc: 'Which header to track',
-      format: String,
-      default: 'x-cdp-request-id',
-      env: 'TRACING_HEADER'
-    }
-  },
   profileService: {
     url: {
       doc: 'Profile service endpoint used to enrich hub auth sessions',
