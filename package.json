@@ -54,7 +54,7 @@
     "@hapi/scooter": "8.0.0",
     "@hapi/vision": "7.0.3",
     "@hapi/yar": "11.0.3",
-    "@defra/lis-hubs-infra-access": "0.2.0",
+    "@defra/lis-hubs-infra-access": "0.5.0",
     "@defra/lis-species-cattle": "0.2.0",
     "@defra/lis-taxonomy-register": "0.1.0",
     "@defra/lis-infra-ui-services": "0.1.0",
