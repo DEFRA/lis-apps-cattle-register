@@ -48,7 +48,7 @@
     "@defra/hapi-secure-context": "0.4.0",
     "@defra/lis-hubs-infra-access": "^0.9.0",
     "@defra/lis-hubs-infra-core": "^0.2.0",
-    "@defra/lis-infra-ui-services": "0.1.0",
+    "@defra/lis-infra-ui-services": "^0.2.0",
     "@defra/lis-species-cattle": "0.2.0",
     "@defra/lis-taxonomy-register": "0.1.0",
     "@hapi/catbox-memory": "6.0.2",
