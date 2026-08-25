@@ -10,10 +10,24 @@ import {
 } from './bundle-store.js'
 
 const frontOfficeAuth = {
-  permissions: ['lis-perm-front-office'],
+  statements: [
+    {
+      role: 'lis-role-front-office',
+      cphs: '*',
+      permissions: ['lis-perm-front-office']
+    }
+  ],
   holdings: [{ cph: '10/081/1234' }]
 }
-const backOfficeAuth = { permissions: ['lis-perm-back-office'] }
+const backOfficeAuth = {
+  statements: [
+    {
+      role: 'lis-role-back-office',
+      cphs: '*',
+      permissions: ['lis-perm-back-office']
+    }
+  ]
+}
 
 describe('bundle store ownership', () => {
   test('resolves CPH access from each supported authorization source', () => {
@@ -21,22 +35,16 @@ describe('bundle store ownership', () => {
     expect(
       canAccessCph(
         {
-          permissions: ['lis-perm-front-office'],
-          roleAssignments: [{ cph: '98/765/4321' }]
+          statements: frontOfficeAuth.statements,
+          cph: '11/222/3333'
         },
-        '98/765/4321'
-      )
-    ).toBe(true)
-    expect(
-      canAccessCph(
-        { permissions: ['lis-perm-front-office'], cph: '11/222/3333' },
         '11/222/3333'
       )
     ).toBe(true)
     expect(
       canAccessCph(
         {
-          permissions: ['lis-perm-front-office'],
+          statements: frontOfficeAuth.statements,
           holdings: ['22/333/4444']
         },
         '22/333/4444'
@@ -45,7 +53,7 @@ describe('bundle store ownership', () => {
     expect(
       canAccessCph(
         {
-          permissions: ['lis-perm-front-office'],
+          statements: frontOfficeAuth.statements,
           holdings: [
             {
               group_name: 'My farm',
@@ -57,10 +65,6 @@ describe('bundle store ownership', () => {
       )
     ).toBe(true)
     expect(canAccessCph(backOfficeAuth, '98/765/4321')).toBe(true)
-    expect(
-      canAccessCph({ roles: ['lis-role-back-office'] }, '21/456/7890')
-    ).toBe(true)
-    expect(isBackOffice({ roles: ['lis-role-back-office'] })).toBe(true)
     expect(isBackOffice(backOfficeAuth)).toBe(true)
     expect(isBackOffice(frontOfficeAuth)).toBe(false)
     expect(canAccessCph(frontOfficeAuth, '98/765/4321')).toBe(false)
@@ -114,7 +118,7 @@ describe('bundle store ownership', () => {
   })
 
   test('uses the development CPH fallback when authorization has no holdings', () => {
-    const auth = { permissions: ['lis-perm-front-office'] }
+    const auth = { statements: frontOfficeAuth.statements }
     const bundle = createBundleForUser(auth)
 
     expect(bundle.cph).toBe('10/081/1234')
@@ -131,7 +135,7 @@ describe('bundle store ownership', () => {
     expect(
       canAccessCph(
         {
-          permissions: ['lis-perm-front-office'],
+          statements: frontOfficeAuth.statements,
           holdings: [{ id: '33/444/5555' }]
         },
         '33/444/5555'

@@ -1,3 +1,4 @@
+import { hasPermission, PERMISSIONS } from '@defra/lis-hubs-infra-access/auth'
 import { milliseconds } from '@defra/lis-infra-ui-services/duration'
 
 const DEFAULT_CPH = '10/081/1234'
@@ -148,7 +149,7 @@ export function canAccessCph(auth = {}, cph) {
   }
 
   return (
-    auth.permissions?.includes('lis-perm-front-office') &&
+    hasPermission(auth, { permission: PERMISSIONS.frontOffice }) &&
     cphsForUser(auth).includes(cph)
   )
 }
@@ -158,16 +159,10 @@ export function canAccessCph(auth = {}, cph) {
  * @returns {boolean} whether the user has unrestricted back-office access
  */
 export function isBackOffice(auth = {}) {
-  return (
-    auth.roles?.includes('lis-role-back-office') ||
-    auth.permissions?.includes('lis-perm-back-office')
-  )
+  return hasPermission(auth, { permission: PERMISSIONS.backOffice })
 }
 
 function cphsForUser(auth = {}) {
-  const assigned = (auth.roleAssignments ?? [])
-    .map((assignment) => assignment.cph)
-    .filter(Boolean)
   const holdings = (auth.holdings ?? [])
     .flatMap((holding) => {
       if (typeof holding === 'string') {
@@ -182,9 +177,7 @@ function cphsForUser(auth = {}) {
 
   // The fallback makes the fake-data prototype navigable with the current
   // development JWT, which does not yet carry holding data.
-  const cphs = [
-    ...new Set([...assigned, ...holdings, auth.cph].filter(Boolean))
-  ]
+  const cphs = [...new Set([...holdings, auth.cph].filter(Boolean))]
   return cphs.length ? cphs : [DEFAULT_CPH]
 }
 
