@@ -23,7 +23,10 @@ describe('register routes', () => {
       {
         sub: 'test-user',
         email: 'test.user@example.com',
-        roles: ['lis-role-front-office', 'lis-role-caseworker-super']
+        statements: [
+          { role: 'lis-role-front-office', cphs: '*' },
+          { role: 'lis-role-caseworker-super', cphs: '*' }
+        ]
       },
       hubJwtConfig
     )
@@ -95,7 +98,10 @@ describe('register routes', () => {
       {
         sub: 'holding-user',
         email: 'holding.user@example.com',
-        roles: ['lis-role-front-office', 'lis-role-caseworker-super'],
+        statements: [
+          { role: 'lis-role-front-office', cphs: '*' },
+          { role: 'lis-role-caseworker-super', cphs: '*' }
+        ],
         holdings: [
           {
             group_name: 'My farm',
@@ -130,7 +136,10 @@ describe('register routes', () => {
       {
         sub: 'caseworker',
         email: 'caseworker@example.com',
-        roles: ['lis-role-back-office']
+        statements: [
+          { role: 'lis-role-back-office', cphs: '*' },
+          { role: 'lis-role-caseworker-super', cphs: '*' }
+        ]
       },
       {
         ...hubJwtConfig,
