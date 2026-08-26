@@ -24,11 +24,16 @@ import { metrics } from '@defra/cdp-metrics'
 const logger = getLoggerForConfig(config)
 const requestLogger = getRequestLoggerPluginForConfig(config)
 const sessionCache = createSessionCachePluginForConfig(config)
-const { getRequestBasePath } = createBasePathHelpersForConfig(config)
+const moduleId = 'cattle-register'
+const { getRequestBasePath } = createBasePathHelpersForConfig({
+  moduleId,
+  assetPath: config.get('assetPath')
+})
 const nunjucksConfig = createNunjucksConfig({
   config,
   logger,
-  getRequestBasePath
+  getRequestBasePath,
+  moduleId
 })
 
 function getSupportedRoutes(server) {

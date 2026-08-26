@@ -42,12 +42,6 @@ export const config = convict({
     default: 3201,
     env: 'PORT'
   },
-  basePath: {
-    doc: 'Optional mount path for the application when it is hosted behind the hub.',
-    format: String,
-    default: '/cattle/register',
-    env: 'BASE_PATH'
-  },
   bundleHistoryMonths: {
     doc: 'Number of months of registration bundle history to show.',
     format: 'nat',
