@@ -2,10 +2,7 @@
 import path from 'path'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
-import {
-  getLoggerForConfig,
-  getRequestLoggerPluginForConfig
-} from '@defra/lis-infra-ui-services/logging'
+import { logger } from '@defra/lis-hubs-infra-core'
 import { createNunjucksConfig } from '@defra/lis-infra-ui-services/nunjucks/plugin'
 
 import { router } from './plugins/router.js'
@@ -21,8 +18,15 @@ import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './plugins/content-security-policy.js'
 import { metrics } from '@defra/cdp-metrics'
 
-const logger = getLoggerForConfig(config)
-const requestLogger = getRequestLoggerPluginForConfig(config)
+logger.level = config.get('log.level')
+logger.enabled = config.get('log.enabled')
+logger.format =
+  config.get('log.format') === 'pino-pretty'
+    ? 'pretty-print'
+    : config.get('log.format')
+logger.serviceName = 'lis-apps-cattle-register'
+logger.serviceVersion = config.get('serviceVersion')
+const requestLogger = logger.hapiPlugin
 const sessionCache = createSessionCachePluginForConfig(config)
 const moduleId = 'cattle-register'
 const { getRequestBasePath } = createBasePathHelpersForConfig({

@@ -2,16 +2,13 @@ import process from 'node:process'
 
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-const { getLoggerForConfig, logger, startServer } = vi.hoisted(() => ({
-  getLoggerForConfig: vi.fn(),
+const { logger, startServer } = vi.hoisted(() => ({
   logger: { info: vi.fn(), error: vi.fn() },
   startServer: vi.fn()
 }))
 
-vi.mock('@defra/lis-infra-ui-services/logging', () => ({ getLoggerForConfig }))
+vi.mock('@defra/lis-hubs-infra-core', () => ({ logger }))
 vi.mock('#server/common/helpers/start-server.js', () => ({ startServer }))
-
-getLoggerForConfig.mockReturnValue(logger)
 
 describe('application entrypoint', () => {
   afterEach(() => {
