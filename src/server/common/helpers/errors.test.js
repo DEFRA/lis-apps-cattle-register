@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import { config } from '#config/config.js'
+import { logger } from '@defra/lis-hubs-infra-core'
 
 import { catchAll } from '@defra/lis-infra-ui-services/errors'
 import { createServer } from '../../server.js'
@@ -32,6 +33,7 @@ describe('#errors', () => {
 
 describe('#catchAll', () => {
   const mockErrorLogger = vi.fn()
+  vi.spyOn(logger, 'error', 'get').mockReturnValue(mockErrorLogger)
   const mockStack = 'Mock error stack'
   const errorPage = 'error/index'
   const mockRequest = (statusCode) => ({
@@ -41,8 +43,7 @@ describe('#catchAll', () => {
       output: {
         statusCode
       }
-    },
-    logger: { error: mockErrorLogger }
+    }
   })
   const mockToolkitView = vi.fn()
   const mockToolkitCode = vi.fn()
