@@ -12,12 +12,7 @@ describe('config environment defaults', () => {
     const { config } = await import('./config.js?environment=production')
 
     expect(config.get('isProduction')).toBe(true)
-    expect(['ecs', 'json']).toContain(config.get('log.format'))
-    expect(config.get('log.redact')).toEqual([
-      'req.headers.authorization',
-      'req.headers.cookie',
-      'res.headers'
-    ])
+    expect(config.get('log.format')).toBe('ecs')
     expect(config.get('isSecureContextEnabled')).toBe(true)
     expect(config.get('session.cache.engine')).toBe('redis')
     expect(config.get('session.cookie.secure')).toBe(true)

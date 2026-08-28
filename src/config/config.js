@@ -100,17 +100,17 @@ export const config = convict({
     },
     format: {
       doc: 'Format to output logs in.',
-      format: ['ecs', 'json', 'pino-pretty'],
-      default: isProduction ? 'ecs' : 'pino-pretty',
+      format: ['ecs', 'pretty'],
+      default: isProduction ? 'ecs' : 'pretty',
       env: 'LOG_FORMAT'
     },
-    redact: {
-      doc: 'Log paths to redact',
-      format: Array,
-      default: isProduction
-        ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
-        : [],
-      env: 'LOG_REDACT'
+    hashSecret: {
+      doc: 'Fixed key used to hash sensitive log context values (e.g. user_email_hash) so they stay searchable without exposing the raw value',
+      format: String,
+      nullable: true,
+      default: null,
+      env: 'LOG_HASH_SECRET',
+      sensitive: true
     }
   },
   httpProxy: {
