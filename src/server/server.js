@@ -21,11 +21,12 @@ import { metrics } from '@defra/cdp-metrics'
 logger.level = config.get('log.level')
 logger.enabled = config.get('log.enabled')
 logger.format =
-  config.get('log.format') === 'pino-pretty'
+  config.get('log.format') === 'pretty'
     ? 'pretty-print'
     : config.get('log.format')
 logger.serviceName = 'lis-apps-cattle-register'
 logger.serviceVersion = config.get('serviceVersion')
+logger.context.hashSecret = config.get('log.hashSecret')
 const requestLogger = logger.hapiPlugin
 const sessionCache = createSessionCachePluginForConfig(config)
 const moduleId = 'cattle-register'
