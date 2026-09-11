@@ -1,6 +1,6 @@
 @use "govuk-frontend";
-@use "@defra/lis-infra-ui-services/components/autocomplete.css";
-@use "@defra/lis-infra-ui-services/components/service-navigation.css";
+@use "pkg:@defra/lis-infra-ui-services/components/autocomplete.scss";
+@use "pkg:@defra/lis-infra-ui-services/components/service-navigation.scss";
 
 @use "variables";
 @use "helpers";
