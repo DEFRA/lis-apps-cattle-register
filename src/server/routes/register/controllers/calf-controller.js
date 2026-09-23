@@ -1,10 +1,14 @@
 import Joi from 'joi'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
-import { comboBreeds } from '@defra/lis-species-cattle'
+import { breeds, getBreedName } from '@defra/lis-species-cattle'
 import { bundlePath, cphFromParams, holdingRoot } from '../paths.js'
 
 const TEMPLATE = './register/calf.njk'
 const PAGE_TITLE = 'Calf details'
+const BREED_ITEMS = Object.entries(breeds).map(([value, text]) => ({
+  value,
+  text
+}))
 
 export const calfController = {
   handler(request, h) {
@@ -21,7 +25,19 @@ export const calfSubmitController = {
         'dob-month': Joi.string().trim().min(1).required(),
         'dob-year': Joi.string().trim().min(1).required(),
         sex: Joi.string().trim().valid('male', 'female').required(),
-        breed: Joi.string().trim().min(1).required()
+        breed: Joi.string()
+          .trim()
+          .min(1)
+          .required()
+          .custom((value, helpers) => {
+            const code = value.toUpperCase()
+
+            if (!getBreedName(code)) {
+              return helpers.error('breed.unknown')
+            }
+
+            return code
+          })
       }),
       failAction(request, h, err) {
         const formValues = formValuesFromPayload(request.payload)
@@ -63,7 +79,7 @@ function errorsFromValidation(validationError) {
         errors.sex = 'Select the calf sex'
         break
       case 'breed':
-        errors.breed = 'Select the calf breed'
+        errors.breed = breedErrorMessage(detail)
         break
       default:
         break
@@ -71,6 +87,12 @@ function errorsFromValidation(validationError) {
   }
 
   return errors
+}
+
+function breedErrorMessage(detail) {
+  return detail?.type === 'breed.unknown'
+    ? 'Select a breed from the list'
+    : 'Select the calf breed'
 }
 
 function viewModel(overrides = {}) {
@@ -81,7 +103,7 @@ function viewModel(overrides = {}) {
     pageTitle: withErrorPageTitle(PAGE_TITLE, errors),
     heading: PAGE_TITLE,
     backUrl: holdingRoot(overrides.cph),
-    breeds: comboBreeds.filter(({ text }) => text),
+    breeds: BREED_ITEMS,
     postBackUrl: bundlePath(overrides.cph, overrides.bundleId, 'calf'),
     formValues,
     errors,

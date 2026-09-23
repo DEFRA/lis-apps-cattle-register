@@ -248,7 +248,7 @@ describe('register routes', () => {
         'dob-month': '2',
         'dob-year': '2026',
         sex: 'female',
-        breed: 'Aberdeen Angus'
+        breed: 'AA'
       },
       'dam'
     ],
