@@ -71,6 +71,16 @@ describe('calf controller', () => {
     expect(value.breed).toEqual('AA')
   })
 
+  test('fails validation for an unknown breed code', () => {
+    const payload = { ...validPayload, breed: 'ZZZZ' }
+
+    const { error } =
+      calfSubmitController.options.validate.payload.validate(payload)
+
+    expect(error.details[0].path).toEqual(['breed'])
+    expect(error.details[0].type).toEqual('breed.unknown')
+  })
+
   test('rejects an unknown breed code', () => {
     const validationError = {
       data: {
