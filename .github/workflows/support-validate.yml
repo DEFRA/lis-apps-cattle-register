@@ -91,6 +91,8 @@ jobs:
             --detach \
             --env PORT=3000 \
             --env SESSION_CACHE_ENGINE=memory \
+            --env CDP_JWT_ISSUER=https://sts.ci.invalid \
+            --env CDP_JWT_JWKS_URI=https://sts.ci.invalid/.well-known/jwks.json \
             --publish 3101:3000 \
             "$IMAGE")
 
