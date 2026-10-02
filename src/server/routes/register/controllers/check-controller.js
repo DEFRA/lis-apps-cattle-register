@@ -13,7 +13,7 @@ export const checkController = {
 export const checkSubmitController = {
   options: {},
   handler(request, h) {
-    addDemoCalf(request.params.bundleId, request.app.hubAuth)
+    addDemoCalf(request.params.bundleId, request.auth.credentials.user)
     return h.redirect(bundleRoot(request.app.cph, request.params.bundleId))
   }
 }

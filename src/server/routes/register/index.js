@@ -17,14 +17,14 @@ export const register = {
       server.ext('onPreHandler', (request, h) => {
         const { bundleId, calfId } = request.params
         const cph = cphFromParams(request.params)
-        if (cph && !canAccessCph(request.app.hubAuth, cph)) {
+        if (cph && !canAccessCph(request.auth.credentials?.user, cph)) {
           return h
             .response('Page not found')
             .code(statusCodes.notFound)
             .takeover()
         }
         const bundle = bundleId
-          ? getBundleForUser(bundleId, request.app.hubAuth)
+          ? getBundleForUser(bundleId, request.auth.credentials?.user)
           : null
         if (bundleId && (!bundle || bundle.cph !== cph)) {
           return h

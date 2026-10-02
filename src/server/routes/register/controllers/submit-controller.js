@@ -14,7 +14,7 @@ export const submitSubmitController = {
   options: {},
   handler(request, h) {
     // do the submit to api
-    submitBundle(request.params.bundleId, request.app.hubAuth)
+    submitBundle(request.params.bundleId, request.auth.credentials.user)
     return h.redirect(
       bundlePath(request.app.cph, request.params.bundleId, 'confirmation')
     )

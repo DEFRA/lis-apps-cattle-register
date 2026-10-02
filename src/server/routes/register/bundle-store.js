@@ -1,4 +1,7 @@
-import { hasPermission, PERMISSIONS } from '@defra/lis-hubs-infra-access/auth'
+import {
+  PERMISSIONS,
+  hasPermission
+} from '@defra/lis-hubs-infra-access/authorization'
 import { milliseconds } from '@defra/lis-infra-ui-services/duration'
 
 const DEFAULT_CPH = '10/081/1234'
