@@ -220,27 +220,6 @@ export const config = convict({
       default: isDevelopment
     }
   },
-  profileService: {
-    url: {
-      doc: 'Profile service endpoint used to enrich hub auth sessions',
-      format: String,
-      default: 'http://localhost:4000/api/profile',
-      env: 'PROFILE_SERVICE_URL'
-    },
-    apiKey: {
-      doc: 'Optional API key sent to the profile service',
-      format: String,
-      default: '',
-      env: 'PROFILE_SERVICE_API_KEY',
-      sensitive: true
-    },
-    apiKeyHeader: {
-      doc: 'Header name used when sending the profile service API key',
-      format: String,
-      default: 'x-api-key',
-      env: 'PROFILE_SERVICE_API_KEY_HEADER'
-    }
-  },
   auth: {
     hubOrigins: {
       doc: 'Public origins allowed to coordinate this shared spoke; also the accepted issuer set for hub-issued JWTs',
