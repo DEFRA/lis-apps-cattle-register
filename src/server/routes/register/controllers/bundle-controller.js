@@ -21,7 +21,7 @@ export const bundleLandingController = {
   handler(request, h) {
     const cph = cphFromParams(request.params)
     const allBundles = listBundlesForUser(
-      request.app.hubAuth,
+      request.auth.credentials.user,
       config.get('bundleHistoryMonths')
     )
     const bundles = cph
@@ -34,7 +34,7 @@ export const bundleLandingController = {
       heading: 'Cattle registrations',
       startUrl: selectedCph ? bundlesRoot(selectedCph) : null,
       historyMonths: config.get('bundleHistoryMonths'),
-      showCph: isBackOffice(request.app.hubAuth),
+      showCph: isBackOffice(request.auth.credentials.user),
       rows: bundles.map(toLandingRow)
     })
   }
@@ -43,7 +43,7 @@ export const bundleLandingController = {
 export const bundleCreateController = {
   handler(request, h) {
     const cph = cphFromParams(request.params)
-    const bundle = createBundleForUser(request.app.hubAuth, cph)
+    const bundle = createBundleForUser(request.auth.credentials.user, cph)
     return h.redirect(bundlePath(bundle.cph, bundle.id, 'calf'))
   }
 }
@@ -52,7 +52,7 @@ export const bundleSummaryController = {
   handler(request, h) {
     const bundle = getBundleForUser(
       request.params.bundleId,
-      request.app.hubAuth
+      request.auth.credentials.user
     )
 
     if (!bundle) {

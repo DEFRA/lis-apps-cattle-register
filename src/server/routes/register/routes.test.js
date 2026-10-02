@@ -1,36 +1,38 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { issueHubJwt } from '@defra/lis-hubs-infra-access/auth'
 
+import { spokeAuth } from '#test-helpers/spoke-auth.js'
 import { createServer } from '../../server.js'
 
 const ROOT_PATH = '/cattle/register'
 const CPH_PATH = '/10/081/1234'
 
-const hubJwtConfig = {
-  secret: 'local-dev-hub-jwt-signing-secret-please-change-1234567890',
-  issuer: 'https://front-office.lis.defra',
-  audience: 'livestock-spokes',
-  ttlSeconds: 3600
-}
-
 describe('register routes', () => {
   let server
-  let cookie
+  let auth
 
   beforeEach(async () => {
     server = await createServer()
-    const hubJwt = await issueHubJwt(
-      {
-        sub: 'test-user',
-        email: 'test.user@example.com',
-        statements: [
-          { role: 'lis-role-front-office', cphs: '*' },
-          { role: 'lis-role-caseworker-super', cphs: '*' }
-        ]
-      },
-      hubJwtConfig
-    )
-    cookie = `livestock_hub_jwt=${hubJwt}`
+    auth = spokeAuth({
+      sub: 'test-user',
+      email: 'test.user@example.com',
+      statements: [
+        {
+          role: 'lis-role-front-office',
+          cphs: '*',
+          permissions: ['lis-perm-front-office']
+        },
+        {
+          role: 'lis-role-caseworker-super',
+          cphs: '*',
+          permissions: [
+            'lis-perm-cattle-read',
+            'lis-perm-cattle-register-admin',
+            'lis-perm-cattle-move-admin',
+            'lis-perm-cattle-death-admin'
+          ]
+        }
+      ]
+    })
   })
 
   afterEach(async () => {
@@ -41,7 +43,7 @@ describe('register routes', () => {
     const response = await server.inject({
       method: 'POST',
       url: `${CPH_PATH}/bundles`,
-      headers: { cookie }
+      auth
     })
     return response.headers.location
       .replace(ROOT_PATH, '')
@@ -52,7 +54,7 @@ describe('register routes', () => {
     const response = await server.inject({
       method: 'GET',
       url: '/',
-      headers: { cookie }
+      auth
     })
 
     expect(response.statusCode).toBe(200)
@@ -64,14 +66,14 @@ describe('register routes', () => {
     const startResponse = await server.inject({
       method: 'POST',
       url: `${CPH_PATH}/bundles`,
-      headers: { cookie }
+      auth
     })
     const routeUrl = startResponse.headers.location.replace(ROOT_PATH, '')
 
     const response = await server.inject({
       method: 'GET',
       url: routeUrl,
-      headers: { cookie }
+      auth
     })
 
     expect(response.statusCode).toBe(200)
@@ -87,43 +89,52 @@ describe('register routes', () => {
     const response = await server.inject({
       method: 'GET',
       url: '/98/765/4321/bundles/REG-MNBX4Q2A',
-      headers: { cookie }
+      auth
     })
 
     expect(response.statusCode).toBe(404)
   })
 
   test('accepts a CPH carried in nested front-office holdings', async () => {
-    const holdingJwt = await issueHubJwt(
-      {
-        sub: 'holding-user',
-        email: 'holding.user@example.com',
-        statements: [
-          { role: 'lis-role-front-office', cphs: '*' },
-          { role: 'lis-role-caseworker-super', cphs: '*' }
-        ],
-        holdings: [
-          {
-            group_name: 'My farm',
-            cphs: [{ cph: '10/081/1234' }]
-          }
-        ]
-      },
-      hubJwtConfig
-    )
-    const holdingCookie = `livestock_hub_jwt=${holdingJwt}`
+    const holdingAuth = spokeAuth({
+      sub: 'holding-user',
+      email: 'holding.user@example.com',
+      statements: [
+        {
+          role: 'lis-role-front-office',
+          cphs: '*',
+          permissions: ['lis-perm-front-office']
+        },
+        {
+          role: 'lis-role-caseworker-super',
+          cphs: '*',
+          permissions: [
+            'lis-perm-cattle-read',
+            'lis-perm-cattle-register-admin',
+            'lis-perm-cattle-move-admin',
+            'lis-perm-cattle-death-admin'
+          ]
+        }
+      ],
+      holdings: [
+        {
+          group_name: 'My farm',
+          cphs: [{ cph: '10/081/1234' }]
+        }
+      ]
+    })
 
     const landing = await server.inject({
       method: 'GET',
       url: '/10/081/1234',
-      headers: { cookie: holdingCookie }
+      auth: holdingAuth
     })
     expect(landing.statusCode).toBe(200)
 
     const start = await server.inject({
       method: 'POST',
       url: '/10/081/1234/bundles',
-      headers: { cookie: holdingCookie }
+      auth: holdingAuth
     })
     expect(start.statusCode).toBe(302)
     expect(start.headers.location).toMatch(
@@ -132,25 +143,32 @@ describe('register routes', () => {
   })
 
   test('allows a back-office user to access a bundle under any CPH', async () => {
-    const backOfficeJwt = await issueHubJwt(
-      {
-        sub: 'caseworker',
-        email: 'caseworker@example.com',
-        statements: [
-          { role: 'lis-role-back-office', cphs: '*' },
-          { role: 'lis-role-caseworker-super', cphs: '*' }
-        ]
-      },
-      {
-        ...hubJwtConfig,
-        issuer: 'http://localhost:3102'
-      }
-    )
+    const backOfficeAuth = spokeAuth({
+      sub: 'caseworker',
+      email: 'caseworker@example.com',
+      statements: [
+        {
+          role: 'lis-role-back-office',
+          cphs: '*',
+          permissions: ['lis-perm-back-office']
+        },
+        {
+          role: 'lis-role-caseworker-super',
+          cphs: '*',
+          permissions: [
+            'lis-perm-cattle-read',
+            'lis-perm-cattle-register-admin',
+            'lis-perm-cattle-move-admin',
+            'lis-perm-cattle-death-admin'
+          ]
+        }
+      ]
+    })
 
     const response = await server.inject({
       method: 'GET',
       url: '/21/456/7890/bundles/REG-MN7T6R4B',
-      headers: { cookie: `livestock_hub_jwt=${backOfficeJwt}` }
+      auth: backOfficeAuth
     })
 
     expect(response.statusCode).toBe(200)
@@ -158,28 +176,23 @@ describe('register routes', () => {
     expect(response.payload).toContain('21/456/7890')
   })
 
-  test('redirects an unauthenticated back-office request to back-office login', async () => {
+  test('rejects a request without a hub service token', async () => {
     const response = await server.inject({
       method: 'GET',
-      url: '/21/456/7890/bundles/REG-MN7T6R4B',
-      headers: {
-        host: 'back-office.lis.defra',
-        'x-forwarded-host': 'back-office.lis.defra',
-        'x-forwarded-proto': 'https'
-      }
+      url: '/21/456/7890/bundles/REG-MN7T6R4B'
     })
 
-    expect(response.statusCode).toBe(302)
-    expect(response.headers.location).toBe(
-      'https://back-office.lis.defra/auth/login?returnUrl=%2Fcattle%2Fregister%2F21%2F456%2F7890%2Fbundles%2FREG-MN7T6R4B'
-    )
+    expect(response.statusCode).toBe(401)
+    expect(response.result).toEqual({
+      message: 'Service authentication required'
+    })
   })
 
   test('renders a CPH-scoped landing page and bundle summary', async () => {
     const landing = await server.inject({
       method: 'GET',
       url: CPH_PATH,
-      headers: { cookie }
+      auth
     })
     expect(landing.statusCode).toBe(200)
     expect(landing.payload).toContain(
@@ -190,7 +203,7 @@ describe('register routes', () => {
     const summary = await server.inject({
       method: 'GET',
       url: `${CPH_PATH}/bundles/REG-MNBX4Q2A`,
-      headers: { cookie }
+      auth
     })
     expect(summary.statusCode).toBe(200)
     expect(summary.payload).toContain('Registration summary')
@@ -201,7 +214,7 @@ describe('register routes', () => {
     const response = await server.inject({
       method: 'GET',
       url: `${CPH_PATH}/bundles/not-a-bundle`,
-      headers: { cookie }
+      auth
     })
 
     expect(response.statusCode).toBe(404)
@@ -220,7 +233,7 @@ describe('register routes', () => {
       const startResponse = await server.inject({
         method: 'POST',
         url: `${CPH_PATH}/bundles`,
-        headers: { cookie }
+        auth
       })
       const bundleUrl = startResponse.headers.location.replace(/\/calf$/, '')
       const routeBundleUrl = bundleUrl.replace(ROOT_PATH, '')
@@ -228,7 +241,7 @@ describe('register routes', () => {
       const response = await server.inject({
         method: 'GET',
         url: `${routeBundleUrl}/${page}`,
-        headers: { cookie }
+        auth
       })
 
       expect(response.statusCode).toBe(200)
@@ -268,7 +281,7 @@ describe('register routes', () => {
     const response = await server.inject({
       method: 'POST',
       url: `${bundleUrl}/${page}`,
-      headers: { cookie },
+      auth,
       payload
     })
 
@@ -288,7 +301,7 @@ describe('register routes', () => {
     const response = await server.inject({
       method: 'POST',
       url: `${bundleUrl}/${page}`,
-      headers: { cookie },
+      auth,
       payload
     })
 
@@ -303,7 +316,7 @@ describe('register routes', () => {
     const checkResponse = await server.inject({
       method: 'POST',
       url: `${bundleUrl}/check`,
-      headers: { cookie }
+      auth
     })
     expect(checkResponse.statusCode).toBe(302)
     expect(checkResponse.headers.location).toBe(`${ROOT_PATH}${bundleUrl}`)
@@ -311,7 +324,7 @@ describe('register routes', () => {
     const listResponse = await server.inject({
       method: 'GET',
       url: `${bundleUrl}/submission-list`,
-      headers: { cookie }
+      auth
     })
     expect(listResponse.statusCode).toBe(200)
     expect(listResponse.payload).toContain('/calves/CALF-')
@@ -320,7 +333,7 @@ describe('register routes', () => {
     const invalidListResponse = await server.inject({
       method: 'POST',
       url: `${bundleUrl}/submission-list`,
-      headers: { cookie },
+      auth,
       payload: {}
     })
     expect(invalidListResponse.statusCode).toBe(400)
@@ -331,7 +344,7 @@ describe('register routes', () => {
     const listSubmitResponse = await server.inject({
       method: 'POST',
       url: `${bundleUrl}/submission-list`,
-      headers: { cookie },
+      auth,
       payload: { add_more: 'no' }
     })
     expect(listSubmitResponse.headers.location).toBe(
@@ -341,7 +354,7 @@ describe('register routes', () => {
     const submitPage = await server.inject({
       method: 'GET',
       url: `${bundleUrl}/submit`,
-      headers: { cookie }
+      auth
     })
     expect(submitPage.statusCode).toBe(200)
     expect(submitPage.payload).toContain('Now submit your cattle registration')
@@ -349,7 +362,7 @@ describe('register routes', () => {
     const submitResponse = await server.inject({
       method: 'POST',
       url: `${bundleUrl}/submit`,
-      headers: { cookie }
+      auth
     })
     expect(submitResponse.headers.location).toBe(
       `${ROOT_PATH}${bundleUrl}/confirmation`
@@ -358,7 +371,7 @@ describe('register routes', () => {
     const confirmationResponse = await server.inject({
       method: 'GET',
       url: `${bundleUrl}/confirmation`,
-      headers: { cookie }
+      auth
     })
     expect(confirmationResponse.statusCode).toBe(200)
     expect(confirmationResponse.payload).toContain('Cattle birth report sent')
@@ -369,7 +382,7 @@ describe('register routes', () => {
     const response = await server.inject({
       method: 'POST',
       url: `${bundleUrl}/submission-list`,
-      headers: { cookie },
+      auth,
       payload: { add_more: 'yes' }
     })
 
@@ -380,14 +393,14 @@ describe('register routes', () => {
     const missingCalf = await server.inject({
       method: 'GET',
       url: `${CPH_PATH}/bundles/REG-MNBX4Q2A/calves/not-a-calf/check`,
-      headers: { cookie }
+      auth
     })
     expect(missingCalf.statusCode).toBe(404)
 
     const readOnlyEdit = await server.inject({
       method: 'GET',
       url: `${CPH_PATH}/bundles/REG-MNBX1K8F/calf`,
-      headers: { cookie }
+      auth
     })
     expect(readOnlyEdit.statusCode).toBe(409)
   })
