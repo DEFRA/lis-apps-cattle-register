@@ -1,16 +1,22 @@
 import {
+  Button,
+  Checkboxes,
   createAll,
+  ErrorSummary,
+  Radios
+} from 'govuk-frontend'
+import { errorPageComponents } from '@defra/lis-infra-ui-services/components/error-pages'
+import { layoutComponents } from '@defra/lis-infra-ui-services/components/layout'
+import { initAllAutocompletes } from '@defra/lis-infra-ui-services/components/autocomplete'
+
+for (const component of new Set([
+  ...layoutComponents,
+  ...errorPageComponents,
   Button,
   Checkboxes,
   ErrorSummary,
-  Radios,
-  SkipLink
-} from 'govuk-frontend'
-import { initAllAutocompletes } from '@defra/lis-infra-ui-services/components/autocomplete'
-
-createAll(Button)
-createAll(Checkboxes)
-createAll(ErrorSummary)
-createAll(Radios)
-createAll(SkipLink)
+  Radios
+])) {
+  createAll(component)
+}
 initAllAutocompletes()
