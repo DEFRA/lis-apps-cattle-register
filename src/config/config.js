@@ -216,7 +216,7 @@ export const config = convict({
       secret: {
         doc: 'Shared secret used to sign and verify hub-issued JWTs',
         format: String,
-        default: 'local-dev-hub-jwt-signing-secret-please-change-1234567890',
+        default: null,
         env: 'HUB_JWT_SECRET',
         sensitive: true
       },
