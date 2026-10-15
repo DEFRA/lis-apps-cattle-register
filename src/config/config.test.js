@@ -15,7 +15,6 @@ describe('config environment defaults', () => {
     expect(config.get('log.format')).toBe('ecs')
     expect(config.get('isSecureContextEnabled')).toBe(true)
     expect(config.get('session.cache.engine')).toBe('redis')
-    expect(config.get('session.cookie.secure')).toBe(true)
     expect(config.get('redis.useSingleInstanceCache')).toBe(false)
     expect(config.get('redis.useTLS')).toBe(true)
   })
