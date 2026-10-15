@@ -1,5 +1,5 @@
 ARG PARENT_VERSION=3.0.5-node24.14.1
-ARG PORT=3000
+ARG PORT=8085
 ARG PORT_DEBUG=9229
 
 FROM defradigital/node-development:${PARENT_VERSION} AS development
@@ -49,4 +49,4 @@ ARG PORT
 ENV PORT=${PORT}
 EXPOSE ${PORT}
 
-CMD [ "node", "src" ]
+ENTRYPOINT [ "node", "src" ]
