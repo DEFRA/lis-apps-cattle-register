@@ -9,7 +9,8 @@ export default defineConfig({
     // fetched when a service token is verified, which route tests bypass.
     env: {
       CDP_JWT_ISSUER: 'https://fake-sts.test',
-      CDP_JWT_JWKS_URI: 'https://fake-sts.test/.well-known/jwks.json'
+      CDP_JWT_JWKS_URI: 'https://fake-sts.test/.well-known/jwks.json',
+      HUB_JWT_SECRET: 'test-hub-jwt-secret'
     },
     coverage: {
       provider: 'v8',

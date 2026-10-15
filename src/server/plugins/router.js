@@ -17,8 +17,7 @@ const spokeAuth = createSpokeAuth({
   hubOrigins: config.get('auth.hubOrigins'),
   cookieName: config.get('auth.hubJwt.cookieName'),
   cookieOptions: getHubJwtCookieOptions({
-    ttlSeconds: config.get('auth.hubJwt.ttlSeconds'),
-    isSecure: config.get('session.cookie.secure')
+    ttlSeconds: config.get('auth.hubJwt.ttlSeconds')
   }),
   port: config.get('port'),
   basePath: getBasePathForModule('cattle-register'),

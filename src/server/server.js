@@ -12,7 +12,6 @@ import { catchAll } from '@defra/lis-infra-ui-services/errors'
 import { createBasePathHelpersForConfig } from '@defra/lis-infra-ui-services/base-path'
 import { setupProxy } from '@defra/lis-infra-ui-services/proxy/setup-proxy'
 import { requestTracing } from './plugins/request-tracing.js'
-import { createSessionCachePluginForConfig } from '@defra/lis-infra-ui-services/session-cache'
 import { getCacheEngine } from '@defra/lis-infra-ui-services/session-cache/cache-engine'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './plugins/content-security-policy.js'
@@ -28,7 +27,6 @@ logger.serviceName = 'lis-apps-cattle-register'
 logger.serviceVersion = config.get('serviceVersion')
 logger.context.hashSecret = config.get('log.hashSecret')
 const requestLogger = logger.hapiPlugin
-const sessionCache = createSessionCachePluginForConfig(config)
 const moduleId = 'cattle-register'
 const { getRequestBasePath } = createBasePathHelpersForConfig({
   moduleId,
@@ -118,7 +116,6 @@ export async function createServer() {
     metrics,
     secureContext,
     pulse,
-    sessionCache,
     nunjucksConfig,
     Scooter,
     contentSecurityPolicy,
