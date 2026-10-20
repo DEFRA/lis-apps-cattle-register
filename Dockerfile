@@ -1,30 +1,15 @@
 ARG PARENT_VERSION=3.0.5-node24.14.1
 ARG PORT=8085
-ARG PORT_DEBUG=9229
 
-FROM defradigital/node-development:${PARENT_VERSION} AS development
+FROM defradigital/node-development:${PARENT_VERSION} AS build
 ARG PARENT_VERSION
 LABEL uk.gov.defra.ffc.parent-image=defradigital/node-development:${PARENT_VERSION}
-
-ENV TZ="Europe/London"
-
-ARG PORT
-ARG PORT_DEBUG
-ENV PORT=${PORT}
-EXPOSE ${PORT} ${PORT_DEBUG}
 
 COPY --chown=node:node --chmod=755 package*.json ./
 RUN npm ci
 COPY --chown=node:node --chmod=755 . .
-RUN npm run build:frontend
-
-CMD [ "npm", "run", "docker:dev" ]
-
-FROM development AS production_build
-
-ENV NODE_ENV=production
-
-RUN npm run build:frontend
+RUN NODE_ENV=production npm run build:frontend \
+    && npm prune --omit=dev
 
 FROM defradigital/node:${PARENT_VERSION} AS production
 ARG PARENT_VERSION
@@ -38,12 +23,11 @@ USER root
 RUN apk add --no-cache curl
 USER node
 
-COPY --from=production_build /home/node/*.js ./
-COPY --from=production_build /home/node/package*.json ./
-COPY --from=production_build /home/node/src ./src/
-COPY --from=production_build /home/node/.public/ ./.public/
-
-RUN npm ci --omit=dev
+COPY --from=build /home/node/*.js ./
+COPY --from=build /home/node/package*.json ./
+COPY --from=build /home/node/node_modules ./node_modules/
+COPY --from=build /home/node/src ./src/
+COPY --from=build /home/node/.public/ ./.public/
 
 ARG PORT
 ENV PORT=${PORT}
