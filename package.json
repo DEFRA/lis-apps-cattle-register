@@ -18,7 +18,6 @@
     "dev": "AWS_EMF_ENVIRONMENT=Local npm run server:watch",
     "dev:debug": "AWS_EMF_ENVIRONMENT=Local npm run server:debug",
     "dev:debug:ide": "AWS_EMF_ENVIRONMENT=Local npm run server:debug:ide",
-    "docker:dev": "npm run dev",
     "format": "prettier --write \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "format:check": "prettier --check \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "lint": "run-s lint:js lint:scss",
