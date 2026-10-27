@@ -56,8 +56,7 @@ function getSupportedRoutes(server) {
 function dumpSupportedRoutes() {
   const routes = getSupportedRoutes(this)
 
-  console.info('Supported routes:')
-  console.table(routes)
+  logger.info({ routes }, 'Supported routes')
 
   return routes
 }

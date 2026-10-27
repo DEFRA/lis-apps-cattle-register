@@ -15,26 +15,24 @@ describe('#createServer', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('Should dump supported routes to the console', () => {
-    const infoSpy = vi
-      .spyOn(console, 'info')
-      .mockImplementation(() => undefined)
-    const tableSpy = vi
-      .spyOn(console, 'table')
-      .mockImplementation(() => undefined)
+  test('Should log supported routes through the logger', () => {
+    const infoSpy = vi.fn()
+    vi.spyOn(logger, 'info', 'get').mockReturnValue(infoSpy)
 
     const routes = server.dumpSupportedRoutes()
 
-    expect(infoSpy).toHaveBeenCalledWith('Supported routes:')
-    expect(tableSpy).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ method: 'GET', path: '/health' }),
-        expect.objectContaining({ method: 'GET', path: '/' }),
-        expect.objectContaining({
-          method: 'POST',
-          path: '/{county}/{parish}/{holding}/bundles/{bundleId}/calf'
-        })
-      ])
+    expect(infoSpy).toHaveBeenCalledWith(
+      {
+        routes: expect.arrayContaining([
+          expect.objectContaining({ method: 'GET', path: '/health' }),
+          expect.objectContaining({ method: 'GET', path: '/' }),
+          expect.objectContaining({
+            method: 'POST',
+            path: '/{county}/{parish}/{holding}/bundles/{bundleId}/calf'
+          })
+        ])
+      },
+      'Supported routes'
     )
     expect(routes).toEqual(
       expect.arrayContaining([
