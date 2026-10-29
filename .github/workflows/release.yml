@@ -16,7 +16,7 @@ jobs:
   get-version:
     name: 'Calculate Stable Version'
     if: github.event.pull_request.merged == true
-    uses: DEFRA/lis-github-actions/.github/workflows/version.yml@be6b83ca7ee5cab10cd4754760312a0cb5099431
+    uses: DEFRA/lis-github-actions/.github/workflows/version.yml@v0
     with:
       ref: ${{ github.event.pull_request.merge_commit_sha }}
       branch: ${{ github.event.pull_request.head.ref }}
@@ -25,7 +25,7 @@ jobs:
   validate:
     name: 'Validate Merged Commit'
     needs: get-version
-    uses: DEFRA/lis-github-actions/.github/workflows/node-service-validate.yml@be6b83ca7ee5cab10cd4754760312a0cb5099431
+    uses: DEFRA/lis-github-actions/.github/workflows/node-service-validate.yml@v0
     with:
       version: ${{ needs.get-version.outputs.version }}
       ref: ${{ github.event.pull_request.merge_commit_sha }}
@@ -39,7 +39,7 @@ jobs:
   sonar-analysis:
     name: 'Sonar Analysis'
     needs: [get-version, validate]
-    uses: DEFRA/lis-github-actions/.github/workflows/node-sonar.yml@be6b83ca7ee5cab10cd4754760312a0cb5099431
+    uses: DEFRA/lis-github-actions/.github/workflows/node-sonar.yml@v0
     with:
       version: ${{ needs.get-version.outputs.version }}
       ref: ${{ github.event.pull_request.merge_commit_sha }}
@@ -50,7 +50,7 @@ jobs:
     name: 'Tag Main'
     needs: [get-version, validate, sonar-analysis]
     if: needs.sonar-analysis.outputs.quality-gate-status == 'PASSED'
-    uses: DEFRA/lis-github-actions/.github/workflows/tag.yml@be6b83ca7ee5cab10cd4754760312a0cb5099431
+    uses: DEFRA/lis-github-actions/.github/workflows/tag.yml@v0
     with:
       version: ${{ needs.get-version.outputs.version }}
       ref: ${{ github.event.pull_request.merge_commit_sha }}
