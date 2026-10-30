@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 
 import convictFormatWithValidator from 'convict-format-with-validator'
 
+import { duration } from '@defra/lis-infra-ui-services/config-formats'
 import { milliseconds } from '@defra/lis-infra-ui-services/duration'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -20,7 +21,12 @@ const trustedHubOrigins = [
   'http://localhost:3102'
 ]
 
+// Fails fast on a misconfigured ttl; ui-services' cache engine also clamps
+// every write to the same limit, so both layers are needed.
+const sessionTtl = duration({ max: 'P7D' })
+
 convict.addFormats(convictFormatWithValidator)
+convict.addFormat(sessionTtl)
 
 export const config = convict({
   serviceVersion: {
@@ -142,7 +148,7 @@ export const config = convict({
       },
       ttl: {
         doc: 'server side session cache ttl',
-        format: Number,
+        format: sessionTtl.name,
         default: milliseconds.fourHours,
         env: 'SESSION_CACHE_TTL'
       }
