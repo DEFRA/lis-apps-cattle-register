@@ -99,11 +99,11 @@ describe('#catchAll', () => {
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.badRequest)
   })
 
-  test('Should provide the service unavailable page for a 503', () => {
+  test('Should provide the problem with the service page for a 503', () => {
     catchAll(mockRequest(statusCodes.serviceUnavailable), mockToolkit)
 
-    expect(mockToolkitView).toHaveBeenCalledWith('error/service-unavailable', {
-      pageTitle: 'Sorry, the service is unavailable',
+    expect(mockToolkitView).toHaveBeenCalledWith('error/problem-with-service', {
+      pageTitle: 'Sorry, there is a problem with the service',
       developmentMessage: undefined
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.serviceUnavailable)
