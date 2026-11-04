@@ -1,6 +1,6 @@
 import Joi from 'joi'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
-import { bundlePath, cphFromParams } from '../paths.js'
+import { bundlePath } from '../paths.js'
 
 const TEMPLATE = './register/submission-list.njk'
 const PAGE_TITLE = 'Register new cattle births'
@@ -33,7 +33,7 @@ export const submissionListSubmitController = {
             TEMPLATE,
             viewModel(
               errors,
-              _request.app.cph ?? cphFromParams(_request.params),
+              _request.app.cph ?? _request.params.cph,
               _request.params.bundleId,
               _request.app.bundle
             )

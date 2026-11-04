@@ -6,33 +6,23 @@ import {
   isBackOffice,
   listBundlesForUser
 } from '../bundle-store.js'
-import {
-  bundlePath,
-  bundleRoot,
-  bundlesRoot,
-  cphFromParams,
-  holdingRoot
-} from '../paths.js'
+import { bundlePath, bundleRoot, bundlesRoot, holdingRoot } from '../paths.js'
 
 const LANDING_TEMPLATE = './register/landing.njk'
 const SUMMARY_TEMPLATE = './register/bundle-summary.njk'
 
 export const bundleLandingController = {
   handler(request, h) {
-    const cph = cphFromParams(request.params)
-    const allBundles = listBundlesForUser(
+    const { cph } = request.params
+    const bundles = listBundlesForUser(
       request.auth.credentials.user,
       config.get('bundleHistoryMonths')
-    )
-    const bundles = cph
-      ? allBundles.filter((bundle) => bundle.cph === cph)
-      : allBundles
-    const selectedCph = cph ?? bundles[0]?.cph
+    ).filter((bundle) => bundle.cph === cph)
 
     return h.view(LANDING_TEMPLATE, {
       pageTitle: 'Cattle registrations',
       heading: 'Cattle registrations',
-      startUrl: selectedCph ? bundlesRoot(selectedCph) : null,
+      startUrl: bundlesRoot(cph),
       historyMonths: config.get('bundleHistoryMonths'),
       showCph: isBackOffice(request.auth.credentials.user),
       rows: bundles.map(toLandingRow)
@@ -42,7 +32,7 @@ export const bundleLandingController = {
 
 export const bundleCreateController = {
   handler(request, h) {
-    const cph = cphFromParams(request.params)
+    const { cph } = request.params
     const bundle = createBundleForUser(request.auth.credentials.user, cph)
     return h.redirect(bundlePath(bundle.cph, bundle.id, 'calf'))
   }

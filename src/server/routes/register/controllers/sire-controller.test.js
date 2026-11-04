@@ -5,9 +5,7 @@ import { sireController, sireSubmitController } from './sire-controller.js'
 const request = {
   app: {},
   params: {
-    county: '10',
-    parish: '081',
-    holding: '1234',
+    cph: '10/081/1234',
     bundleId: 'REG-123'
   }
 }
@@ -22,7 +20,7 @@ describe('sire controller', () => {
       './register/sire.njk',
       expect.objectContaining({
         pageTitle: 'Sire details',
-        backUrl: '/cattle/register/10/081/1234/bundles/REG-123/dam',
+        backUrl: '/holdings/10/081/1234/cattle/register/bundles/REG-123/dam',
         formValues: { sire_tag: '', sire_name: '' },
         errors: {},
         errorList: []

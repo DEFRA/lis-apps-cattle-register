@@ -6,9 +6,7 @@ import { calfController, calfSubmitController } from './calf-controller.js'
 const request = {
   app: {},
   params: {
-    county: '10',
-    parish: '081',
-    holding: '1234',
+    cph: '10/081/1234',
     bundleId: 'REG-123'
   }
 }
@@ -23,7 +21,7 @@ describe('calf controller', () => {
       './register/calf.njk',
       expect.objectContaining({
         pageTitle: 'Calf details',
-        backUrl: '/cattle/register/10/081/1234',
+        backUrl: '/holdings/10/081/1234/cattle/register',
         breeds: Object.entries(breeds).map(([value, text]) => ({
           value,
           text

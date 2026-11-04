@@ -25,10 +25,13 @@ describe('#createServer', () => {
       {
         routes: expect.arrayContaining([
           expect.objectContaining({ method: 'GET', path: '/health' }),
-          expect.objectContaining({ method: 'GET', path: '/' }),
+          expect.objectContaining({
+            method: 'GET',
+            path: '/holdings/{cph*3}/cattle/register'
+          }),
           expect.objectContaining({
             method: 'POST',
-            path: '/{county}/{parish}/{holding}/bundles/{bundleId}/calf'
+            path: '/holdings/{cph*3}/cattle/register/bundles/{bundleId}/calf'
           })
         ])
       },
@@ -37,10 +40,13 @@ describe('#createServer', () => {
     expect(routes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ method: 'GET', path: '/health' }),
-        expect.objectContaining({ method: 'GET', path: '/' }),
+        expect.objectContaining({
+          method: 'GET',
+          path: '/holdings/{cph*3}/cattle/register'
+        }),
         expect.objectContaining({
           method: 'POST',
-          path: '/{county}/{parish}/{holding}/bundles/{bundleId}/calf'
+          path: '/holdings/{cph*3}/cattle/register/bundles/{bundleId}/calf'
         })
       ])
     )
@@ -59,9 +65,10 @@ describe('log format mapping', () => {
 
     // Act
     await import('./server.js')
+    const { logger: serverLogger } = await import('@defra/lis-hubs-infra-core')
 
     // Assert
-    expect(logger.format).toBe('pretty-print')
+    expect(serverLogger.format).toBe('pretty-print')
   })
 
   test('server.js passes any other LOG_FORMAT value through to the logger unchanged', async () => {
@@ -71,8 +78,9 @@ describe('log format mapping', () => {
 
     // Act
     await import('./server.js')
+    const { logger: serverLogger } = await import('@defra/lis-hubs-infra-core')
 
     // Assert
-    expect(logger.format).toBe('ecs')
+    expect(serverLogger.format).toBe('ecs')
   })
 })

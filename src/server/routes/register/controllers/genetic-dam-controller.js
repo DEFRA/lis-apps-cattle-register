@@ -1,6 +1,6 @@
 import Joi from 'joi'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
-import { bundlePath, cphFromParams } from '../paths.js'
+import { bundlePath } from '../paths.js'
 
 const TEMPLATE = './register/genetic-dam.njk'
 const PAGE_TITLE = 'Genetic Dam details'
@@ -69,7 +69,7 @@ function viewModel(overrides = {}) {
 
 function requestContext(request) {
   return {
-    cph: request.app.cph ?? cphFromParams(request.params),
+    cph: request.app.cph ?? request.params.cph,
     bundleId: request.params.bundleId
   }
 }

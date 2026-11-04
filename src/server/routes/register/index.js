@@ -1,7 +1,6 @@
 import { routes } from './routes.js'
 import { canAccessCph, getBundleForUser } from './bundle-store.js'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
-import { cphFromParams } from './paths.js'
 
 export const register = {
   plugin: {
@@ -15,8 +14,7 @@ export const register = {
 
       // eslint-disable-next-line sonarjs/cyclomatic-complexity
       server.ext('onPreHandler', (request, h) => {
-        const { bundleId, calfId } = request.params
-        const cph = cphFromParams(request.params)
+        const { bundleId, calfId, cph } = request.params
         if (cph && !canAccessCph(request.auth.credentials?.user, cph)) {
           return h
             .response('Page not found')

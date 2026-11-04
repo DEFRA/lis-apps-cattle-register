@@ -4,7 +4,7 @@ import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 const TEMPLATE = './register/dam.njk'
 const PAGE_TITLE = 'Dam details'
 const TAG_HEADING = 'Official animal ear tag number: '
-import { bundlePath, cphFromParams } from '../paths.js'
+import { bundlePath } from '../paths.js'
 
 export const damController = {
   handler(request, h) {
@@ -75,7 +75,7 @@ function viewModel(overrides = {}) {
 
 function requestContext(request) {
   return {
-    cph: request.app.cph ?? cphFromParams(request.params),
+    cph: request.app.cph ?? request.params.cph,
     bundleId: request.params.bundleId
   }
 }

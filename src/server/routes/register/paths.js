@@ -1,14 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc, no-magic-numbers */
-import { buildMicrositePath } from '@defra/lis-infra-ui-services'
-import { taxonomy } from '@defra/lis-taxonomy-register'
-import { species } from '@defra/lis-species-cattle'
+import { getMountPath } from '@defra/lis-hubs-infra-registry'
 
-export const ROOT_PATH = buildMicrositePath(taxonomy.id, species.id)
-export const CPH_ROUTE = '{county}/{parish}/{holding}'
-
-export function cphFromParams({ county, parish, holding } = {}) {
-  return county && parish && holding ? `${county}/${parish}/${holding}` : null
-}
+export const HOLDING_ROUTE = '/holdings/{cph*3}/cattle/register'
 
 export function cphPath(cph) {
   const segments = cph?.split('/') ?? []
@@ -24,7 +17,7 @@ export function cphPath(cph) {
 }
 
 export function holdingRoot(cph) {
-  return `${ROOT_PATH}/${cphPath(cph)}`
+  return getMountPath('cattle-register', 'holding', { cph: cphPath(cph) })
 }
 
 export function bundlesRoot(cph) {
