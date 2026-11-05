@@ -8,6 +8,7 @@ import {
   toUkCalendarDate
 } from '#server/common/helpers/calendar-date.js'
 import { registrationPagePath } from '../paths.js'
+import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { getMessage } from './messages.js'
 
 const TEMPLATE = 'register/calf-details/index'
@@ -56,6 +57,7 @@ function buildViewModel({
     formAction: registrationPagePath(cph, registrationId, 'calf-details'),
     values,
     breedItems: breedOptions,
+    maxFieldLength: MAX_FIELD_LENGTH,
     maxDateOfBirth: formatCalendarDate(toUkCalendarDate(new Date())),
     errorList,
     fieldErrors,

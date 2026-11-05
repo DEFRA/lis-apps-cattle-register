@@ -37,7 +37,8 @@
             text: "Enter the full animal ear tag number. For example, UK123456123456"
           },
           errorMessage: fieldErrors.earTagNumber,
-          spellcheck: false
+          spellcheck: false,
+          attributes: { maxlength: maxFieldLength }
         }) }}
 
         {{ lisDatePicker({
@@ -52,7 +53,8 @@
             text: "Select from the calendar or enter manually, for example 27/3/2026"
           },
           errorMessage: fieldErrors.dateOfBirth,
-          maxDate: maxDateOfBirth
+          maxDate: maxDateOfBirth,
+          attributes: { maxlength: maxFieldLength }
         }) }}
 
         {{ govukRadios({
@@ -87,7 +89,8 @@
           },
           errorMessage: fieldErrors.breed,
           items: breedItems,
-          minLength: 1
+          minLength: 1,
+          attributes: { maxlength: maxFieldLength }
         }) }}
 
         {% for warning in warnings %}
