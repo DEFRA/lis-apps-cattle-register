@@ -138,7 +138,9 @@ describe('register routes', () => {
       expect($('title').text().trim()).toMatch(/^Calf details - /)
       expect($('h1').text().trim()).toBe('Calf details')
       expect($('.govuk-back-link').attr('href')).toBe(`/holdings/${CPH}/cattle`)
-      expect($('main form').attr('action')).toBe(CALF_DETAILS_PATH)
+      expect($('main form').attr('action')).toBe(
+        `${REGISTER_PATH}/${REGISTRATION_ID}/calves/1/calf-details`
+      )
       expect($('main form').attr('method')).toBe('post')
       expect($('.govuk-error-summary')).toHaveLength(0)
       expect($('.govuk-warning-text')).toHaveLength(0)
@@ -212,7 +214,8 @@ describe('register routes', () => {
       expect(registrationClient.getCalfDetails).toHaveBeenCalledWith({
         cph: CPH,
         registrationId: REGISTRATION_ID,
-        userId: 'test-user'
+        userId: 'test-user',
+        calfNumber: 1
       })
     })
 

@@ -5,6 +5,11 @@ import { getMessage } from './messages.js'
 describe('getMessage()', () => {
   test.each([
     ['earTagNumber', 'required', 'Enter the animal ear tag number'],
+    [
+      'earTagNumber',
+      'duplicate',
+      'This animal ear tag number has already been added to this registration'
+    ],
     ['dateOfBirth', 'required', 'Enter the date the animal was born'],
     [
       'dateOfBirth',

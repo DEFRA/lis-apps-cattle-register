@@ -117,6 +117,7 @@ describe('register CSRF protection', () => {
         cph: CPH,
         registrationId: REGISTRATION_ID,
         userId: 'test-user',
+        calfNumber: 1,
         answers: validPayload,
         acknowledgedWarnings: []
       })

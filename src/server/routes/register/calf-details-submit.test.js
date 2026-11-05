@@ -90,6 +90,7 @@ describe('calf details submit routes', () => {
         cph: CPH,
         registrationId: REGISTRATION_ID,
         userId: 'test-user',
+        calfNumber: 1,
         answers: validPayload,
         acknowledgedWarnings: []
       })
