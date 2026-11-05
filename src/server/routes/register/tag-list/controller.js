@@ -25,13 +25,14 @@ function calfPage(calf) {
 
 /**
  * @param {object} request - with the registration in request.pre.registration
- * @returns {{ earTagNumber: string, href: string, isReady: boolean }[]} one
- *   item per calf, in the order they were added
+ * @returns {{ id: string, earTagNumber: string, href: string, isReady: boolean }[]}
+ *   one item per calf, in the order they were added; id is its row link's
  */
 function calfItems(request) {
   const { cph, registrationId } = request.params
 
   return request.pre.registration.calves.map((calf, index) => ({
+    id: `calf-${index + 1}`,
     earTagNumber: formatEarTag(calf.calfDetails.earTagNumber),
     href: calfPagePath(cph, registrationId, index + 1, calfPage(calf)),
     isReady: calf.checked
@@ -59,9 +60,9 @@ function buildViewModel({ request, addAnother = '', errors = [] }) {
     calves,
     values: { addAnother },
     // The incomplete error is about a calf, not a field on this page, so it
-    // links to the first calf to complete.
+    // links to the row link of the first calf to complete.
     errorList: errorList.map((item) =>
-      item.href === '#calves' ? { ...item, href: firstNotReady.href } : item
+      item.href === '#calves' ? { ...item, href: `#${firstNotReady.id}` } : item
     ),
     fieldErrors
   }

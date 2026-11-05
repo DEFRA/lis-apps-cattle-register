@@ -95,7 +95,7 @@ describe('calf details for each calf', () => {
       )
     })
 
-    test('it shows calf 1 at its per-calf address, back to the holding', async () => {
+    test('it shows a saved calf 1 at its per-calf address, back to the list of calves', async () => {
       // Arrange
       const registrationId = await startRegistration(server)
 
@@ -105,6 +105,21 @@ describe('calf details for each calf', () => {
       // Assert
       const $ = load(response.payload)
       expect($('#earTagNumber').val()).toBe(calfDetailsPayload.earTagNumber)
+      expect($('.govuk-back-link').attr('href')).toBe(
+        `${REGISTER_PATH}/${registrationId}/tag-list`
+      )
+    })
+
+    test('it shows calf 1 back to the holding while no calf is saved', async () => {
+      // Arrange
+      const registrationId = randomUUID()
+
+      // Act
+      const response = await get(calfPath(registrationId, 'calf-details'))
+
+      // Assert
+      const $ = load(response.payload)
+      expect($('#earTagNumber').val()).toBe('')
       expect($('.govuk-back-link').attr('href')).toBe(`/holdings/${CPH}/cattle`)
     })
 

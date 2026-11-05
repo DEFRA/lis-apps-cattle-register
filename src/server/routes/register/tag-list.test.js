@@ -100,6 +100,13 @@ describe('tag list route', () => {
           .toArray()
           .map((cell) => $(cell).text().trim())
       ).toEqual(['Tag number', 'Status'])
+      expect($('#calves caption').text().trim()).toBe(
+        'Animals in this registration'
+      )
+      expect($('#calves caption').hasClass('govuk-visually-hidden')).toBe(true)
+      expect($('#calves .govuk-table__cell--numeric')).toHaveLength(0)
+      expect($('#calves .govuk-table__header--numeric')).toHaveLength(0)
+      expect($('#calves tbody a').attr('id')).toBe('calf-1')
       expect(calfRows($)).toEqual([
         {
           earTag: 'UK 123456 301550',
