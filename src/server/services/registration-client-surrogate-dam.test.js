@@ -56,7 +56,8 @@ describe('registrationClient (stub) surrogate dam', () => {
       damDetails: { damType: 'surrogate' },
       geneticDam: {},
       surrogateDam,
-      sireDetails: {}
+      sireDetails: {},
+      checked: false
     })
   })
 

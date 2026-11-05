@@ -118,7 +118,48 @@ function incompleteDamPage(calf) {
     'surrogate-dam': calf.surrogateDam
   }[page]
 
-  return answers && Object.keys(answers).length > 0 ? null : page
+  return answers && isSaved(answers) ? null : page
+}
+
+/**
+ * @param {object} answers - the answers saved on one page
+ * @returns {boolean} true once the page has been saved
+ */
+function isSaved(answers) {
+  return Object.keys(answers).length > 0
+}
+
+/**
+ * @param {object} calf - the saved calf
+ * @returns {string | null} the first page after calf details the calf has
+ *   not completed, or null when every page up to check calf details is saved
+ */
+export function firstIncompletePage(calf) {
+  const damPageToComplete = incompleteDamPage(calf)
+
+  if (damPageToComplete) {
+    return damPageToComplete
+  }
+
+  return isSaved(calf.sireDetails) ? null : 'sire-details'
+}
+
+/**
+ * @param {Request} request
+ * @param {ResponseToolkit} h
+ * @param {string | null} page - the page to send the user to, if any
+ * @returns {symbol | object}
+ */
+function continueUnlessIncomplete(request, h, page) {
+  if (!page) {
+    return h.continue
+  }
+
+  const { cph, registrationId, calfNumber } = request.params
+
+  return h
+    .redirect(calfPagePath(cph, registrationId, calfNumber, page))
+    .takeover()
 }
 
 /**
@@ -130,15 +171,24 @@ function incompleteDamPage(calf) {
  * @returns {symbol | object}
  */
 export function demandDamComplete(request, h) {
-  const page = incompleteDamPage(request.pre.calf)
+  return continueUnlessIncomplete(
+    request,
+    h,
+    incompleteDamPage(request.pre.calf)
+  )
+}
 
-  if (!page) {
-    return h.continue
-  }
-
-  const { cph, registrationId, calfNumber } = request.params
-
-  return h
-    .redirect(calfPagePath(cph, registrationId, calfNumber, page))
-    .takeover()
+/**
+ * Route prerequisite, after loadCalf, for check calf details: every page
+ * before it must be saved, otherwise the user is sent to the first not saved.
+ * @param {Request} request
+ * @param {ResponseToolkit} h
+ * @returns {symbol | object}
+ */
+export function demandCalfComplete(request, h) {
+  return continueUnlessIncomplete(
+    request,
+    h,
+    firstIncompletePage(request.pre.calf)
+  )
 }

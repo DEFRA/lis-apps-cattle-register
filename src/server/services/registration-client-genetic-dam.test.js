@@ -146,7 +146,8 @@ describe('registrationClient (stub) genetic dam', () => {
       damDetails: { damType: 'genetic' },
       geneticDam: { earTagNumber: 'UK123456501100' },
       surrogateDam: {},
-      sireDetails: {}
+      sireDetails: {},
+      checked: false
     })
   })
 
