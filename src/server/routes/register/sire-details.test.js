@@ -187,8 +187,10 @@ describe('sire details routes', () => {
       expect($('title').text().trim()).toMatch(/^Sire details - /)
       expect($('h1').text().trim()).toBe('Sire details')
       expect($('main .govuk-caption-l').text().trim()).toBe(
-        'Official animal ear tag number: UK123456301550'
+        'Official animal ear tag number: UK 123456 301550'
       )
+      expect($('#sireEarTagNumber').attr('maxlength')).toBe('200')
+      expect($('#sireName').attr('maxlength')).toBe('200')
       expect($('main form').attr('action')).toBe(
         sireDetailsPath(registrationId)
       )

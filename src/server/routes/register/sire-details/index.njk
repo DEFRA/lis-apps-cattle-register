@@ -29,7 +29,8 @@
           hint: {
             text: "Enter the full animal ear tag number. For example, UK123456123456"
           },
-          spellcheck: false
+          spellcheck: false,
+          attributes: { maxlength: maxFieldLength }
         }) }}
 
         {{ govukInput({
@@ -40,7 +41,8 @@
           label: {
             text: "Sire name (optional)",
             classes: "govuk-label--m"
-          }
+          },
+          attributes: { maxlength: maxFieldLength }
         }) }}
 
         {{ govukButton({
