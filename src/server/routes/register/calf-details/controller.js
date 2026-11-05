@@ -103,7 +103,7 @@ export const calfDetailsController = {
     })
 
     if (!saved) {
-      return await calfNotFound(request, h)
+      return calfNotFound(request, h)
     }
 
     const { answers } = saved
@@ -142,7 +142,7 @@ export const calfDetailsSubmitController = {
     // The calves before this one have expired, or been evicted, since the
     // page was shown.
     if (!result) {
-      return await calfNotFound(request, h)
+      return calfNotFound(request, h)
     }
 
     const { errors, warnings } = result
