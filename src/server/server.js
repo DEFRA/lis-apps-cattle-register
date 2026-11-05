@@ -3,6 +3,7 @@ import path from 'path'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
 import { logger } from '@defra/lis-hubs-infra-core'
+import { csrfPlugin } from '@defra/lis-infra-ui-services/csrf'
 import { createNunjucksConfig } from '@defra/lis-infra-ui-services/nunjucks/plugin'
 
 import { router } from './plugins/router.js'
@@ -112,6 +113,8 @@ export async function createServer() {
     nunjucksConfig,
     Scooter,
     contentSecurityPolicy,
+    // The hub issues the CSRF token and sends it with each proxied request.
+    { plugin: csrfPlugin, options: { tokenSource: 'header' } },
     router
   ])
 
