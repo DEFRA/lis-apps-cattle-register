@@ -1,0 +1,84 @@
+import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
+
+import { registrationClient } from '#server/services/registration-client.js'
+import { calfPagePath } from '../paths.js'
+import { calfNotFound, registrationKey } from '../registration.js'
+import { formErrors } from '../form-errors.js'
+import { getMessage } from './messages.js'
+
+const TEMPLATE = 'register/surrogate-dam/index'
+const PAGE_TITLE = 'Genetic and surrogate dam details'
+const FIELDS = ['geneticDamEarTagNumber', 'surrogateDamEarTagNumber']
+// Not built yet (LREG-784 continues with sire details).
+const NEXT_PAGE = 'sire-details'
+
+/**
+ * @param {object} answers
+ * @returns {Record<string, string>} each field's answer, blank when absent
+ */
+function formValuesFrom(answers) {
+  return Object.fromEntries(
+    FIELDS.map((field) => [field, answers[field] ?? ''])
+  )
+}
+
+/**
+ * @param {object} options
+ * @param {object} options.request - with the saved calf in request.pre.calf
+ * @param {Record<string, string>} options.values
+ * @param {{ field: string, code: string }[]} [options.errors]
+ * @returns {object} the surrogate dam view model
+ */
+function buildViewModel({ request, values, errors = [] }) {
+  const { cph, registrationId, calfNumber } = request.params
+  const { errorList, fieldErrors } = formErrors(errors, getMessage)
+
+  return {
+    pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
+    heading: PAGE_TITLE,
+    calfEarTagNumber: request.pre.calf.calfDetails.earTagNumber,
+    backLinkHref: calfPagePath(cph, registrationId, calfNumber, 'dam-details'),
+    formAction: calfPagePath(cph, registrationId, calfNumber, 'surrogate-dam'),
+    values,
+    errorList,
+    fieldErrors
+  }
+}
+
+export const surrogateDamController = {
+  handler(request, h) {
+    return h.view(
+      TEMPLATE,
+      buildViewModel({
+        request,
+        values: formValuesFrom(request.pre.calf.surrogateDam)
+      })
+    )
+  }
+}
+
+export const surrogateDamSubmitController = {
+  async handler(request, h) {
+    const { cph, registrationId, calfNumber } = request.params
+    const values = formValuesFrom(request.payload)
+    const result = await registrationClient.saveSurrogateDam({
+      ...registrationKey(request),
+      calfNumber,
+      answers: values
+    })
+
+    if (!result) {
+      return calfNotFound(request, h)
+    }
+
+    const { errors } = result
+
+    if (errors.length) {
+      return h
+        .view(TEMPLATE, buildViewModel({ request, values, errors }))
+        .code(statusCodes.badRequest)
+    }
+
+    return h.redirect(calfPagePath(cph, registrationId, calfNumber, NEXT_PAGE))
+  }
+}

@@ -18,6 +18,10 @@ import {
   geneticDamController,
   geneticDamSubmitController
 } from './genetic-dam/controller.js'
+import {
+  surrogateDamController,
+  surrogateDamSubmitController
+} from './surrogate-dam/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -74,6 +78,11 @@ const geneticDamPrerequisites = [
   { method: demandDamType('genetic') }
 ]
 
+const surrogateDamPrerequisites = [
+  ...calfPrerequisites,
+  { method: demandDamType('surrogate') }
+]
+
 const formField = Joi.string().max(MAX_FIELD_LENGTH).allow('').default('')
 
 const calfDetailsPayload = Joi.object({
@@ -112,6 +121,35 @@ const geneticDamRoutes = [
         payload: geneticDamPayload
       },
       pre: geneticDamPrerequisites
+    }
+  }
+]
+
+const surrogateDamPayload = Joi.object({
+  geneticDamEarTagNumber: formField,
+  surrogateDamEarTagNumber: formField
+}).options({ stripUnknown: true })
+
+const surrogateDamRoutes = [
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/surrogate-dam`,
+    ...surrogateDamController,
+    options: {
+      validate: calfParams,
+      pre: surrogateDamPrerequisites
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/surrogate-dam`,
+    ...surrogateDamSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: surrogateDamPayload
+      },
+      pre: surrogateDamPrerequisites
     }
   }
 ]
@@ -172,7 +210,8 @@ export const register = {
             pre: calfPrerequisites
           }
         },
-        ...geneticDamRoutes
+        ...geneticDamRoutes,
+        ...surrogateDamRoutes
       ])
     }
   }

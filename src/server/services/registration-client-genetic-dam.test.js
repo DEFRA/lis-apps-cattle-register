@@ -144,7 +144,8 @@ describe('registrationClient (stub) genetic dam', () => {
     expect(calf).toEqual({
       calfDetails,
       damDetails: { damType: 'genetic' },
-      geneticDam: { earTagNumber: 'UK123456501100' }
+      geneticDam: { earTagNumber: 'UK123456501100' },
+      surrogateDam: {}
     })
   })
 

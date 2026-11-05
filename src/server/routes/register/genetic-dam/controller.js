@@ -5,6 +5,7 @@ import { registrationClient } from '#server/services/registration-client.js'
 import { calfPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { calfNotFound, registrationKey } from '../registration.js'
+import { formErrors } from '../form-errors.js'
 import { getMessage } from './messages.js'
 
 const TEMPLATE = 'register/genetic-dam/index'
@@ -21,13 +22,7 @@ const NEXT_PAGE = 'sire-details'
  */
 function buildViewModel({ request, earTagNumber, errors = [] }) {
   const { cph, registrationId, calfNumber } = request.params
-  const errorList = errors.map((error) => ({
-    text: getMessage(error),
-    href: `#${error.field}`
-  }))
-  const fieldErrors = Object.fromEntries(
-    errors.map((error) => [error.field, { text: getMessage(error) }])
-  )
+  const { errorList, fieldErrors } = formErrors(errors, getMessage)
 
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
