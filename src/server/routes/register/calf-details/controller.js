@@ -14,6 +14,7 @@ import { getMessage } from './messages.js'
 const TEMPLATE = 'register/calf-details/index'
 const PAGE_TITLE = 'Calf details'
 const FIELDS = ['earTagNumber', 'dateOfBirth', 'sex', 'breed']
+const LATE_DATE_OF_BIRTH_WARNING = 'overDeadline'
 
 /**
  * @param {object} answers
@@ -83,18 +84,20 @@ export const calfDetailsSubmitController = {
     const { cph, registrationId } = request.params
     const { acknowledgedLateDateOfBirth, ...submitted } = request.payload
     const values = formValuesFrom(submitted)
-    const { errors, warnings } = await registrationClient.saveCalfDetails({
-      ...registrationKey(request),
-      answers: values
-    })
 
     // The late-birth warning is shown once for a date: the page then carries
-    // that date in a hidden field, and posting the same date again continues.
-    // A changed date is warned about again.
+    // that date in a hidden field, and posting the same date again confirms
+    // it. A changed date is warned about again. Nothing is saved until the
+    // warning is confirmed.
     const isAcknowledged =
       acknowledgedLateDateOfBirth !== '' &&
       acknowledgedLateDateOfBirth === values.dateOfBirth
-    const warningsToShow = errors.length || isAcknowledged ? [] : warnings
+    const { errors, warnings } = await registrationClient.saveCalfDetails({
+      ...registrationKey(request),
+      answers: values,
+      acknowledgedWarnings: isAcknowledged ? [LATE_DATE_OF_BIRTH_WARNING] : []
+    })
+    const warningsToShow = errors.length ? [] : warnings
 
     if (errors.length || warningsToShow.length) {
       return h

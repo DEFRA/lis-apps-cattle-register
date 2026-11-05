@@ -316,7 +316,8 @@ describe('register routes', () => {
         cph: CPH,
         registrationId: REGISTRATION_ID,
         userId: 'test-user',
-        answers: validPayload
+        answers: validPayload,
+        acknowledgedWarnings: []
       })
     })
 

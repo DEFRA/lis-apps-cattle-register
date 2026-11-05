@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
+import { DRAFT_TTL_MS } from './draft-store.js'
 import { createRegistrationClient } from './registration-client.js'
 
 const NOW = new Date('2026-11-05T10:00:00Z')
@@ -209,17 +210,68 @@ describe('registrationClient (stub)', () => {
     expect(result).toEqual({ answers: validAnswers })
   })
 
-  test('saveCalfDetails() saves answers that only have warnings', async () => {
+  test('saveCalfDetails() saves nothing while a warning is not confirmed', async () => {
     // Arrange
     const client = createRegistrationClient({ now: () => NOW })
     const answers = { ...validAnswers, dateOfBirth: '8/10/2026' }
     await client.saveCalfDetails({ ...registration, answers })
 
     // Act
+    const calf = await client.getCalf({ ...registration, calfNumber: 1 })
+
+    // Assert
+    expect(calf).toBeNull()
+  })
+
+  test('saveCalfDetails() saves answers whose warnings are all confirmed', async () => {
+    // Arrange
+    const client = createRegistrationClient({ now: () => NOW })
+    const answers = { ...validAnswers, dateOfBirth: '8/10/2026' }
+
+    // Act
+    const result = await client.saveCalfDetails({
+      ...registration,
+      answers,
+      acknowledgedWarnings: ['overDeadline']
+    })
+
+    // Assert
+    expect(result).toEqual({ errors: [], warnings: [] })
+    expect(await client.getCalfDetails(registration)).toEqual({ answers })
+  })
+
+  test('saveCalfDetails() still reports a warning when another one is confirmed', async () => {
+    // Arrange
+    const client = createRegistrationClient({ now: () => NOW })
+
+    // Act
+    const result = await client.saveCalfDetails({
+      ...registration,
+      answers: { ...validAnswers, dateOfBirth: '8/10/2026' },
+      acknowledgedWarnings: ['somethingElse']
+    })
+
+    // Assert
+    expect(result.warnings).toEqual([
+      { field: 'dateOfBirth', code: 'overDeadline' }
+    ])
+    expect(await client.getCalfDetails(registration)).toEqual({ answers: {} })
+  })
+
+  test('saveCalfDetails() keeps the saved answers when a change is not confirmed', async () => {
+    // Arrange
+    const client = createRegistrationClient({ now: () => NOW })
+    await client.saveCalfDetails({ ...registration, answers: validAnswers })
+    await client.saveCalfDetails({
+      ...registration,
+      answers: { ...validAnswers, dateOfBirth: '8/10/2026' }
+    })
+
+    // Act
     const result = await client.getCalfDetails(registration)
 
     // Assert
-    expect(result).toEqual({ answers })
+    expect(result).toEqual({ answers: validAnswers })
   })
 
   test('saveCalfDetails() saves nothing when there are errors', async () => {
@@ -370,24 +422,59 @@ describe('registrationClient (stub)', () => {
     }
   )
 
-  test('saveDamDetails() throws for a calf the registration does not have', async () => {
+  test('saveDamDetails() returns null for a calf the registration does not have', async () => {
     // Arrange
     const client = createRegistrationClient({ now: () => NOW })
-    let error
 
     // Act
-    try {
-      await client.saveDamDetails({
-        ...registration,
-        calfNumber: 1,
-        answers: { damType: 'genetic' }
-      })
-    } catch (e) {
-      error = e
-    }
+    const result = await client.saveDamDetails({
+      ...registration,
+      calfNumber: 1,
+      answers: { damType: 'genetic' }
+    })
 
     // Assert
-    expect(error).toBeInstanceOf(Error)
-    expect(error.message).toBe('No calf 1 in this registration')
+    expect(result).toBeNull()
+  })
+
+  test('saveDamDetails() returns null once the registration has expired', async () => {
+    // Arrange
+    let at = NOW
+    const client = createRegistrationClient({ now: () => at })
+    await client.saveCalfDetails({ ...registration, answers: validAnswers })
+    at = new Date(NOW.getTime() + DRAFT_TTL_MS)
+
+    // Act
+    const result = await client.saveDamDetails({
+      ...registration,
+      calfNumber: 1,
+      answers: { damType: 'genetic' }
+    })
+
+    // Assert
+    expect(result).toBeNull()
+  })
+
+  test('saveDamDetails() restarts the expiry of the registration', async () => {
+    // Arrange
+    let at = NOW
+    const client = createRegistrationClient({ now: () => at })
+    await client.saveCalfDetails({ ...registration, answers: validAnswers })
+    at = new Date(NOW.getTime() + DRAFT_TTL_MS - 1)
+    await client.saveDamDetails({
+      ...registration,
+      calfNumber: 1,
+      answers: { damType: 'genetic' }
+    })
+    at = new Date(NOW.getTime() + DRAFT_TTL_MS + 1)
+
+    // Act
+    const calf = await client.getCalf({ ...registration, calfNumber: 1 })
+
+    // Assert
+    expect(calf).toEqual({
+      calfDetails: validAnswers,
+      damDetails: { damType: 'genetic' }
+    })
   })
 })
