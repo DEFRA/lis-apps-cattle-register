@@ -5,8 +5,8 @@
  * (see draft-store.js): not shared between instances, lost on restart, and
  * expired or evicted after a while. The rules below move to that service.
  * Keep the interface (getCalfDetails/saveCalfDetails/getCalf/saveDamDetails/
- * saveGeneticDam, field + code results, null for a calf the registration
- * does not have) when replacing it with the real client.
+ * saveGeneticDam/saveSurrogateDam, field + code results, null for a calf the
+ * registration does not have) when replacing it with the real client.
  */
 /** @import { CalendarDate } from '#server/common/helpers/calendar-date.js' */
 import { breedOptions } from '#server/common/helpers/breed-options.js'
@@ -46,10 +46,17 @@ const knownBreeds = new Set(breedOptions)
  */
 
 /**
+ * @typedef {object} SurrogateDamAnswers
+ * @property {string} [geneticDamEarTagNumber]
+ * @property {string} [surrogateDamEarTagNumber]
+ */
+
+/**
  * @typedef {object} Calf
  * @property {CalfDetailsAnswers} calfDetails
  * @property {DamDetailsAnswers} damDetails
  * @property {GeneticDamAnswers} geneticDam - empty unless damType is genetic
+ * @property {SurrogateDamAnswers} surrogateDam - empty unless damType is surrogate
  */
 
 /**
@@ -61,7 +68,7 @@ const knownBreeds = new Set(breedOptions)
 
 /**
  * @typedef {object} FieldResult
- * @property {'earTagNumber'|'dateOfBirth'|'sex'|'breed'|'damType'} field
+ * @property {'earTagNumber'|'dateOfBirth'|'sex'|'breed'|'damType'|'geneticDamEarTagNumber'|'surrogateDamEarTagNumber'} field
  * @property {string} code
  */
 
@@ -187,13 +194,33 @@ function validateDamDetails(answers) {
 }
 
 /**
+ * @param {Record<string, string | undefined>} answers
+ * @param {string[]} fields
+ * @returns {FieldResult[]} a required error for each blank field, in order
+ */
+function blankFieldErrors(answers, fields) {
+  return fields
+    .filter((field) => isBlank(answers[field]))
+    .map((field) => ({ field, code: 'required' }))
+}
+
+/**
  * @param {GeneticDamAnswers} answers
  * @returns {FieldResult[]}
  */
 function validateGeneticDam(answers) {
-  return isBlank(answers.earTagNumber)
-    ? [{ field: 'earTagNumber', code: 'required' }]
-    : []
+  return blankFieldErrors(answers, ['earTagNumber'])
+}
+
+/**
+ * @param {SurrogateDamAnswers} answers
+ * @returns {FieldResult[]}
+ */
+function validateSurrogateDam(answers) {
+  return blankFieldErrors(answers, [
+    'geneticDamEarTagNumber',
+    'surrogateDamEarTagNumber'
+  ])
 }
 
 /**
@@ -208,11 +235,12 @@ function storeKey({ cph, registrationId, userId }) {
  * @param {Calf} calf
  * @returns {Calf} a copy, so callers cannot change what is held
  */
-function copyCalf({ calfDetails, damDetails, geneticDam }) {
+function copyCalf({ calfDetails, damDetails, geneticDam, surrogateDam }) {
   return {
     calfDetails: { ...calfDetails },
     damDetails: { ...damDetails },
-    geneticDam: { ...geneticDam }
+    geneticDam: { ...geneticDam },
+    surrogateDam: { ...surrogateDam }
   }
 }
 
@@ -226,36 +254,90 @@ function unacknowledged(warnings, acknowledgedWarnings) {
 }
 
 /**
+ * @param {object} store
+ * @param {RegistrationKey} key
+ * @param {number} calfNumber
+ * @returns {Calf | undefined}
+ */
+function findStoredCalf(store, key, calfNumber) {
+  return store.get(storeKey(key))?.[calfNumber - 1]
+}
+
+/**
+ * Writes the calf back, which also restarts the draft's expiry.
+ * @param {object} store
+ * @param {RegistrationKey} key
+ * @param {number} calfNumber
+ * @param {Calf} calf
+ */
+function saveStoredCalf(store, key, calfNumber, calf) {
+  const calves = [...(store.get(storeKey(key)) ?? [])]
+
+  calves[calfNumber - 1] = calf
+  store.set(storeKey(key), calves, key.userId)
+}
+
+/**
+ * Saves the answers, trimmed, about the dam of a calf born via one type of
+ * dam, when there are no errors. Throws when the calf was born via the other type.
+ * @param {object} store
+ * @param {{ damType: string, property: 'geneticDam'|'surrogateDam', validate: (answers: object) => FieldResult[] }} dam
+ * @param {RegistrationKey & { calfNumber: number, answers: object }} registration
+ * @returns {{ errors: FieldResult[] } | null} null, saving nothing, when
+ *   the registration has no such calf
+ */
+function saveDamAnswers(
+  store,
+  { damType, property, validate },
+  { calfNumber, answers, ...key }
+) {
+  const calf = findStoredCalf(store, key, calfNumber)
+
+  if (!calf) {
+    return null
+  }
+
+  if (calf.damDetails.damType !== damType) {
+    throw new Error(`Calf ${calfNumber} was not born via a ${damType} dam`)
+  }
+
+  const errors = validate(answers)
+
+  if (errors.length === 0) {
+    saveStoredCalf(store, key, calfNumber, {
+      ...calf,
+      [property]: trimAnswers(answers)
+    })
+  }
+
+  return { errors }
+}
+
+const GENETIC_DAM = {
+  damType: 'genetic',
+  property: 'geneticDam',
+  validate: validateGeneticDam
+}
+
+const SURROGATE_DAM = {
+  damType: 'surrogate',
+  property: 'surrogateDam',
+  validate: validateSurrogateDam
+}
+
+/**
  * @param {object} [options]
  * @param {() => Date} [options.now] - the current instant; injectable for tests
  * @param {object} [options.store] - where drafts are held; injectable for tests
- * @returns {{ getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function, saveGeneticDam: Function }}
+ * @returns {{ getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function, saveGeneticDam: Function, saveSurrogateDam: Function }}
  */
 export function createRegistrationClient({
   now = () => new Date(),
   store = createDraftStore({ now })
 } = {}) {
-  /**
-   * @param {RegistrationKey} key
-   * @param {number} calfNumber
-   * @returns {Calf | undefined}
-   */
-  function findCalf(key, calfNumber) {
-    return store.get(storeKey(key))?.[calfNumber - 1]
-  }
-
-  /**
-   * Writes the calf back, which also restarts the draft's expiry.
-   * @param {RegistrationKey} key
-   * @param {number} calfNumber
-   * @param {Calf} calf
-   */
-  function saveCalf(key, calfNumber, calf) {
-    const calves = [...(store.get(storeKey(key)) ?? [])]
-
-    calves[calfNumber - 1] = calf
-    store.set(storeKey(key), calves, key.userId)
-  }
+  const findCalf = (key, calfNumber) => findStoredCalf(store, key, calfNumber)
+  const saveCalf = (key, calfNumber, calf) =>
+    saveStoredCalf(store, key, calfNumber, calf)
 
   return {
     /**
@@ -289,7 +371,8 @@ export function createRegistrationClient({
         saveCalf(key, FIRST_CALF, {
           calfDetails: trimAnswers(answers),
           damDetails: calf?.damDetails ?? {},
-          geneticDam: calf?.geneticDam ?? {}
+          geneticDam: calf?.geneticDam ?? {},
+          surrogateDam: calf?.surrogateDam ?? {}
         })
       }
 
@@ -309,7 +392,7 @@ export function createRegistrationClient({
 
     /**
      * Saves the answers when there are no errors. A changed dam type
-     * discards the dam answered for the other type.
+     * discards the dam answers given for the other type.
      * @param {RegistrationKey & { calfNumber: number, answers: DamDetailsAnswers }} registration
      * @returns {Promise<{ errors: FieldResult[] } | null>} null, saving
      *   nothing, when the registration has no such calf (never started, or
@@ -325,13 +408,13 @@ export function createRegistrationClient({
       const errors = validateDamDetails(answers)
 
       if (errors.length === 0) {
-        const geneticDam =
-          calf.damDetails.damType === answers.damType ? calf.geneticDam : {}
+        const isUnchanged = calf.damDetails.damType === answers.damType
 
         saveCalf(key, calfNumber, {
           ...calf,
           damDetails: { ...answers },
-          geneticDam
+          geneticDam: isUnchanged ? calf.geneticDam : {},
+          surrogateDam: isUnchanged ? calf.surrogateDam : {}
         })
       }
 
@@ -346,27 +429,21 @@ export function createRegistrationClient({
      *   nothing, when the registration has no such calf (never started, or
      *   expired or evicted since the page was shown)
      */
-    async saveGeneticDam({ calfNumber, answers, ...key }) {
-      const calf = findCalf(key, calfNumber)
+    async saveGeneticDam(registration) {
+      return saveDamAnswers(store, GENETIC_DAM, registration)
+    },
 
-      if (!calf) {
-        return null
-      }
-
-      if (calf.damDetails.damType !== 'genetic') {
-        throw new Error(`Calf ${calfNumber} was not born via a genetic dam`)
-      }
-
-      const errors = validateGeneticDam(answers)
-
-      if (errors.length === 0) {
-        saveCalf(key, calfNumber, {
-          ...calf,
-          geneticDam: trimAnswers(answers)
-        })
-      }
-
-      return { errors }
+    /**
+     * Saves the answers, trimmed, the surrogate dam and the calf's genetic dam, when
+     * there are no errors. Throws when the calf was not born via a surrogate
+     * dam.
+     * @param {RegistrationKey & { calfNumber: number, answers: SurrogateDamAnswers }} registration
+     * @returns {Promise<{ errors: FieldResult[] } | null>} null, saving
+     *   nothing, when the registration has no such calf (never started, or
+     *   expired or evicted since the page was shown)
+     */
+    async saveSurrogateDam(registration) {
+      return saveDamAnswers(store, SURROGATE_DAM, registration)
     }
   }
 }

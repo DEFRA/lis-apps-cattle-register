@@ -10,6 +10,7 @@ import {
 import { calfPagePath, registrationPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { registrationKey } from '../registration.js'
+import { formErrors } from '../form-errors.js'
 import { getMessage } from './messages.js'
 
 const TEMPLATE = 'register/calf-details/index'
@@ -44,13 +45,7 @@ function buildViewModel({
   acknowledgedLateDateOfBirth = ''
 }) {
   const { cph, registrationId } = request.params
-  const errorList = errors.map((error) => ({
-    text: getMessage(error),
-    href: `#${error.field}`
-  }))
-  const fieldErrors = Object.fromEntries(
-    errors.map((error) => [error.field, { text: getMessage(error) }])
-  )
+  const { errorList, fieldErrors } = formErrors(errors, getMessage)
 
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,

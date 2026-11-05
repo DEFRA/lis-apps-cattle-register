@@ -4,6 +4,7 @@ import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 import { registrationClient } from '#server/services/registration-client.js'
 import { calfPagePath, registrationPagePath } from '../paths.js'
 import { calfNotFound, registrationKey } from '../registration.js'
+import { formErrors } from '../form-errors.js'
 import { getMessage } from './messages.js'
 
 const TEMPLATE = 'register/dam-details/index'
@@ -36,13 +37,7 @@ function nextPageFor(damType) {
  */
 function buildViewModel({ request, damType, errors = [] }) {
   const { cph, registrationId, calfNumber } = request.params
-  const errorList = errors.map((error) => ({
-    text: getMessage(error),
-    href: `#${error.field}`
-  }))
-  const fieldErrors = Object.fromEntries(
-    errors.map((error) => [error.field, { text: getMessage(error) }])
-  )
+  const { errorList, fieldErrors } = formErrors(errors, getMessage)
 
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,

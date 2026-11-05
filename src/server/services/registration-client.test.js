@@ -273,7 +273,8 @@ describe('registrationClient (stub)', () => {
     expect(calf).toEqual({
       calfDetails: changed,
       damDetails: { damType: 'genetic' },
-      geneticDam: {}
+      geneticDam: {},
+      surrogateDam: {}
     })
   })
 
@@ -289,7 +290,8 @@ describe('registrationClient (stub)', () => {
     expect(calf).toEqual({
       calfDetails: validAnswers,
       damDetails: {},
-      geneticDam: {}
+      geneticDam: {},
+      surrogateDam: {}
     })
   })
 
@@ -320,7 +322,8 @@ describe('registrationClient (stub)', () => {
     expect(second).toEqual({
       calfDetails: validAnswers,
       damDetails: {},
-      geneticDam: {}
+      geneticDam: {},
+      surrogateDam: {}
     })
   })
 
@@ -425,7 +428,8 @@ describe('registrationClient (stub)', () => {
     expect(calf).toEqual({
       calfDetails: validAnswers,
       damDetails: { damType: 'genetic' },
-      geneticDam: {}
+      geneticDam: {},
+      surrogateDam: {}
     })
   })
 })

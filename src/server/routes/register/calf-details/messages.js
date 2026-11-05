@@ -1,3 +1,5 @@
+import { createGetMessage } from '../form-errors.js'
+
 const BREED_MESSAGE =
   'Enter the animal breed or breed code into the text box and select the correct one from the suggested options'
 
@@ -21,20 +23,4 @@ const MESSAGES = {
   }
 }
 
-/**
- * The text shown to the user for a validation result from the registration
- * service. Throws on an unknown field or code so a new rule cannot reach the
- * page without wording.
- * @param {{ field: string, code: string }} result
- * @returns {string}
- */
-export function getMessage({ field, code }) {
-  if (
-    !Object.hasOwn(MESSAGES, field) ||
-    !Object.hasOwn(MESSAGES[field], code)
-  ) {
-    throw new Error(`No message for ${field} ${code}`)
-  }
-
-  return MESSAGES[field][code]
-}
+export const getMessage = createGetMessage(MESSAGES)
