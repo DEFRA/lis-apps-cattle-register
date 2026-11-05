@@ -3,11 +3,16 @@ import Joi from 'joi'
 
 import { REGISTER_ROUTE } from './paths.js'
 import { demandRegisterAccess } from './holding-access.js'
+import { loadCalf } from './registration.js'
 import { startRegistrationController } from './start/controller.js'
 import {
   calfDetailsController,
   calfDetailsSubmitController
 } from './calf-details/controller.js'
+import {
+  damDetailsController,
+  damDetailsSubmitController
+} from './dam-details/controller.js'
 
 const MAX_FIELD_LENGTH = 200
 
@@ -44,6 +49,23 @@ const registrationParams = {
   failAction: failValidation
 }
 
+const calfParams = {
+  params: Joi.object({
+    cph,
+    registrationId: Joi.string().guid().required(),
+    calfNumber: Joi.string()
+      .pattern(/^[1-9]\d{0,2}$/)
+      .required()
+      .custom(Number)
+  }),
+  failAction: failValidation
+}
+
+const calfPrerequisites = [
+  { method: demandRegisterAccess },
+  { method: loadCalf, assign: 'calf' }
+]
+
 const formField = Joi.string().max(MAX_FIELD_LENGTH).allow('').default('')
 
 const calfDetailsPayload = Joi.object({
@@ -52,6 +74,10 @@ const calfDetailsPayload = Joi.object({
   sex: formField,
   breed: formField,
   acknowledgedLateDateOfBirth: formField
+}).options({ stripUnknown: true })
+
+const damDetailsPayload = Joi.object({
+  damType: formField
 }).options({ stripUnknown: true })
 
 export const register = {
@@ -87,6 +113,27 @@ export const register = {
               payload: calfDetailsPayload
             },
             pre: [{ method: demandRegisterAccess }]
+          }
+        },
+        {
+          method: 'GET',
+          path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/dam-details`,
+          ...damDetailsController,
+          options: {
+            validate: calfParams,
+            pre: calfPrerequisites
+          }
+        },
+        {
+          method: 'POST',
+          path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/dam-details`,
+          ...damDetailsSubmitController,
+          options: {
+            validate: {
+              ...calfParams,
+              payload: damDetailsPayload
+            },
+            pre: calfPrerequisites
           }
         }
       ])

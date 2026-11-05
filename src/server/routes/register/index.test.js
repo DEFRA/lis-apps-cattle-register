@@ -205,7 +205,8 @@ describe('register routes', () => {
       expect($('#breed').val()).toBe('Aberdeen Angus (AA)')
       expect(registrationClient.getCalfDetails).toHaveBeenCalledWith({
         cph: CPH,
-        registrationId: REGISTRATION_ID
+        registrationId: REGISTRATION_ID,
+        userId: 'test-user'
       })
     })
 
@@ -309,11 +310,12 @@ describe('register routes', () => {
       // Assert
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(
-        `${REGISTER_PATH}/${REGISTRATION_ID}/dam-details`
+        `${REGISTER_PATH}/${REGISTRATION_ID}/calves/1/dam-details`
       )
       expect(saveCalfDetails).toHaveBeenCalledWith({
         cph: CPH,
         registrationId: REGISTRATION_ID,
+        userId: 'test-user',
         answers: validPayload
       })
     })
@@ -471,7 +473,7 @@ describe('register routes', () => {
       // Assert
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(
-        `${REGISTER_PATH}/${REGISTRATION_ID}/dam-details`
+        `${REGISTER_PATH}/${REGISTRATION_ID}/calves/1/dam-details`
       )
     })
 
