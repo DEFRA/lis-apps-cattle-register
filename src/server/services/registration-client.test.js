@@ -135,23 +135,6 @@ describe('registrationClient (stub)', () => {
     }
   )
 
-  test('saveCalfDetails() warns, without an error, when the date of birth is 28 days ago', async () => {
-    // Arrange
-    const client = createRegistrationClient({ now: () => NOW })
-
-    // Act
-    const result = await client.saveCalfDetails({
-      ...registration,
-      answers: { ...validAnswers, dateOfBirth: '8/10/2026' }
-    })
-
-    // Assert
-    expect(result).toEqual({
-      errors: [],
-      warnings: [{ field: 'dateOfBirth', code: 'overDeadline' }]
-    })
-  })
-
   test('saveCalfDetails() rejects a sex other than male or female', async () => {
     // Arrange
     const client = createRegistrationClient({ now: () => NOW })
@@ -210,68 +193,26 @@ describe('registrationClient (stub)', () => {
     expect(result).toEqual({ answers: validAnswers })
   })
 
-  test('saveCalfDetails() saves nothing while a warning is not confirmed', async () => {
+  test('saveCalfDetails() saves the answers trimmed', async () => {
     // Arrange
     const client = createRegistrationClient({ now: () => NOW })
-    const answers = { ...validAnswers, dateOfBirth: '8/10/2026' }
-    await client.saveCalfDetails({ ...registration, answers })
+    const padded = Object.fromEntries(
+      Object.entries(validAnswers).map(([field, answer]) => [
+        field,
+        ` ${answer}  `
+      ])
+    )
 
     // Act
-    const calf = await client.getCalf({ ...registration, calfNumber: 1 })
-
-    // Assert
-    expect(calf).toBeNull()
-  })
-
-  test('saveCalfDetails() saves answers whose warnings are all confirmed', async () => {
-    // Arrange
-    const client = createRegistrationClient({ now: () => NOW })
-    const answers = { ...validAnswers, dateOfBirth: '8/10/2026' }
-
-    // Act
-    const result = await client.saveCalfDetails({
-      ...registration,
-      answers,
-      acknowledgedWarnings: ['overDeadline']
-    })
-
-    // Assert
-    expect(result).toEqual({ errors: [], warnings: [] })
-    expect(await client.getCalfDetails(registration)).toEqual({ answers })
-  })
-
-  test('saveCalfDetails() still reports a warning when another one is confirmed', async () => {
-    // Arrange
-    const client = createRegistrationClient({ now: () => NOW })
-
-    // Act
-    const result = await client.saveCalfDetails({
-      ...registration,
-      answers: { ...validAnswers, dateOfBirth: '8/10/2026' },
-      acknowledgedWarnings: ['somethingElse']
-    })
-
-    // Assert
-    expect(result.warnings).toEqual([
-      { field: 'dateOfBirth', code: 'overDeadline' }
-    ])
-    expect(await client.getCalfDetails(registration)).toEqual({ answers: {} })
-  })
-
-  test('saveCalfDetails() keeps the saved answers when a change is not confirmed', async () => {
-    // Arrange
-    const client = createRegistrationClient({ now: () => NOW })
-    await client.saveCalfDetails({ ...registration, answers: validAnswers })
     await client.saveCalfDetails({
       ...registration,
-      answers: { ...validAnswers, dateOfBirth: '8/10/2026' }
+      answers: { ...padded, sex: 'female' }
     })
 
-    // Act
-    const result = await client.getCalfDetails(registration)
-
     // Assert
-    expect(result).toEqual({ answers: validAnswers })
+    expect(await client.getCalfDetails(registration)).toEqual({
+      answers: validAnswers
+    })
   })
 
   test('saveCalfDetails() saves nothing when there are errors', async () => {

@@ -177,7 +177,7 @@ describe('dam details submit routes', () => {
         `Error: ${DAM_TYPE_MESSAGE}`
       )
       expect($('legend .govuk-caption-l').text().trim()).toBe(
-        'Official animal ear tag number: UK123456301550'
+        'Official animal ear tag number: UK 123456 301550'
       )
       expect($('input[name="damType"]:checked')).toHaveLength(0)
     })

@@ -138,7 +138,7 @@ describe('dam details routes', () => {
       expect($('title').text().trim()).toMatch(/^Dam details - /)
       expect($('h1').text().trim()).toBe('Dam details')
       expect($('legend .govuk-caption-l').text().trim()).toBe(
-        'Official animal ear tag number: UK123456301550'
+        'Official animal ear tag number: UK 123456 301550'
       )
       expect($('.govuk-back-link').attr('href')).toBe(
         `${REGISTER_PATH}/${registrationId}/calf-details`

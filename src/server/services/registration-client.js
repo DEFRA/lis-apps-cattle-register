@@ -15,6 +15,7 @@ import {
   toUkCalendarDate
 } from '#server/common/helpers/calendar-date.js'
 import { createDraftStore } from './draft-store.js'
+import { trimAnswers } from './registration-calf-details.js'
 
 const SEXES = new Set(['male', 'female'])
 const DAM_TYPES = new Set(['genetic', 'surrogate'])
@@ -226,7 +227,7 @@ export function createRegistrationClient({
     const calves = [...(store.get(storeKey(key)) ?? [])]
 
     calves[calfNumber - 1] = calf
-    store.set(storeKey(key), calves)
+    store.set(storeKey(key), calves, key.userId)
   }
 
   return {
@@ -240,7 +241,7 @@ export function createRegistrationClient({
     },
 
     /**
-     * Saves the answers, as the first calf, only when there are no errors
+     * Saves the answers, trimmed, as the first calf, only when there are no errors
      * and the user has confirmed every warning; otherwise the saved answers
      * are left as they were.
      * @param {RegistrationKey & { answers: CalfDetailsAnswers, acknowledgedWarnings?: string[] }} registration
@@ -258,7 +259,10 @@ export function createRegistrationClient({
       if (result.errors.length === 0 && result.warnings.length === 0) {
         const damDetails = findCalf(key, FIRST_CALF)?.damDetails ?? {}
 
-        saveCalf(key, FIRST_CALF, { calfDetails: { ...answers }, damDetails })
+        saveCalf(key, FIRST_CALF, {
+          calfDetails: trimAnswers(answers),
+          damDetails
+        })
       }
 
       return result

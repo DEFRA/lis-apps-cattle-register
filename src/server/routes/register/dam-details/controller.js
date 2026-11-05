@@ -1,4 +1,5 @@
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
+import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
 import { registrationClient } from '#server/services/registration-client.js'
 import { calfPagePath, registrationPagePath } from '../paths.js'
@@ -46,7 +47,7 @@ function buildViewModel({ request, damType, errors = [] }) {
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
-    calfEarTagNumber: request.pre.calf.calfDetails.earTagNumber,
+    calfEarTagNumber: formatEarTag(request.pre.calf.calfDetails.earTagNumber),
     backLinkHref: registrationPagePath(cph, registrationId, 'calf-details'),
     formAction: calfPagePath(cph, registrationId, calfNumber, 'dam-details'),
     values: { damType },
