@@ -41,6 +41,11 @@ import {
   tagListController,
   tagListSubmitController
 } from './tag-list/controller.js'
+import {
+  CANCEL_PAGE,
+  cancelCalfController,
+  cancelCalfSubmitController
+} from './cancel/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -274,6 +279,27 @@ const checkCalfDetailsRoutes = [
   }
 ]
 
+const cancelCalfRoutes = [
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/${CANCEL_PAGE}`,
+    ...cancelCalfController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/${CANCEL_PAGE}`,
+    ...cancelCalfSubmitController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  }
+]
+
 const tagListPrerequisites = [
   { method: demandRegisterAccess },
   { method: loadRegistration, assign: 'registration' }
@@ -344,6 +370,7 @@ export const register = {
         ...surrogateDamRoutes,
         ...sireDetailsRoutes,
         ...checkCalfDetailsRoutes,
+        ...cancelCalfRoutes,
         ...tagListRoutes
       ])
     }

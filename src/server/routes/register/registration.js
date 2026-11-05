@@ -59,7 +59,7 @@ export function calfNotFound(request, h) {
 
 /**
  * Route prerequisite for a page about every calf in the registration: a
- * registration with no calves (never started, or expired or evicted) is sent
+ * registration there is not (never started, or expired or evicted) is sent
  * to calf details, where its first calf is entered.
  * @param {Request} request
  * @param {ResponseToolkit} h
@@ -70,7 +70,7 @@ export async function loadRegistration(request, h) {
     registrationKey(request)
   )
 
-  if (registration.calves.length > 0) {
+  if (registration) {
     return registration
   }
 
@@ -82,7 +82,7 @@ export async function loadRegistration(request, h) {
 }
 
 /**
-Route prerequisite for a page about one calf: the calf in the path must
+ * Route prerequisite for a page about one calf: the calf in the path must
  * have its calf details saved, otherwise see calfNotFound().
  * @param {Request} request
  * @param {ResponseToolkit} h

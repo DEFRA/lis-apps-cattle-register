@@ -24,38 +24,42 @@
 
       <h1 class="govuk-heading-l">{{ heading }}</h1>
 
-      <p class="govuk-body">
-        Select the tag number from the list to update calf, dam and sire details. You can use the status indicator to check which animals are ready to send.
-      </p>
+      {% if calves.length %}
+        <p class="govuk-body">
+          Select the tag number from the list to update calf, dam and sire details. You can use the status indicator to check which animals are ready to send.
+        </p>
 
-      {% set calfRows = [] %}
-      {% for calf in calves %}
-        {% set earTagHtml %}
-          <a class="govuk-link" id="{{ calf.id }}" href="{{ calf.href }}">{{ calf.earTagNumber }}</a>
-        {% endset %}
-        {% set statusHtml %}
-          {% if calf.isReady %}
-            {{ govukTag({ text: "Ready to send", classes: "govuk-tag--green" }) }}
-          {% else %}
-            {{ govukTag({ text: "Incomplete", classes: "govuk-tag--blue" }) }}
-          {% endif %}
-        {% endset %}
-        {% set calfRows = (calfRows.push([
-          { html: earTagHtml },
-          { html: statusHtml }
-        ]), calfRows) %}
-      {% endfor %}
+        {% set calfRows = [] %}
+        {% for calf in calves %}
+          {% set earTagHtml %}
+            <a class="govuk-link" id="{{ calf.id }}" href="{{ calf.href }}">{{ calf.earTagNumber }}</a>
+          {% endset %}
+          {% set statusHtml %}
+            {% if calf.isReady %}
+              {{ govukTag({ text: "Ready to send", classes: "govuk-tag--green" }) }}
+            {% else %}
+              {{ govukTag({ text: "Incomplete", classes: "govuk-tag--blue" }) }}
+            {% endif %}
+          {% endset %}
+          {% set calfRows = (calfRows.push([
+            { html: earTagHtml },
+            { html: statusHtml }
+          ]), calfRows) %}
+        {% endfor %}
 
-      {{ govukTable({
-        attributes: { id: "calves" },
-        caption: "Animals in this registration",
-        captionClasses: "govuk-visually-hidden",
-        head: [
-          { text: "Tag number" },
-          { text: "Status" }
-        ],
-        rows: calfRows
-      }) }}
+        {{ govukTable({
+          attributes: { id: "calves" },
+          caption: "Animals in this registration",
+          captionClasses: "govuk-visually-hidden",
+          head: [
+            { text: "Tag number" },
+            { text: "Status" }
+          ],
+          rows: calfRows
+        }) }}
+      {% else %}
+        <p class="govuk-body">You have not added any animals to this registration.</p>
+      {% endif %}
 
       {% call lisForm({ action: formAction }) %}
         {{ govukRadios({
