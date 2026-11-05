@@ -367,6 +367,26 @@ describe('register routes', () => {
     expect(response.headers.location).toBe(`${bundleUrl}/calf`)
   })
 
+  test('re-renders the submission list with an error when no choice is made', async () => {
+    // Arrange
+    const bundleUrl = await startBundle()
+
+    // Act
+    const response = await server.inject({
+      method: 'POST',
+      url: `${bundleUrl}/submission-list`,
+      auth,
+      payload: {}
+    })
+
+    // Assert
+    expect(response.statusCode).toBe(400)
+    expect(response.payload).toContain(
+      'Select yes to add additional animals or no to continue'
+    )
+    expect(response.payload).toContain('href="#add_more"')
+  })
+
   test('rejects missing calves and prevents editing submitted bundles', async () => {
     const missingCalf = await server.inject({
       method: 'GET',
