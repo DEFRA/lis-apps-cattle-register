@@ -4,7 +4,7 @@ import Joi from 'joi'
 import { REGISTER_ROUTE } from './paths.js'
 import { MAX_FIELD_LENGTH } from './form-limits.js'
 import { demandRegisterAccess } from './holding-access.js'
-import { demandDamType, loadCalf } from './registration.js'
+import { demandDamComplete, demandDamType, loadCalf } from './registration.js'
 import { startRegistrationController } from './start/controller.js'
 import {
   calfDetailsController,
@@ -22,6 +22,10 @@ import {
   surrogateDamController,
   surrogateDamSubmitController
 } from './surrogate-dam/controller.js'
+import {
+  sireDetailsController,
+  sireDetailsSubmitController
+} from './sire-details/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -154,6 +158,40 @@ const surrogateDamRoutes = [
   }
 ]
 
+const sireDetailsPrerequisites = [
+  ...calfPrerequisites,
+  { method: demandDamComplete }
+]
+
+const sireDetailsPayload = Joi.object({
+  sireEarTagNumber: formField,
+  sireName: formField
+}).options({ stripUnknown: true })
+
+const sireDetailsRoutes = [
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/sire-details`,
+    ...sireDetailsController,
+    options: {
+      validate: calfParams,
+      pre: sireDetailsPrerequisites
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/sire-details`,
+    ...sireDetailsSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: sireDetailsPayload
+      },
+      pre: sireDetailsPrerequisites
+    }
+  }
+]
+
 export const register = {
   plugin: {
     name: 'register',
@@ -211,7 +249,8 @@ export const register = {
           }
         },
         ...geneticDamRoutes,
-        ...surrogateDamRoutes
+        ...surrogateDamRoutes,
+        ...sireDetailsRoutes
       ])
     }
   }
