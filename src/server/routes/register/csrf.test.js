@@ -116,7 +116,9 @@ describe('register CSRF protection', () => {
       expect(saveCalfDetails).toHaveBeenCalledWith({
         cph: CPH,
         registrationId: REGISTRATION_ID,
-        answers: validPayload
+        userId: 'test-user',
+        answers: validPayload,
+        acknowledgedWarnings: []
       })
     })
 

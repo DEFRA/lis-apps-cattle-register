@@ -1,8 +1,11 @@
 /*
- * TEMPORARY STUB until the cattle-register backend-for-frontend lands under
- * LREG-876. The spoke is stateless: draft answers and validation belong to
- * that service, so nothing here is persisted and the rules below move there.
- * Keep the interface (getCalfDetails/saveCalfDetails, field + code results)
+ * TEMPORARY STUB until the cattle-register backend-for-frontend lands
+ * (LREG-876/878...). Draft answers and validation belong to that service.
+ * Until then answers are held in memory, per instance, in a bounded store
+ * (see draft-store.js): not shared between instances, lost on restart, and
+ * expired or evicted after a while. The rules below move to that service.
+ * Keep the interface (getCalfDetails/saveCalfDetails/getCalf/saveDamDetails,
+ * field + code results, null for a calf the registration does not have)
  * when replacing it with the real client.
  */
 /** @import { CalendarDate } from '#server/common/helpers/calendar-date.js' */
@@ -11,8 +14,12 @@ import {
   daysBetween,
   toUkCalendarDate
 } from '#server/common/helpers/calendar-date.js'
+import { createDraftStore } from './draft-store.js'
+import { trimAnswers } from './registration-calf-details.js'
 
 const SEXES = new Set(['male', 'female'])
+const DAM_TYPES = new Set(['genetic', 'surrogate'])
+const FIRST_CALF = 1
 const BIRTH_REPORTING_DEADLINE_DAYS = 27
 const DATE_PARTS = 3
 const DAY_OR_MONTH_PATTERN = /^\d{1,2}$/
@@ -29,8 +36,26 @@ const knownBreeds = new Set(breedOptions)
  */
 
 /**
+ * @typedef {object} DamDetailsAnswers
+ * @property {string} [damType] - genetic or surrogate
+ */
+
+/**
+ * @typedef {object} Calf
+ * @property {CalfDetailsAnswers} calfDetails
+ * @property {DamDetailsAnswers} damDetails
+ */
+
+/**
+ * @typedef {object} RegistrationKey
+ * @property {string} cph
+ * @property {string} registrationId
+ * @property {string} userId - the user who started the registration
+ */
+
+/**
  * @typedef {object} FieldResult
- * @property {'earTagNumber'|'dateOfBirth'|'sex'|'breed'} field
+ * @property {'earTagNumber'|'dateOfBirth'|'sex'|'breed'|'damType'} field
  * @property {string} code
  */
 
@@ -139,27 +164,142 @@ function validateCalfDetails(answers, now) {
 }
 
 /**
+ * @param {DamDetailsAnswers} answers
+ * @returns {FieldResult[]}
+ */
+function validateDamDetails(answers) {
+  return DAM_TYPES.has(answers.damType)
+    ? []
+    : [{ field: 'damType', code: 'required' }]
+}
+
+/**
+ * @param {RegistrationKey} key
+ * @returns {string}
+ */
+function storeKey({ cph, registrationId, userId }) {
+  return JSON.stringify([userId, cph, registrationId])
+}
+
+/**
+ * @param {Calf} calf
+ * @returns {Calf} a copy, so callers cannot change what is held
+ */
+function copyCalf({ calfDetails, damDetails }) {
+  return { calfDetails: { ...calfDetails }, damDetails: { ...damDetails } }
+}
+
+/**
+ * @param {FieldResult[]} warnings
+ * @param {string[]} acknowledgedWarnings - warning codes the user confirmed
+ * @returns {FieldResult[]} the warnings the user has not confirmed
+ */
+function unacknowledged(warnings, acknowledgedWarnings) {
+  return warnings.filter(({ code }) => !acknowledgedWarnings.includes(code))
+}
+
+/**
  * @param {object} [options]
  * @param {() => Date} [options.now] - the current instant; injectable for tests
- * @returns {{ getCalfDetails: Function, saveCalfDetails: Function }}
+ * @param {object} [options.store] - where drafts are held; injectable for tests
+ * @returns {{ getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function }}
  */
-export function createRegistrationClient({ now = () => new Date() } = {}) {
+export function createRegistrationClient({
+  now = () => new Date(),
+  store = createDraftStore({ now })
+} = {}) {
+  /**
+   * @param {RegistrationKey} key
+   * @param {number} calfNumber
+   * @returns {Calf | undefined}
+   */
+  function findCalf(key, calfNumber) {
+    return store.get(storeKey(key))?.[calfNumber - 1]
+  }
+
+  /**
+   * Writes the calf back, which also restarts the draft's expiry.
+   * @param {RegistrationKey} key
+   * @param {number} calfNumber
+   * @param {Calf} calf
+   */
+  function saveCalf(key, calfNumber, calf) {
+    const calves = [...(store.get(storeKey(key)) ?? [])]
+
+    calves[calfNumber - 1] = calf
+    store.set(storeKey(key), calves, key.userId)
+  }
+
   return {
     /**
-     * @param {{ cph: string, registrationId: string }} _registration
+     * The first calf's calf details answers, empty until saved.
+     * @param {RegistrationKey} key
      * @returns {Promise<{ answers: CalfDetailsAnswers }>}
      */
-    async getCalfDetails(_registration) {
-      return { answers: {} }
+    async getCalfDetails(key) {
+      return { answers: { ...findCalf(key, FIRST_CALF)?.calfDetails } }
     },
 
     /**
-     * Saves the answers when there are no errors. Warnings do not stop a save.
-     * @param {{ cph: string, registrationId: string, answers: CalfDetailsAnswers }} registration
+     * Saves the answers, trimmed, as the first calf, only when there are no errors
+     * and the user has confirmed every warning; otherwise the saved answers
+     * are left as they were.
+     * @param {RegistrationKey & { answers: CalfDetailsAnswers, acknowledgedWarnings?: string[] }} registration
+     *   acknowledgedWarnings - the codes of the warnings the user confirmed
      * @returns {Promise<{ errors: FieldResult[], warnings: FieldResult[] }>}
+     *   the errors, and the warnings not yet confirmed; saved when both are empty
      */
-    async saveCalfDetails({ answers }) {
-      return validateCalfDetails(answers, now())
+    async saveCalfDetails({ answers, acknowledgedWarnings = [], ...key }) {
+      const validation = validateCalfDetails(answers, now())
+      const result = {
+        errors: validation.errors,
+        warnings: unacknowledged(validation.warnings, acknowledgedWarnings)
+      }
+
+      if (result.errors.length === 0 && result.warnings.length === 0) {
+        const damDetails = findCalf(key, FIRST_CALF)?.damDetails ?? {}
+
+        saveCalf(key, FIRST_CALF, {
+          calfDetails: trimAnswers(answers),
+          damDetails
+        })
+      }
+
+      return result
+    },
+
+    /**
+     * @param {RegistrationKey & { calfNumber: number }} registration
+     * @returns {Promise<Calf | null>} the calf at that position, from 1, or
+     *   null when the registration has no such calf
+     */
+    async getCalf({ calfNumber, ...key }) {
+      const calf = findCalf(key, calfNumber)
+
+      return calf ? copyCalf(calf) : null
+    },
+
+    /**
+     * Saves the answers when there are no errors.
+     * @param {RegistrationKey & { calfNumber: number, answers: DamDetailsAnswers }} registration
+     * @returns {Promise<{ errors: FieldResult[] } | null>} null, saving
+     *   nothing, when the registration has no such calf (never started, or
+     *   expired or evicted since the page was shown)
+     */
+    async saveDamDetails({ calfNumber, answers, ...key }) {
+      const calf = findCalf(key, calfNumber)
+
+      if (!calf) {
+        return null
+      }
+
+      const errors = validateDamDetails(answers)
+
+      if (errors.length === 0) {
+        saveCalf(key, calfNumber, { ...calf, damDetails: { ...answers } })
+      }
+
+      return { errors }
     }
   }
 }
