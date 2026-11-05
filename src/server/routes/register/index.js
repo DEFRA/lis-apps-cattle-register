@@ -8,7 +8,8 @@ import {
   demandCalfComplete,
   demandDamComplete,
   demandDamType,
-  loadCalf
+  loadCalf,
+  loadRegistration
 } from './registration.js'
 import { returnQuery } from './check-return.js'
 import { startRegistrationController } from './start/controller.js'
@@ -36,6 +37,10 @@ import {
   checkCalfDetailsController,
   checkCalfDetailsSubmitController
 } from './check-calf-details/controller.js'
+import {
+  tagListController,
+  tagListSubmitController
+} from './tag-list/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -70,8 +75,15 @@ const registrationParams = {
   failAction: failValidation
 }
 
-const calfDetailsParams = {
-  ...registrationParams,
+// The first calf's calf details also has an address without a calf number,
+// where a registration starts.
+const firstCalfDetailsParams = {
+  params: Joi.object({
+    cph,
+    registrationId: Joi.string().guid().required(),
+    calfNumber: Joi.forbidden().default(1)
+  }),
+  failAction: failValidation,
   query: returnQuery
 }
 
@@ -116,6 +128,30 @@ const calfDetailsPayload = Joi.object({
   breed: formField,
   acknowledgedLateDateOfBirth: formField
 }).options({ stripUnknown: true })
+
+const calfDetailsRoutes = [
+  [`${REGISTER_ROUTE}/{registrationId}/calf-details`, firstCalfDetailsParams],
+  [
+    `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/calf-details`,
+    changeableCalfParams
+  ]
+].flatMap(([path, validate]) => [
+  {
+    method: 'GET',
+    path,
+    ...calfDetailsController,
+    options: { validate, pre: [{ method: demandRegisterAccess }] }
+  },
+  {
+    method: 'POST',
+    path,
+    ...calfDetailsSubmitController,
+    options: {
+      validate: { ...validate, payload: calfDetailsPayload },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  }
+])
 
 const damDetailsPayload = Joi.object({
   damType: formField
@@ -238,6 +274,36 @@ const checkCalfDetailsRoutes = [
   }
 ]
 
+const tagListPrerequisites = [
+  { method: demandRegisterAccess },
+  { method: loadRegistration, assign: 'registration' }
+]
+
+const tagListPayload = Joi.object({
+  addAnother: formField
+}).options({ stripUnknown: true })
+
+const tagListRoutes = [
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{registrationId}/tag-list`,
+    ...tagListController,
+    options: {
+      validate: registrationParams,
+      pre: tagListPrerequisites
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{registrationId}/tag-list`,
+    ...tagListSubmitController,
+    options: {
+      validate: { ...registrationParams, payload: tagListPayload },
+      pre: tagListPrerequisites
+    }
+  }
+]
+
 export const register = {
   plugin: {
     name: 'register',
@@ -252,27 +318,7 @@ export const register = {
             pre: [{ method: demandRegisterAccess }]
           }
         },
-        {
-          method: 'GET',
-          path: `${REGISTER_ROUTE}/{registrationId}/calf-details`,
-          ...calfDetailsController,
-          options: {
-            validate: calfDetailsParams,
-            pre: [{ method: demandRegisterAccess }]
-          }
-        },
-        {
-          method: 'POST',
-          path: `${REGISTER_ROUTE}/{registrationId}/calf-details`,
-          ...calfDetailsSubmitController,
-          options: {
-            validate: {
-              ...calfDetailsParams,
-              payload: calfDetailsPayload
-            },
-            pre: [{ method: demandRegisterAccess }]
-          }
-        },
+        ...calfDetailsRoutes,
         {
           method: 'GET',
           path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/dam-details`,
@@ -297,7 +343,8 @@ export const register = {
         ...geneticDamRoutes,
         ...surrogateDamRoutes,
         ...sireDetailsRoutes,
-        ...checkCalfDetailsRoutes
+        ...checkCalfDetailsRoutes,
+        ...tagListRoutes
       ])
     }
   }

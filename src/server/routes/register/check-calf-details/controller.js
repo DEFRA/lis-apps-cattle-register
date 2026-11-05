@@ -11,8 +11,6 @@ import { CHECK_PAGE, withReturnToCheck } from '../check-return.js'
 const TEMPLATE = 'register/check-calf-details/index'
 const PAGE_TITLE = 'Check calf details'
 const NOT_PROVIDED = 'Not provided'
-// Not built yet (LREG-887): the prototype continues with the list of calves
-// in the registration.
 const NEXT_PAGE = 'tag-list'
 const SEX_TEXT = { male: 'Male', female: 'Female' }
 const DAM_TYPE_TEXT = { genetic: 'Genetic', surrogate: 'Surrogate' }
@@ -126,13 +124,8 @@ function summaryRows(calf, changeHref) {
  */
 function buildViewModel(request) {
   const { cph, registrationId, calfNumber } = request.params
-  // Calf details has one address per registration, for the first calf.
   const changeHref = (page) =>
-    withReturnToCheck(
-      page === 'calf-details'
-        ? registrationPagePath(cph, registrationId, page)
-        : calfPagePath(cph, registrationId, calfNumber, page)
-    )
+    withReturnToCheck(calfPagePath(cph, registrationId, calfNumber, page))
 
   return {
     pageTitle: PAGE_TITLE,

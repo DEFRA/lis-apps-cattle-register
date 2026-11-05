@@ -1,0 +1,85 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "form/macro.njk" import lisForm with context %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: backLinkHref
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errorList.length %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: errorList
+        }) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-l">{{ heading }}</h1>
+
+      <p class="govuk-body">
+        Select the tag number from the list to update calf, dam and sire details. You can use the status indicator to check which animals are ready to send.
+      </p>
+
+      {% set calfRows = [] %}
+      {% for calf in calves %}
+        {% set earTagHtml %}
+          <a class="govuk-link" href="{{ calf.href }}">{{ calf.earTagNumber }}</a>
+        {% endset %}
+        {% set statusHtml %}
+          {% if calf.isReady %}
+            {{ govukTag({ text: "Ready to send", classes: "govuk-tag--green" }) }}
+          {% else %}
+            {{ govukTag({ text: "Incomplete", classes: "govuk-tag--blue" }) }}
+          {% endif %}
+        {% endset %}
+        {% set calfRows = (calfRows.push([
+          { html: earTagHtml },
+          { html: statusHtml, format: "numeric" }
+        ]), calfRows) %}
+      {% endfor %}
+
+      {{ govukTable({
+        attributes: { id: "calves" },
+        head: [
+          { text: "Tag number" },
+          { text: "Status", format: "numeric" }
+        ],
+        rows: calfRows
+      }) }}
+
+      {% call lisForm({ action: formAction }) %}
+        {{ govukRadios({
+          classes: "govuk-radios--inline",
+          idPrefix: "addAnother",
+          name: "addAnother",
+          fieldset: {
+            legend: {
+              text: "Add more animals",
+              classes: "govuk-fieldset__legend--m"
+            }
+          },
+          hint: {
+            text: "You can add calves from different dams or siblings from a multiple birth."
+          },
+          errorMessage: fieldErrors.addAnother,
+          items: [
+            { value: "yes", text: "Yes", checked: values.addAnother == "yes" },
+            { value: "no", text: "No", checked: values.addAnother == "no" }
+          ]
+        }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+      {% endcall %}
+    </div>
+  </div>
+{% endblock %}
