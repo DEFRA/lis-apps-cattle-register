@@ -63,8 +63,8 @@ function viewModel(errors, cph, bundleId, bundle) {
     heading: PAGE_TITLE,
     rows: createSummaryItems(cph, bundleId, bundle?.calves),
     postBackUrl: bundlePath(cph, bundleId, 'submission-list'),
-    errors: errors ?? {},
-    errorList: errorListFromErrors(errors ?? {})
+    errors,
+    errorList: errorListFromErrors(errors)
   }
 }
 
