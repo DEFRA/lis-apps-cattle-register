@@ -47,7 +47,7 @@ describe('tag list route for a registration with every calf cancelled', () => {
     vi.useRealTimers()
   })
 
-  test('GET says no animals are added, in place of the list, and asks to add more', async () => {
+  test('GET shows the intro, says no animals are added in place of the list, and asks to add more', async () => {
     // Arrange
     const registrationId = await emptyRegistration()
 
@@ -63,7 +63,10 @@ describe('tag list route for a registration with every calf cancelled', () => {
     const $ = load(response.payload)
     expect($('h1').text().trim()).toBe('Register new cattle births')
     expect($('#calves')).toHaveLength(0)
-    expect($('main p.govuk-body').text().trim()).toBe(
+    expect($('main p.govuk-body').first().text().trim()).toMatch(
+      /^Select the tag number from the list/
+    )
+    expect($('main p.govuk-body').eq(1).text().trim()).toBe(
       'You have not added any animals to this registration.'
     )
     expect($('.govuk-back-link').attr('href')).toBe(
@@ -91,7 +94,7 @@ describe('tag list route for a registration with every calf cancelled', () => {
   test('POST no asks for an animal to be added', async () => {
     // Arrange
     const registrationId = await emptyRegistration()
-    const message = 'Select yes to add an animal'
+    const message = 'Add at least one animal before continuing'
 
     // Act
     const response = await postForm(server, tagListPath(registrationId), {
