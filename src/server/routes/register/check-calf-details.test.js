@@ -110,7 +110,7 @@ describe('check calf details route', () => {
       expect($('.govuk-back-link').attr('href')).toBe(
         calfPath(registrationId, 'sire-details')
       )
-      const calfDetailsHref = `${REGISTER_PATH}/${registrationId}/calf-details?return=check`
+      const calfDetailsHref = `${calfPath(registrationId, 'calf-details')}?return=check`
       expect(summaryRows($)).toEqual([
         {
           key: 'Animal ear tag number',

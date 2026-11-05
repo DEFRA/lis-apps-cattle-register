@@ -141,3 +141,60 @@ export async function startRegistration(
 
   return registrationId
 }
+
+/**
+ * Saves the pages of one more calf in an existing registration, through
+ * the per-calf addresses, and confirms it on check calf details.
+ * @param {object} server
+ * @param {string} registrationId
+ * @param {number} calfNumber - the calf's position, from 1
+ * @param {object} [options]
+ * @param {string} [options.earTagNumber]
+ * @param {boolean} [options.complete] - false saves calf details only
+ * @param {boolean} [options.confirmed] - false leaves the calf unconfirmed
+ * @returns {Promise<void>}
+ * @throws {Error} when a page does not accept its answers
+ */
+export async function addCalf(
+  server,
+  registrationId,
+  calfNumber,
+  {
+    earTagNumber = `UK12345630155${calfNumber}`,
+    complete = true,
+    confirmed = true
+  } = {}
+) {
+  const steps = [
+    [
+      calfPath(registrationId, 'calf-details', calfNumber),
+      { ...calfDetailsPayload, earTagNumber }
+    ]
+  ]
+
+  if (complete) {
+    steps.push(
+      [
+        calfPath(registrationId, 'dam-details', calfNumber),
+        { damType: 'genetic' }
+      ],
+      [
+        calfPath(registrationId, 'genetic-dam', calfNumber),
+        damPayloads['genetic-dam']
+      ],
+      [calfPath(registrationId, 'sire-details', calfNumber), sireDetailsPayload]
+    )
+  }
+
+  if (complete && confirmed) {
+    steps.push([calfPath(registrationId, 'check-calf-details', calfNumber), {}])
+  }
+
+  for (const [url, payload] of steps) {
+    const response = await postForm(server, url, payload)
+
+    if (response.statusCode !== REDIRECT) {
+      throw new Error(`${url} answered ${response.statusCode}`)
+    }
+  }
+}

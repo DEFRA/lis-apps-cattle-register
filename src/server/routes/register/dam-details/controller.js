@@ -2,7 +2,7 @@ import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
 import { registrationClient } from '#server/services/registration-client.js'
-import { calfPagePath, registrationPagePath } from '../paths.js'
+import { calfPagePath } from '../paths.js'
 import { calfNotFound, registrationKey } from '../registration.js'
 import { formErrors } from '../form-errors.js'
 import { backLinkPath, keepReturn, pathAfterSave } from '../check-return.js'
@@ -47,7 +47,7 @@ function buildViewModel({ request, damType, errors = [] }) {
     backLinkHref: backLinkPath(
       request,
       calfNumber,
-      registrationPagePath(cph, registrationId, 'calf-details')
+      calfPagePath(cph, registrationId, calfNumber, 'calf-details')
     ),
     formAction: keepReturn(
       request,

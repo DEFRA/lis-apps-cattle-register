@@ -12,7 +12,6 @@ import { load } from 'cheerio'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
 import {
-  REGISTER_PATH,
   calfDetailsPayload,
   calfPath,
   damPayloads,
@@ -33,9 +32,7 @@ const RETURN = '?return=check'
  * @returns {string} the path of a page of calf 1, calf details included
  */
 function pagePath(registrationId, page) {
-  return page === 'calf-details'
-    ? `${REGISTER_PATH}/${registrationId}/calf-details`
-    : calfPath(registrationId, page)
+  return calfPath(registrationId, page)
 }
 
 const changeablePages = [

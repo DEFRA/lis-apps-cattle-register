@@ -1,3 +1,4 @@
+import Boom from '@hapi/boom'
 import { getMountPath } from '@defra/lis-hubs-infra-registry'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
@@ -18,6 +19,7 @@ const TEMPLATE = 'register/calf-details/index'
 const PAGE_TITLE = 'Calf details'
 const FIELDS = ['earTagNumber', 'dateOfBirth', 'sex', 'breed']
 const LATE_DATE_OF_BIRTH_WARNING = 'overDeadline'
+const TAG_LIST_PAGE = 'tag-list'
 
 /**
  * @param {object} answers
@@ -27,6 +29,19 @@ function formValuesFrom(answers) {
   return Object.fromEntries(
     FIELDS.map((field) => [field, answers[field] ?? ''])
   )
+}
+
+/**
+ * @param {object} request
+ * @returns {string} the page before calf details: the holding for the first
+ *   calf, where the registration starts, otherwise the list of calves
+ */
+function previousPath(request) {
+  const { cph, registrationId, calfNumber } = request.params
+
+  return calfNumber === 1
+    ? getMountPath('cattle-home', 'holding', { cph })
+    : registrationPagePath(cph, registrationId, TAG_LIST_PAGE)
 }
 
 /**
@@ -45,20 +60,16 @@ function buildViewModel({
   warnings = [],
   acknowledgedLateDateOfBirth = ''
 }) {
-  const { cph, registrationId } = request.params
+  const { cph, registrationId, calfNumber } = request.params
   const { errorList, fieldErrors } = formErrors(errors, getMessage)
 
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
-    backLinkHref: backLinkPath(
-      request,
-      1,
-      getMountPath('cattle-home', 'holding', { cph })
-    ),
+    backLinkHref: backLinkPath(request, calfNumber, previousPath(request)),
     formAction: keepReturn(
       request,
-      registrationPagePath(cph, registrationId, 'calf-details')
+      calfPagePath(cph, registrationId, calfNumber, 'calf-details')
     ),
     values,
     breedItems: breedOptions,
@@ -73,9 +84,16 @@ function buildViewModel({
 
 export const calfDetailsController = {
   async handler(request, h) {
-    const { answers } = await registrationClient.getCalfDetails(
-      registrationKey(request)
-    )
+    const saved = await registrationClient.getCalfDetails({
+      ...registrationKey(request),
+      calfNumber: request.params.calfNumber
+    })
+
+    if (!saved) {
+      return Boom.notFound()
+    }
+
+    const { answers } = saved
 
     return h.view(
       TEMPLATE,
@@ -86,7 +104,7 @@ export const calfDetailsController = {
 
 export const calfDetailsSubmitController = {
   async handler(request, h) {
-    const { cph, registrationId } = request.params
+    const { cph, registrationId, calfNumber } = request.params
     const { acknowledgedLateDateOfBirth, ...submitted } = request.payload
     const values = formValuesFrom(submitted)
 
@@ -97,11 +115,20 @@ export const calfDetailsSubmitController = {
     const isAcknowledged =
       acknowledgedLateDateOfBirth !== '' &&
       acknowledgedLateDateOfBirth === values.dateOfBirth
-    const { errors, warnings } = await registrationClient.saveCalfDetails({
+    const result = await registrationClient.saveCalfDetails({
       ...registrationKey(request),
+      calfNumber,
       answers: values,
       acknowledgedWarnings: isAcknowledged ? [LATE_DATE_OF_BIRTH_WARNING] : []
     })
+
+    // The calves before this one have expired, or been evicted, since the
+    // page was shown.
+    if (!result) {
+      return Boom.notFound()
+    }
+
+    const { errors, warnings } = result
     const warningsToShow = errors.length ? [] : warnings
 
     if (errors.length || warningsToShow.length) {
@@ -123,8 +150,8 @@ export const calfDetailsSubmitController = {
     return h.redirect(
       await pathAfterSave(
         request,
-        1,
-        calfPagePath(cph, registrationId, 1, 'dam-details')
+        calfNumber,
+        calfPagePath(cph, registrationId, calfNumber, 'dam-details')
       )
     )
   }

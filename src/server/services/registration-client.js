@@ -4,24 +4,26 @@
  * Until then answers are held in memory, per instance, in a bounded store
  * (see draft-store.js): not shared between instances, lost on restart, and
  * expired or evicted after a while. The rules below move to that service.
- * Keep the interface (getCalfDetails/saveCalfDetails/getCalf/saveDamDetails/
- * saveGeneticDam/saveSurrogateDam/saveSireDetails/confirmCalf, field + code
+ * Keep the interface (getRegistration/getCalfDetails/saveCalfDetails/getCalf/
+ * saveDamDetails/saveGeneticDam/saveSurrogateDam/saveSireDetails/confirmCalf,
+ * field + code
  * results, null for a calf the registration does not have) when replacing
  * it with the real client.
  */
-import { breedOptions } from '#server/common/helpers/breed-options.js'
 import { createDraftStore } from './draft-store.js'
-import { trimAnswers } from './registration-calf-details.js'
 import {
-  checkDateOfBirth,
-  lateRegistrationWarnings
-} from './registration-date-of-birth.js'
+  isBlank,
+  trimAnswers,
+  validateCalfDetails
+} from './registration-calf-details.js'
+import {
+  hasRoomForCalf,
+  isAddressableCalf,
+  isEarTagTaken
+} from './registration-calves.js'
 
-const SEXES = new Set(['male', 'female'])
 const DAM_TYPES = new Set(['genetic', 'surrogate'])
 const FIRST_CALF = 1
-
-const knownBreeds = new Set(breedOptions)
 
 /**
  * @typedef {object} CalfDetailsAnswers
@@ -76,49 +78,6 @@ const knownBreeds = new Set(breedOptions)
  * @property {'earTagNumber'|'dateOfBirth'|'sex'|'breed'|'damType'|'geneticDamEarTagNumber'|'surrogateDamEarTagNumber'} field
  * @property {string} code
  */
-
-/**
- * @param {string | undefined} text
- * @returns {boolean} true when there is no text other than whitespace
- */
-function isBlank(text) {
-  return (text ?? '').trim() === ''
-}
-
-/**
- * @param {string} breed
- * @returns {string | null} the error code, or null when the breed is listed
- */
-function checkBreed(breed) {
-  if (breed === '') {
-    return 'required'
-  }
-
-  return knownBreeds.has(breed) ? null : 'unknown'
-}
-
-/**
- * @param {CalfDetailsAnswers} answers
- * @param {Date} now
- * @returns {{ errors: FieldResult[], warnings: FieldResult[] }}
- */
-function validateCalfDetails(answers, now) {
-  const dateCheck = checkDateOfBirth((answers.dateOfBirth ?? '').trim(), now)
-  const codes = {
-    earTagNumber: isBlank(answers.earTagNumber) ? 'required' : null,
-    dateOfBirth: dateCheck.error ?? null,
-    sex: SEXES.has(answers.sex) ? null : 'required',
-    breed: checkBreed((answers.breed ?? '').trim())
-  }
-  const errors = Object.entries(codes)
-    .filter(([, code]) => code !== null)
-    .map(([field, code]) => ({ field, code }))
-  const warnings = dateCheck.birthDate
-    ? lateRegistrationWarnings(dateCheck.birthDate, now)
-    : []
-
-  return { errors, warnings }
-}
 
 /**
  * @param {DamDetailsAnswers} answers
@@ -202,6 +161,15 @@ function unacknowledged(warnings, acknowledgedWarnings) {
 /**
  * @param {object} store
  * @param {RegistrationKey} key
+ * @returns {Calf[]} the calves saved so far, in order
+ */
+function storedCalves(store, key) {
+  return store.get(storeKey(key)) ?? []
+}
+
+/**
+ * @param {object} store
+ * @param {RegistrationKey} key
  * @param {number} calfNumber
  * @returns {Calf | undefined}
  */
@@ -217,7 +185,7 @@ function findStoredCalf(store, key, calfNumber) {
  * @param {Calf} calf
  */
 function saveStoredCalf(store, key, calfNumber, calf) {
-  const calves = [...(store.get(storeKey(key)) ?? [])]
+  const calves = [...storedCalves(store, key)]
 
   calves[calfNumber - 1] = calf
   store.set(storeKey(key), calves, key.userId)
@@ -308,10 +276,52 @@ function confirmStoredCalf(store, { calfNumber, ...key }) {
 }
 
 /**
+ * @param {object} store
+ * @param {Date} now
+ * @param {RegistrationKey & { calfNumber?: number, answers: CalfDetailsAnswers, acknowledgedWarnings?: string[] }} registration
+ * @returns {{ errors: FieldResult[], warnings: FieldResult[] } | null} see
+ *   saveCalfDetails()
+ */
+function saveStoredCalfDetails(
+  store,
+  now,
+  { calfNumber = FIRST_CALF, answers, acknowledgedWarnings = [], ...key }
+) {
+  const calves = storedCalves(store, key)
+
+  if (!isAddressableCalf(calves, calfNumber)) {
+    return null
+  }
+
+  const validation = validateCalfDetails(answers, now, (earTagNumber) =>
+    isEarTagTaken(calves, calfNumber, earTagNumber)
+  )
+  const result = {
+    errors: validation.errors,
+    warnings: unacknowledged(validation.warnings, acknowledgedWarnings)
+  }
+
+  if (result.errors.length === 0 && result.warnings.length === 0) {
+    const calf = calves[calfNumber - 1]
+
+    saveStoredCalf(store, key, calfNumber, {
+      calfDetails: trimAnswers(answers),
+      damDetails: calf?.damDetails ?? {},
+      geneticDam: calf?.geneticDam ?? {},
+      surrogateDam: calf?.surrogateDam ?? {},
+      sireDetails: calf?.sireDetails ?? {},
+      checked: false
+    })
+  }
+
+  return result
+}
+
+/**
  * @param {object} [options]
  * @param {() => Date} [options.now] - the current instant; injectable for tests
  * @param {object} [options.store] - where drafts are held; injectable for tests
- * @returns {{ getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function, saveGeneticDam: Function, saveSurrogateDam: Function, saveSireDetails: Function, confirmCalf: Function }}
+ * @returns {{ getRegistration: Function, getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function, saveGeneticDam: Function, saveSurrogateDam: Function, saveSireDetails: Function, confirmCalf: Function }}
  */
 export function createRegistrationClient({
   now = () => new Date(),
@@ -323,43 +333,50 @@ export function createRegistrationClient({
 
   return {
     /**
-     * The first calf's calf details answers, empty until saved.
      * @param {RegistrationKey} key
-     * @returns {Promise<{ answers: CalfDetailsAnswers }>}
+     * @returns {Promise<{ calves: Calf[], canAddCalf: boolean }>} the calves
+     *   saved so far, in order (none for a registration never started, or
+     *   expired or evicted), and whether there is room for another
      */
-    async getCalfDetails(key) {
-      return { answers: { ...findCalf(key, FIRST_CALF)?.calfDetails } }
+    async getRegistration(key) {
+      const calves = storedCalves(store, key)
+
+      return {
+        calves: calves.map(copyCalf),
+        canAddCalf: hasRoomForCalf(calves)
+      }
     },
 
     /**
-     * Saves the answers, trimmed, as the first calf, only when there are no errors
-     * and the user has confirmed every warning; otherwise the saved answers
-     * are left as they were.
-     * @param {RegistrationKey & { answers: CalfDetailsAnswers, acknowledgedWarnings?: string[] }} registration
-     *   acknowledgedWarnings - the codes of the warnings the user confirmed
-     * @returns {Promise<{ errors: FieldResult[], warnings: FieldResult[] }>}
-     *   the errors, and the warnings not yet confirmed; saved when both are empty
+     * A calf's calf details answers, empty until saved.
+     * @param {RegistrationKey & { calfNumber?: number }} registration
+     *   calfNumber - from 1; the first calf when left out
+     * @returns {Promise<{ answers: CalfDetailsAnswers } | null>} null for a
+     *   calf that is neither saved nor the next one there is room for
      */
-    async saveCalfDetails({ answers, acknowledgedWarnings = [], ...key }) {
-      const validation = validateCalfDetails(answers, now())
-      const result = {
-        errors: validation.errors,
-        warnings: unacknowledged(validation.warnings, acknowledgedWarnings)
+    async getCalfDetails({ calfNumber = FIRST_CALF, ...key }) {
+      if (!isAddressableCalf(storedCalves(store, key), calfNumber)) {
+        return null
       }
 
-      if (result.errors.length === 0 && result.warnings.length === 0) {
-        const calf = findCalf(key, FIRST_CALF)
+      return { answers: { ...findCalf(key, calfNumber)?.calfDetails } }
+    },
 
-        saveCalf(key, FIRST_CALF, {
-          calfDetails: trimAnswers(answers),
-          damDetails: calf?.damDetails ?? {},
-          geneticDam: calf?.geneticDam ?? {},
-          surrogateDam: calf?.surrogateDam ?? {},
-          sireDetails: calf?.sireDetails ?? {}
-        })
-      }
-
-      return result
+    /**
+     * Saves the answers, trimmed, only when there are no errors and the user has
+     * confirmed every warning; otherwise the saved answers are left as they
+     * were. Another calf in the registration with the same ear tag is an
+     * error.
+     * @param {RegistrationKey & { calfNumber?: number, answers: CalfDetailsAnswers, acknowledgedWarnings?: string[] }} registration
+     *   calfNumber - from 1; the first calf when left out.
+     *   acknowledgedWarnings - the codes of the warnings the user confirmed
+     * @returns {Promise<{ errors: FieldResult[], warnings: FieldResult[] } | null>}
+     *   the errors, and the warnings not yet confirmed, saved when both are
+     *   empty; null, saving nothing, for a calf that is neither saved nor
+     *   the next one there is room for
+     */
+    async saveCalfDetails(registration) {
+      return saveStoredCalfDetails(store, now(), registration)
     },
 
     /**

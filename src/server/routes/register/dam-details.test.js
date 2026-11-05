@@ -141,7 +141,7 @@ describe('dam details routes', () => {
         'Official animal ear tag number: UK 123456 301550'
       )
       expect($('.govuk-back-link').attr('href')).toBe(
-        `${REGISTER_PATH}/${registrationId}/calf-details`
+        `${REGISTER_PATH}/${registrationId}/calves/1/calf-details`
       )
       expect($('main form').attr('action')).toBe(damDetailsPath(registrationId))
       expect($('main form').attr('method')).toBe('post')
