@@ -9,6 +9,7 @@ describe('getMessage()', () => {
       'required',
       'Select yes to add additional animals or no to continue'
     ],
+    ['addAnother', 'noCalves', 'Select yes to add an animal'],
     [
       'addAnother',
       'tooMany',

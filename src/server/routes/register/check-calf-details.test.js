@@ -171,6 +171,9 @@ describe('check calf details route', () => {
       )
       expect($('main form').attr('method')).toBe('post')
       expect($('main form button').text().trim()).toBe('Continue')
+      const cancel = $('main a.govuk-button--secondary')
+      expect(cancel.text().trim()).toBe('Cancel birth registration')
+      expect(cancel.attr('href')).toBe(calfPath(registrationId, 'cancel'))
     })
 
     test('it shows only the surrogate dam answers for a calf born via a surrogate dam', async () => {

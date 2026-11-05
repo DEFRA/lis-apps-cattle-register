@@ -26,6 +26,12 @@
           text: "Continue"
         }) }}
       {% endcall %}
+
+      {{ govukButton({
+        text: "Cancel birth registration",
+        href: cancelHref,
+        classes: "govuk-button--secondary"
+      }) }}
     </div>
   </div>
 {% endblock %}

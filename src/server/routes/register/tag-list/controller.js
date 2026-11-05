@@ -55,7 +55,9 @@ function buildViewModel({ request, addAnother = '', errors = [] }) {
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
-    backLinkHref: calves.at(-1).href,
+    backLinkHref:
+      calves.at(-1)?.href ??
+      calfPagePath(cph, registrationId, 1, 'calf-details'),
     formAction: registrationPagePath(cph, registrationId, TAG_LIST_PAGE),
     calves,
     values: { addAnother },
@@ -76,6 +78,10 @@ function buildViewModel({ request, addAnother = '', errors = [] }) {
 function validate(addAnother, { calves, canAddCalf }) {
   if (addAnother === 'yes') {
     return canAddCalf ? [] : [{ field: 'addAnother', code: 'tooMany' }]
+  }
+
+  if (addAnother === 'no' && calves.length === 0) {
+    return [{ field: 'addAnother', code: 'noCalves' }]
   }
 
   if (addAnother === 'no') {
