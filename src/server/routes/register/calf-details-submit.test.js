@@ -84,11 +84,12 @@ describe('calf details submit routes', () => {
       // Assert
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(
-        `${REGISTER_PATH}/${REGISTRATION_ID}/dam-details`
+        `${REGISTER_PATH}/${REGISTRATION_ID}/calves/1/dam-details`
       )
       expect(saveCalfDetails).toHaveBeenCalledWith({
         cph: CPH,
         registrationId: REGISTRATION_ID,
+        userId: 'test-user',
         answers: validPayload
       })
     })
@@ -246,7 +247,7 @@ describe('calf details submit routes', () => {
       // Assert
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(
-        `${REGISTER_PATH}/${REGISTRATION_ID}/dam-details`
+        `${REGISTER_PATH}/${REGISTRATION_ID}/calves/1/dam-details`
       )
     })
 

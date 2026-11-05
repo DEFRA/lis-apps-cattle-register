@@ -211,7 +211,8 @@ describe('register routes', () => {
       expect($('#breed').val()).toBe('Aberdeen Angus (AA)')
       expect(registrationClient.getCalfDetails).toHaveBeenCalledWith({
         cph: CPH,
-        registrationId: REGISTRATION_ID
+        registrationId: REGISTRATION_ID,
+        userId: 'test-user'
       })
     })
 

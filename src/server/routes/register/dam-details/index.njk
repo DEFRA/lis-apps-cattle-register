@@ -1,0 +1,59 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "form/macro.njk" import lisForm with context %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: backLinkHref
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errorList.length %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: errorList
+        }) }}
+      {% endif %}
+
+      {% set legendHtml %}
+        <span class="govuk-caption-l">Official animal ear tag number: {{ calfEarTagNumber }}</span>
+        <h1 class="govuk-fieldset__heading">{{ heading }}</h1>
+      {% endset %}
+
+      {% call lisForm({ action: formAction }) %}
+        {{ govukRadios({
+          idPrefix: "damType",
+          name: "damType",
+          fieldset: {
+            legend: {
+              html: legendHtml,
+              classes: "govuk-fieldset__legend--l"
+            }
+          },
+          errorMessage: fieldErrors.damType,
+          items: [
+            {
+              value: "genetic",
+              text: "Calf born via genetic dam",
+              checked: values.damType == "genetic"
+            },
+            {
+              value: "surrogate",
+              text: "Calf born via surrogate dam",
+              checked: values.damType == "surrogate"
+            }
+          ]
+        }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+      {% endcall %}
+    </div>
+  </div>
+{% endblock %}

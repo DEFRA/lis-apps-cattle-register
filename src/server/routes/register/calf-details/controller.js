@@ -7,8 +7,9 @@ import {
   formatCalendarDate,
   toUkCalendarDate
 } from '#server/common/helpers/calendar-date.js'
-import { registrationPagePath } from '../paths.js'
+import { calfPagePath, registrationPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
+import { registrationKey } from '../registration.js'
 import { getMessage } from './messages.js'
 
 const TEMPLATE = 'register/calf-details/index'
@@ -68,11 +69,9 @@ function buildViewModel({
 
 export const calfDetailsController = {
   async handler(request, h) {
-    const { cph, registrationId } = request.params
-    const { answers } = await registrationClient.getCalfDetails({
-      cph,
-      registrationId
-    })
+    const { answers } = await registrationClient.getCalfDetails(
+      registrationKey(request)
+    )
 
     return h.view(
       TEMPLATE,
@@ -87,8 +86,7 @@ export const calfDetailsSubmitController = {
     const { acknowledgedLateDateOfBirth, ...submitted } = request.payload
     const values = formValuesFrom(submitted)
     const { errors, warnings } = await registrationClient.saveCalfDetails({
-      cph,
-      registrationId,
+      ...registrationKey(request),
       answers: values
     })
 
@@ -116,6 +114,6 @@ export const calfDetailsSubmitController = {
         .code(errors.length ? statusCodes.badRequest : statusCodes.ok)
     }
 
-    return h.redirect(registrationPagePath(cph, registrationId, 'dam-details'))
+    return h.redirect(calfPagePath(cph, registrationId, 1, 'dam-details'))
   }
 }
