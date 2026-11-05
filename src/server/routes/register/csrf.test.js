@@ -150,5 +150,41 @@ describe('register CSRF protection', () => {
       expect(response.statusCode).toBe(statusCodes.forbidden)
       expect(saveCalfDetails).not.toHaveBeenCalled()
     })
+
+    test('it re-renders the CSRF token when a valid-token post fails validation', async () => {
+      // Arrange
+      const request = {
+        method: 'POST',
+        url: CALF_DETAILS_PATH,
+        auth: keeperAuth,
+        headers: csrfHeaders,
+        payload: { ...validPayload, earTagNumber: '', _csrf: CSRF_TOKEN }
+      }
+
+      // Act
+      const response = await server.inject(request)
+
+      // Assert
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+      const $ = load(response.payload)
+      expect($('main form input[name="_csrf"]').attr('value')).toBe(CSRF_TOKEN)
+    })
+
+    test('it rejects a same-origin post with no CSRF header and an empty _csrf field', async () => {
+      // Arrange
+      const request = {
+        method: 'POST',
+        url: CALF_DETAILS_PATH,
+        auth: keeperAuth,
+        headers: { 'sec-fetch-site': 'same-origin' },
+        payload: { ...validPayload, _csrf: '' }
+      }
+
+      // Act
+      const response = await server.inject(request)
+
+      // Assert
+      expect(response.statusCode).toBe(statusCodes.forbidden)
+    })
   })
 })
