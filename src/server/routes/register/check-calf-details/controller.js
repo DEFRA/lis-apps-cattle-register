@@ -137,6 +137,7 @@ function buildViewModel(request) {
   return {
     pageTitle: PAGE_TITLE,
     heading: PAGE_TITLE,
+    calfEarTagNumber: formatEarTag(request.pre.calf.calfDetails.earTagNumber),
     backLinkHref: calfPagePath(cph, registrationId, calfNumber, 'sire-details'),
     formAction: calfPagePath(cph, registrationId, calfNumber, CHECK_PAGE),
     rows: summaryRows(request.pre.calf, changeHref)
