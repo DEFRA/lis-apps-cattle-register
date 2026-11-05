@@ -1,0 +1,113 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "date-picker/macro.njk" import lisDatePicker %}
+{% from "form/macro.njk" import lisForm with context %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: backLinkHref
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errorList.length %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: errorList
+        }) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-l">{{ heading }}</h1>
+
+      {% call lisForm({ action: formAction }) %}
+        {{ govukInput({
+          id: "earTagNumber",
+          name: "earTagNumber",
+          classes: "govuk-input--width-20",
+          value: values.earTagNumber,
+          label: {
+            text: "Animal ear tag number",
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: "Enter the full animal ear tag number. For example, UK123456123456"
+          },
+          errorMessage: fieldErrors.earTagNumber,
+          spellcheck: false,
+          attributes: { maxlength: maxFieldLength }
+        }) }}
+
+        {{ lisDatePicker({
+          id: "dateOfBirth",
+          name: "dateOfBirth",
+          value: values.dateOfBirth,
+          label: {
+            text: "Date of birth",
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: "Select from the calendar or enter manually, for example 27/3/2026"
+          },
+          errorMessage: fieldErrors.dateOfBirth,
+          maxDate: maxDateOfBirth,
+          attributes: { maxlength: maxFieldLength }
+        }) }}
+
+        {{ govukRadios({
+          classes: "govuk-radios--inline",
+          idPrefix: "sex",
+          name: "sex",
+          fieldset: {
+            legend: {
+              text: "Sex of the calf",
+              classes: "govuk-fieldset__legend--m"
+            }
+          },
+          errorMessage: fieldErrors.sex,
+          items: [
+            { value: "male", text: "Male", checked: values.sex == "male" },
+            { value: "female", text: "Female", checked: values.sex == "female" }
+          ]
+        }) }}
+
+        {{ appAutocomplete({
+          id: "breed",
+          name: "breed",
+          classes: "govuk-input--width-20",
+          containerClasses: "app-autocomplete--width-20",
+          value: values.breed,
+          label: {
+            text: "Breed",
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: "Start typing the breed or enter the breed code and select from the list"
+          },
+          errorMessage: fieldErrors.breed,
+          items: breedItems,
+          minLength: 1,
+          attributes: { maxlength: maxFieldLength }
+        }) }}
+
+        {% for warning in warnings %}
+          {{ govukWarningText({
+            text: warning,
+            iconFallbackText: "Warning"
+          }) }}
+        {% endfor %}
+
+        {% if acknowledgedLateDateOfBirth %}
+          <input type="hidden" name="acknowledgedLateDateOfBirth" value="{{ acknowledgedLateDateOfBirth }}">
+        {% endif %}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+      {% endcall %}
+    </div>
+  </div>
+{% endblock %}
