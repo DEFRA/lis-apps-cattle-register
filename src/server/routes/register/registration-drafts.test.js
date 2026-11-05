@@ -73,6 +73,15 @@ function damDetailsPath(registrationId, calfNumber = 1) {
   return `${REGISTER_PATH}/${registrationId}/calves/${calfNumber}/dam-details`
 }
 
+/**
+ * @param {string} registrationId
+ * @param {number} [calfNumber]
+ * @returns {string}
+ */
+function geneticDamPath(registrationId, calfNumber = 1) {
+  return `${REGISTER_PATH}/${registrationId}/calves/${calfNumber}/genetic-dam`
+}
+
 describe('registration drafts', () => {
   let server
 
@@ -228,6 +237,42 @@ describe('registration drafts', () => {
       // Act
       const response = await post(damDetailsPath(registrationId, 2), {
         damType: 'genetic'
+      })
+
+      // Assert
+      expect(response.statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('a genetic dam answer sent as it expires goes back to calf details', async () => {
+      // Arrange
+      const registrationId = randomUUID()
+      await post(calfDetailsPath(registrationId), calfDetailsPayload)
+      await post(damDetailsPath(registrationId), { damType: 'genetic' })
+      vi.spyOn(registrationClient, 'saveGeneticDam').mockResolvedValueOnce(null)
+
+      // Act
+      const response = await post(geneticDamPath(registrationId), {
+        earTagNumber: 'UK123456501100'
+      })
+
+      // Assert
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(calfDetailsPath(registrationId))
+    })
+
+    test('a genetic dam answer for a later calf that has expired is not found', async () => {
+      // Arrange
+      const registrationId = randomUUID()
+      vi.spyOn(registrationClient, 'getCalf').mockResolvedValueOnce({
+        calfDetails: calfDetailsPayload,
+        damDetails: { damType: 'genetic' },
+        geneticDam: {}
+      })
+      vi.spyOn(registrationClient, 'saveGeneticDam').mockResolvedValueOnce(null)
+
+      // Act
+      const response = await post(geneticDamPath(registrationId, 2), {
+        earTagNumber: 'UK123456501100'
       })
 
       // Assert

@@ -272,7 +272,8 @@ describe('registrationClient (stub)', () => {
     // Assert
     expect(calf).toEqual({
       calfDetails: changed,
-      damDetails: { damType: 'genetic' }
+      damDetails: { damType: 'genetic' },
+      geneticDam: {}
     })
   })
 
@@ -285,7 +286,11 @@ describe('registrationClient (stub)', () => {
     const calf = await client.getCalf({ ...registration, calfNumber: 1 })
 
     // Assert
-    expect(calf).toEqual({ calfDetails: validAnswers, damDetails: {} })
+    expect(calf).toEqual({
+      calfDetails: validAnswers,
+      damDetails: {},
+      geneticDam: {}
+    })
   })
 
   test('getCalf() returns null for a calf the registration does not have', async () => {
@@ -312,7 +317,11 @@ describe('registrationClient (stub)', () => {
     const second = await client.getCalf({ ...registration, calfNumber: 1 })
 
     // Assert
-    expect(second).toEqual({ calfDetails: validAnswers, damDetails: {} })
+    expect(second).toEqual({
+      calfDetails: validAnswers,
+      damDetails: {},
+      geneticDam: {}
+    })
   })
 
   test.each(['genetic', 'surrogate'])(
@@ -415,7 +424,8 @@ describe('registrationClient (stub)', () => {
     // Assert
     expect(calf).toEqual({
       calfDetails: validAnswers,
-      damDetails: { damType: 'genetic' }
+      damDetails: { damType: 'genetic' },
+      geneticDam: {}
     })
   })
 })

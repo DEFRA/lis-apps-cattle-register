@@ -4,7 +4,7 @@ import Joi from 'joi'
 import { REGISTER_ROUTE } from './paths.js'
 import { MAX_FIELD_LENGTH } from './form-limits.js'
 import { demandRegisterAccess } from './holding-access.js'
-import { loadCalf } from './registration.js'
+import { demandDamType, loadCalf } from './registration.js'
 import { startRegistrationController } from './start/controller.js'
 import {
   calfDetailsController,
@@ -14,6 +14,10 @@ import {
   damDetailsController,
   damDetailsSubmitController
 } from './dam-details/controller.js'
+import {
+  geneticDamController,
+  geneticDamSubmitController
+} from './genetic-dam/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -65,6 +69,11 @@ const calfPrerequisites = [
   { method: loadCalf, assign: 'calf' }
 ]
 
+const geneticDamPrerequisites = [
+  ...calfPrerequisites,
+  { method: demandDamType('genetic') }
+]
+
 const formField = Joi.string().max(MAX_FIELD_LENGTH).allow('').default('')
 
 const calfDetailsPayload = Joi.object({
@@ -78,6 +87,34 @@ const calfDetailsPayload = Joi.object({
 const damDetailsPayload = Joi.object({
   damType: formField
 }).options({ stripUnknown: true })
+
+const geneticDamPayload = Joi.object({
+  earTagNumber: formField
+}).options({ stripUnknown: true })
+
+const geneticDamRoutes = [
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/genetic-dam`,
+    ...geneticDamController,
+    options: {
+      validate: calfParams,
+      pre: geneticDamPrerequisites
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/genetic-dam`,
+    ...geneticDamSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: geneticDamPayload
+      },
+      pre: geneticDamPrerequisites
+    }
+  }
+]
 
 export const register = {
   plugin: {
@@ -134,7 +171,8 @@ export const register = {
             },
             pre: calfPrerequisites
           }
-        }
+        },
+        ...geneticDamRoutes
       ])
     }
   }
