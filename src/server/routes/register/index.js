@@ -2,14 +2,13 @@ import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import { REGISTER_ROUTE } from './paths.js'
+import { MAX_FIELD_LENGTH } from './form-limits.js'
 import { demandRegisterAccess } from './holding-access.js'
 import { startRegistrationController } from './start/controller.js'
 import {
   calfDetailsController,
   calfDetailsSubmitController
 } from './calf-details/controller.js'
-
-const MAX_FIELD_LENGTH = 200
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
