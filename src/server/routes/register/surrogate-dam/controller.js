@@ -6,6 +6,7 @@ import { calfPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { calfNotFound, registrationKey } from '../registration.js'
 import { formErrors } from '../form-errors.js'
+import { backLinkPath, keepReturn, pathAfterSave } from '../check-return.js'
 import { getMessage } from './messages.js'
 
 const TEMPLATE = 'register/surrogate-dam/index'
@@ -38,8 +39,15 @@ function buildViewModel({ request, values, errors = [] }) {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
     calfEarTagNumber: formatEarTag(request.pre.calf.calfDetails.earTagNumber),
-    backLinkHref: calfPagePath(cph, registrationId, calfNumber, 'dam-details'),
-    formAction: calfPagePath(cph, registrationId, calfNumber, 'surrogate-dam'),
+    backLinkHref: backLinkPath(
+      request,
+      calfNumber,
+      calfPagePath(cph, registrationId, calfNumber, 'dam-details')
+    ),
+    formAction: keepReturn(
+      request,
+      calfPagePath(cph, registrationId, calfNumber, 'surrogate-dam')
+    ),
     values,
     maxFieldLength: MAX_FIELD_LENGTH,
     errorList,
@@ -81,6 +89,12 @@ export const surrogateDamSubmitController = {
         .code(statusCodes.badRequest)
     }
 
-    return h.redirect(calfPagePath(cph, registrationId, calfNumber, NEXT_PAGE))
+    return h.redirect(
+      await pathAfterSave(
+        request,
+        calfNumber,
+        calfPagePath(cph, registrationId, calfNumber, NEXT_PAGE)
+      )
+    )
   }
 }

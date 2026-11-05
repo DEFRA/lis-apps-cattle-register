@@ -4,7 +4,13 @@ import Joi from 'joi'
 import { REGISTER_ROUTE } from './paths.js'
 import { MAX_FIELD_LENGTH } from './form-limits.js'
 import { demandRegisterAccess } from './holding-access.js'
-import { demandDamComplete, demandDamType, loadCalf } from './registration.js'
+import {
+  demandCalfComplete,
+  demandDamComplete,
+  demandDamType,
+  loadCalf
+} from './registration.js'
+import { returnQuery } from './check-return.js'
 import { startRegistrationController } from './start/controller.js'
 import {
   calfDetailsController,
@@ -26,6 +32,10 @@ import {
   sireDetailsController,
   sireDetailsSubmitController
 } from './sire-details/controller.js'
+import {
+  checkCalfDetailsController,
+  checkCalfDetailsSubmitController
+} from './check-calf-details/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -60,6 +70,11 @@ const registrationParams = {
   failAction: failValidation
 }
 
+const calfDetailsParams = {
+  ...registrationParams,
+  query: returnQuery
+}
+
 const calfParams = {
   params: Joi.object({
     cph,
@@ -70,6 +85,11 @@ const calfParams = {
       .custom(Number)
   }),
   failAction: failValidation
+}
+
+const changeableCalfParams = {
+  ...calfParams,
+  query: returnQuery
 }
 
 const calfPrerequisites = [
@@ -111,7 +131,7 @@ const geneticDamRoutes = [
     path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/genetic-dam`,
     ...geneticDamController,
     options: {
-      validate: calfParams,
+      validate: changeableCalfParams,
       pre: geneticDamPrerequisites
     }
   },
@@ -121,7 +141,7 @@ const geneticDamRoutes = [
     ...geneticDamSubmitController,
     options: {
       validate: {
-        ...calfParams,
+        ...changeableCalfParams,
         payload: geneticDamPayload
       },
       pre: geneticDamPrerequisites
@@ -140,7 +160,7 @@ const surrogateDamRoutes = [
     path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/surrogate-dam`,
     ...surrogateDamController,
     options: {
-      validate: calfParams,
+      validate: changeableCalfParams,
       pre: surrogateDamPrerequisites
     }
   },
@@ -150,7 +170,7 @@ const surrogateDamRoutes = [
     ...surrogateDamSubmitController,
     options: {
       validate: {
-        ...calfParams,
+        ...changeableCalfParams,
         payload: surrogateDamPayload
       },
       pre: surrogateDamPrerequisites
@@ -174,7 +194,7 @@ const sireDetailsRoutes = [
     path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/sire-details`,
     ...sireDetailsController,
     options: {
-      validate: calfParams,
+      validate: changeableCalfParams,
       pre: sireDetailsPrerequisites
     }
   },
@@ -184,10 +204,36 @@ const sireDetailsRoutes = [
     ...sireDetailsSubmitController,
     options: {
       validate: {
-        ...calfParams,
+        ...changeableCalfParams,
         payload: sireDetailsPayload
       },
       pre: sireDetailsPrerequisites
+    }
+  }
+]
+
+const checkCalfDetailsPrerequisites = [
+  ...calfPrerequisites,
+  { method: demandCalfComplete }
+]
+
+const checkCalfDetailsRoutes = [
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/check-calf-details`,
+    ...checkCalfDetailsController,
+    options: {
+      validate: calfParams,
+      pre: checkCalfDetailsPrerequisites
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/check-calf-details`,
+    ...checkCalfDetailsSubmitController,
+    options: {
+      validate: calfParams,
+      pre: checkCalfDetailsPrerequisites
     }
   }
 ]
@@ -211,7 +257,7 @@ export const register = {
           path: `${REGISTER_ROUTE}/{registrationId}/calf-details`,
           ...calfDetailsController,
           options: {
-            validate: registrationParams,
+            validate: calfDetailsParams,
             pre: [{ method: demandRegisterAccess }]
           }
         },
@@ -221,7 +267,7 @@ export const register = {
           ...calfDetailsSubmitController,
           options: {
             validate: {
-              ...registrationParams,
+              ...calfDetailsParams,
               payload: calfDetailsPayload
             },
             pre: [{ method: demandRegisterAccess }]
@@ -232,7 +278,7 @@ export const register = {
           path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/dam-details`,
           ...damDetailsController,
           options: {
-            validate: calfParams,
+            validate: changeableCalfParams,
             pre: calfPrerequisites
           }
         },
@@ -242,7 +288,7 @@ export const register = {
           ...damDetailsSubmitController,
           options: {
             validate: {
-              ...calfParams,
+              ...changeableCalfParams,
               payload: damDetailsPayload
             },
             pre: calfPrerequisites
@@ -250,7 +296,8 @@ export const register = {
         },
         ...geneticDamRoutes,
         ...surrogateDamRoutes,
-        ...sireDetailsRoutes
+        ...sireDetailsRoutes,
+        ...checkCalfDetailsRoutes
       ])
     }
   }
