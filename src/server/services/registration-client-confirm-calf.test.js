@@ -151,10 +151,15 @@ describe('registrationClient (stub) confirm calf', () => {
       const client = await clientWithCalf(options)
 
       // Act
-      const confirming = client.confirmCalf(calfOne)
+      let error
+      try {
+        await client.confirmCalf(calfOne)
+      } catch (e) {
+        error = e
+      }
 
       // Assert
-      await expect(confirming).rejects.toThrow('Calf 1 has pages not saved')
+      expect(error?.message).toBe('Calf 1 has pages not saved')
       const calf = await client.getCalf(calfOne)
       expect(calf.checked).toBe(false)
     }

@@ -104,6 +104,9 @@ describe('check calf details route', () => {
       const $ = load(response.payload)
       expect($('title').text().trim()).toMatch(/^Check calf details - /)
       expect($('h1').text().trim()).toBe('Check calf details')
+      expect($('main .govuk-caption-l').text().trim()).toBe(
+        'Official animal ear tag number: UK 123456 301550'
+      )
       expect($('.govuk-back-link').attr('href')).toBe(
         calfPath(registrationId, 'sire-details')
       )
@@ -240,6 +243,9 @@ describe('check calf details route', () => {
       const $ = load(response.payload)
       expect($('main b')).toHaveLength(0)
       expect(summaryRows($)[0].value).toBe('<b>UK1</b>')
+      expect($('main .govuk-caption-l').text().trim()).toBe(
+        'Official animal ear tag number: <b>UK1</b>'
+      )
     })
 
     test.each([
