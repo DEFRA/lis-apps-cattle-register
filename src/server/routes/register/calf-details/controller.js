@@ -11,6 +11,7 @@ import { calfPagePath, registrationPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { registrationKey } from '../registration.js'
 import { formErrors } from '../form-errors.js'
+import { backLinkPath, keepReturn, pathAfterSave } from '../check-return.js'
 import { getMessage } from './messages.js'
 
 const TEMPLATE = 'register/calf-details/index'
@@ -50,8 +51,15 @@ function buildViewModel({
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
-    backLinkHref: getMountPath('cattle-home', 'holding', { cph }),
-    formAction: registrationPagePath(cph, registrationId, 'calf-details'),
+    backLinkHref: backLinkPath(
+      request,
+      1,
+      getMountPath('cattle-home', 'holding', { cph })
+    ),
+    formAction: keepReturn(
+      request,
+      registrationPagePath(cph, registrationId, 'calf-details')
+    ),
     values,
     breedItems: breedOptions,
     maxFieldLength: MAX_FIELD_LENGTH,
@@ -112,6 +120,12 @@ export const calfDetailsSubmitController = {
         .code(errors.length ? statusCodes.badRequest : statusCodes.ok)
     }
 
-    return h.redirect(calfPagePath(cph, registrationId, 1, 'dam-details'))
+    return h.redirect(
+      await pathAfterSave(
+        request,
+        1,
+        calfPagePath(cph, registrationId, 1, 'dam-details')
+      )
+    )
   }
 }

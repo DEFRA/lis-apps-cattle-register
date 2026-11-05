@@ -5,6 +5,7 @@ import { registrationClient } from '#server/services/registration-client.js'
 import { calfPagePath, registrationPagePath } from '../paths.js'
 import { calfNotFound, registrationKey } from '../registration.js'
 import { formErrors } from '../form-errors.js'
+import { backLinkPath, keepReturn, pathAfterSave } from '../check-return.js'
 import { getMessage } from './messages.js'
 
 const TEMPLATE = 'register/dam-details/index'
@@ -43,8 +44,15 @@ function buildViewModel({ request, damType, errors = [] }) {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
     calfEarTagNumber: formatEarTag(request.pre.calf.calfDetails.earTagNumber),
-    backLinkHref: registrationPagePath(cph, registrationId, 'calf-details'),
-    formAction: calfPagePath(cph, registrationId, calfNumber, 'dam-details'),
+    backLinkHref: backLinkPath(
+      request,
+      calfNumber,
+      registrationPagePath(cph, registrationId, 'calf-details')
+    ),
+    formAction: keepReturn(
+      request,
+      calfPagePath(cph, registrationId, calfNumber, 'dam-details')
+    ),
     values: { damType },
     errorList,
     fieldErrors
@@ -86,7 +94,11 @@ export const damDetailsSubmitController = {
     }
 
     return h.redirect(
-      calfPagePath(cph, registrationId, calfNumber, nextPageFor(damType))
+      await pathAfterSave(
+        request,
+        calfNumber,
+        calfPagePath(cph, registrationId, calfNumber, nextPageFor(damType))
+      )
     )
   }
 }

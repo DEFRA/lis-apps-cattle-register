@@ -5,26 +5,21 @@
  * (see draft-store.js): not shared between instances, lost on restart, and
  * expired or evicted after a while. The rules below move to that service.
  * Keep the interface (getCalfDetails/saveCalfDetails/getCalf/saveDamDetails/
- * saveGeneticDam/saveSurrogateDam/saveSireDetails, field + code results,
- * null for a calf the registration does not have) when replacing it with the
- * real client.
+ * saveGeneticDam/saveSurrogateDam/saveSireDetails/confirmCalf, field + code
+ * results, null for a calf the registration does not have) when replacing
+ * it with the real client.
  */
-/** @import { CalendarDate } from '#server/common/helpers/calendar-date.js' */
 import { breedOptions } from '#server/common/helpers/breed-options.js'
-import {
-  daysBetween,
-  toUkCalendarDate
-} from '#server/common/helpers/calendar-date.js'
 import { createDraftStore } from './draft-store.js'
 import { trimAnswers } from './registration-calf-details.js'
+import {
+  checkDateOfBirth,
+  lateRegistrationWarnings
+} from './registration-date-of-birth.js'
 
 const SEXES = new Set(['male', 'female'])
 const DAM_TYPES = new Set(['genetic', 'surrogate'])
 const FIRST_CALF = 1
-const BIRTH_REPORTING_DEADLINE_DAYS = 27
-const DATE_PARTS = 3
-const DAY_OR_MONTH_PATTERN = /^\d{1,2}$/
-const YEAR_PATTERN = /^\d{4}$/
 
 const knownBreeds = new Set(breedOptions)
 
@@ -65,6 +60,8 @@ const knownBreeds = new Set(breedOptions)
  * @property {GeneticDamAnswers} geneticDam - empty unless damType is genetic
  * @property {SurrogateDamAnswers} surrogateDam - empty unless damType is surrogate
  * @property {SireDetailsAnswers} sireDetails - empty until saved
+ * @property {boolean} checked - true once the user has confirmed the
+ *   answers on check calf details; saving any answer clears it
  */
 
 /**
@@ -86,74 +83,6 @@ const knownBreeds = new Set(breedOptions)
  */
 function isBlank(text) {
   return (text ?? '').trim() === ''
-}
-
-/**
- * @param {string[]} parts - day, month and year text
- * @returns {CalendarDate | null}
- */
-function toRealDate([dayText, monthText, yearText]) {
-  if (
-    !DAY_OR_MONTH_PATTERN.test(dayText) ||
-    !DAY_OR_MONTH_PATTERN.test(monthText) ||
-    !YEAR_PATTERN.test(yearText)
-  ) {
-    return null
-  }
-
-  const [day, month, year] = [dayText, monthText, yearText].map(Number)
-  const date = new Date(Date.UTC(year, month - 1, day))
-
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== month - 1 ||
-    date.getUTCDate() !== day
-  ) {
-    return null
-  }
-
-  return { day, month, year }
-}
-
-/**
- * Follows the prototype: anything that is not three "/"-separated parts,
- * blank included, is a missing date.
- * @param {string} dateOfBirth
- * @param {Date} now
- * @returns {{ error?: string, birthDate?: CalendarDate }}
- */
-function checkDateOfBirth(dateOfBirth, now) {
-  const parts = dateOfBirth.split('/')
-
-  if (parts.length !== DATE_PARTS || !parts.every(Boolean)) {
-    return { error: 'required' }
-  }
-
-  const birthDate = toRealDate(parts)
-
-  if (!birthDate) {
-    return { error: 'invalid' }
-  }
-
-  if (daysBetween(birthDate, toUkCalendarDate(now)) < 0) {
-    return { error: 'future' }
-  }
-
-  return { birthDate }
-}
-
-/**
- * Provisional, non-blocking late-registration warning. Kept apart from the
- * date rules so it can be removed on its own.
- * @param {CalendarDate} birthDate
- * @param {Date} now
- * @returns {FieldResult[]}
- */
-function lateRegistrationWarnings(birthDate, now) {
-  return daysBetween(birthDate, toUkCalendarDate(now)) >
-    BIRTH_REPORTING_DEADLINE_DAYS
-    ? [{ field: 'dateOfBirth', code: 'overDeadline' }]
-    : []
 }
 
 /**
@@ -248,14 +177,16 @@ function copyCalf({
   damDetails,
   geneticDam,
   surrogateDam,
-  sireDetails
+  sireDetails,
+  checked
 }) {
   return {
     calfDetails: { ...calfDetails },
     damDetails: { ...damDetails },
     geneticDam: { ...geneticDam },
     surrogateDam: { ...surrogateDam },
-    sireDetails: { ...sireDetails }
+    sireDetails: { ...sireDetails },
+    checked
   }
 }
 
@@ -321,7 +252,8 @@ function saveDamAnswers(
   if (errors.length === 0) {
     saveStoredCalf(store, key, calfNumber, {
       ...calf,
-      [property]: trimAnswers(answers)
+      [property]: trimAnswers(answers),
+      checked: false
     })
   }
 
@@ -341,10 +273,45 @@ const SURROGATE_DAM = {
 }
 
 /**
+ * @param {Calf} calf
+ * @returns {boolean} true when every page up to check calf details is saved
+ */
+function isCalfComplete({ damDetails, geneticDam, surrogateDam, sireDetails }) {
+  const damAnswers = { genetic: geneticDam, surrogate: surrogateDam }[
+    damDetails.damType
+  ]
+
+  return [damAnswers ?? {}, sireDetails].every(
+    (answers) => Object.keys(answers).length > 0
+  )
+}
+
+/**
+ * @param {object} store
+ * @param {RegistrationKey & { calfNumber: number }} registration
+ * @returns {{ errors: FieldResult[] } | null} see confirmCalf()
+ */
+function confirmStoredCalf(store, { calfNumber, ...key }) {
+  const calf = findStoredCalf(store, key, calfNumber)
+
+  if (!calf) {
+    return null
+  }
+
+  if (!isCalfComplete(calf)) {
+    throw new Error(`Calf ${calfNumber} has pages not saved`)
+  }
+
+  saveStoredCalf(store, key, calfNumber, { ...calf, checked: true })
+
+  return { errors: [] }
+}
+
+/**
  * @param {object} [options]
  * @param {() => Date} [options.now] - the current instant; injectable for tests
  * @param {object} [options.store] - where drafts are held; injectable for tests
- * @returns {{ getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function, saveGeneticDam: Function, saveSurrogateDam: Function, saveSireDetails: Function }}
+ * @returns {{ getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function, saveGeneticDam: Function, saveSurrogateDam: Function, saveSireDetails: Function, confirmCalf: Function }}
  */
 export function createRegistrationClient({
   now = () => new Date(),
@@ -352,7 +319,7 @@ export function createRegistrationClient({
 } = {}) {
   const findCalf = (key, calfNumber) => findStoredCalf(store, key, calfNumber)
   const saveCalf = (key, calfNumber, calf) =>
-    saveStoredCalf(store, key, calfNumber, calf)
+    saveStoredCalf(store, key, calfNumber, { ...calf, checked: false })
 
   return {
     /**
@@ -487,6 +454,18 @@ export function createRegistrationClient({
       })
 
       return { errors: [] }
+    },
+
+    /**
+     * Records that the user has checked and confirmed the calf's answers.
+     * Throws when a page before check calf details is not saved.
+     * @param {RegistrationKey & { calfNumber: number }} registration
+     * @returns {Promise<{ errors: FieldResult[] } | null>} null, saving
+     *   nothing, when the registration has no such calf (never started, or
+     *   expired or evicted since the page was shown)
+     */
+    async confirmCalf(registration) {
+      return confirmStoredCalf(store, registration)
     }
   }
 }
