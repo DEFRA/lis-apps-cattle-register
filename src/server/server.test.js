@@ -24,32 +24,48 @@ describe('#createServer', () => {
     expect(infoSpy).toHaveBeenCalledWith(
       {
         routes: expect.arrayContaining([
-          expect.objectContaining({ method: 'GET', path: '/health' }),
-          expect.objectContaining({
-            method: 'GET',
-            path: '/holdings/{cph*3}/cattle/register'
-          }),
-          expect.objectContaining({
-            method: 'POST',
-            path: '/holdings/{cph*3}/cattle/register/bundles/{bundleId}/calf'
-          })
+          expect.objectContaining({ method: 'GET', path: '/health' })
         ])
       },
       'Supported routes'
     )
     expect(routes).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ method: 'GET', path: '/health' }),
-        expect.objectContaining({
-          method: 'GET',
-          path: '/holdings/{cph*3}/cattle/register'
-        }),
-        expect.objectContaining({
-          method: 'POST',
-          path: '/holdings/{cph*3}/cattle/register/bundles/{bundleId}/calf'
-        })
+        expect.objectContaining({ method: 'GET', path: '/health' })
       ])
     )
+  })
+})
+
+describe('#dumpSupportedRoutes', () => {
+  let server
+
+  beforeEach(async () => {
+    server = await createServer()
+  })
+
+  afterEach(async () => {
+    vi.restoreAllMocks()
+    await server.stop({ timeout: 0 })
+  })
+
+  test('it lists routes by path, then by method for routes sharing a path', () => {
+    // Arrange
+    vi.spyOn(logger, 'info', 'get').mockReturnValue(vi.fn())
+    const handler = () => 'ok'
+    server.route([
+      { method: 'POST', path: '/a-shared-path', handler },
+      { method: 'GET', path: '/a-shared-path', handler }
+    ])
+
+    // Act
+    const routes = server.dumpSupportedRoutes()
+
+    // Assert
+    expect(routes.slice(0, 2)).toEqual([
+      { method: 'GET', path: '/a-shared-path' },
+      { method: 'POST', path: '/a-shared-path' }
+    ])
   })
 })
 

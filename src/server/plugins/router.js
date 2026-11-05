@@ -2,7 +2,6 @@ import inert from '@hapi/inert'
 import { createSpokeAuth } from '@defra/lis-hubs-infra-access/authentication'
 
 import { health } from '../routes/health/index.js'
-import { register } from '../routes/register/index.js'
 
 import { serveStaticFiles } from './serve-static-files.js'
 import { config } from '#config/config.js'
@@ -23,7 +22,6 @@ export const router = {
     async register(server) {
       await server.register([inert, spokeAuth])
       await server.register([health])
-      await server.register(register)
 
       await server.register(serveStaticFiles)
     }
