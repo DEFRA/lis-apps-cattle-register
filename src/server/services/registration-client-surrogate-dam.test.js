@@ -59,6 +59,25 @@ describe('registrationClient (stub) surrogate dam', () => {
     })
   })
 
+  test('saveSurrogateDam() saves both ear tag numbers trimmed', async () => {
+    // Arrange
+    const client = await clientWithDamType('surrogate')
+
+    // Act
+    await client.saveSurrogateDam({
+      ...registration,
+      calfNumber: 1,
+      answers: {
+        geneticDamEarTagNumber: '  UK123456501100 ',
+        surrogateDamEarTagNumber: ' UK123456601200  '
+      }
+    })
+
+    // Assert
+    const calf = await client.getCalf({ ...registration, calfNumber: 1 })
+    expect(calf.surrogateDam).toEqual(surrogateDam)
+  })
+
   test.each([
     ['blank', ''],
     ['whitespace only', '   '],
