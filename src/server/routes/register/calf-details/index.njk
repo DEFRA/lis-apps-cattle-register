@@ -22,7 +22,7 @@
 
       <h1 class="govuk-heading-l">{{ heading }}</h1>
 
-      <form action="{{ formAction }}" method="post" novalidate>
+      {% call lisForm({ action: formAction }) %}
         {{ govukInput({
           id: "earTagNumber",
           name: "earTagNumber",
@@ -103,7 +103,7 @@
         {{ govukButton({
           text: "Continue"
         }) }}
-      </form>
+      {% endcall %}
     </div>
   </div>
 {% endblock %}

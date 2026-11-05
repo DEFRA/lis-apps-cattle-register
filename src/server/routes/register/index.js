@@ -3,7 +3,6 @@ import Joi from 'joi'
 
 import { REGISTER_ROUTE } from './paths.js'
 import { demandRegisterAccess } from './holding-access.js'
-import { demandSameSitePost } from './same-site.js'
 import { startRegistrationController } from './start/controller.js'
 import {
   calfDetailsController,
@@ -87,10 +86,7 @@ export const register = {
               ...registrationParams,
               payload: calfDetailsPayload
             },
-            pre: [
-              { method: demandSameSitePost },
-              { method: demandRegisterAccess }
-            ]
+            pre: [{ method: demandRegisterAccess }]
           }
         }
       ])
