@@ -11,7 +11,6 @@ import { getMessage } from './messages.js'
 const TEMPLATE = 'register/surrogate-dam/index'
 const PAGE_TITLE = 'Genetic and surrogate dam details'
 const FIELDS = ['geneticDamEarTagNumber', 'surrogateDamEarTagNumber']
-// Not built yet (LREG-784 continues with sire details).
 const NEXT_PAGE = 'sire-details'
 
 /**

@@ -274,7 +274,8 @@ describe('registrationClient (stub)', () => {
       calfDetails: changed,
       damDetails: { damType: 'genetic' },
       geneticDam: {},
-      surrogateDam: {}
+      surrogateDam: {},
+      sireDetails: {}
     })
   })
 
@@ -291,7 +292,8 @@ describe('registrationClient (stub)', () => {
       calfDetails: validAnswers,
       damDetails: {},
       geneticDam: {},
-      surrogateDam: {}
+      surrogateDam: {},
+      sireDetails: {}
     })
   })
 
@@ -323,7 +325,8 @@ describe('registrationClient (stub)', () => {
       calfDetails: validAnswers,
       damDetails: {},
       geneticDam: {},
-      surrogateDam: {}
+      surrogateDam: {},
+      sireDetails: {}
     })
   })
 
@@ -429,7 +432,8 @@ describe('registrationClient (stub)', () => {
       calfDetails: validAnswers,
       damDetails: { damType: 'genetic' },
       geneticDam: {},
-      surrogateDam: {}
+      surrogateDam: {},
+      sireDetails: {}
     })
   })
 })

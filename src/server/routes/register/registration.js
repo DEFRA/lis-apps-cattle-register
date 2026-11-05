@@ -93,3 +93,52 @@ export function demandDamType(damType) {
       .takeover()
   }
 }
+
+/**
+ * The page about the dam the calf was born via, by dam type.
+ * @param {{ damType?: string }} damDetails
+ * @returns {'genetic-dam'|'surrogate-dam'|'dam-details'} dam details when
+ *   the dam type is not answered
+ */
+export function damPage({ damType }) {
+  const pages = { genetic: 'genetic-dam', surrogate: 'surrogate-dam' }
+
+  return pages[damType] ?? 'dam-details'
+}
+
+/**
+ * @param {object} calf - the saved calf
+ * @returns {string | null} the first dam page the calf has not completed,
+ *   or null when its dam details and the page about its dam are saved
+ */
+function incompleteDamPage(calf) {
+  const page = damPage(calf.damDetails)
+  const answers = {
+    'genetic-dam': calf.geneticDam,
+    'surrogate-dam': calf.surrogateDam
+  }[page]
+
+  return answers && Object.keys(answers).length > 0 ? null : page
+}
+
+/**
+ * Route prerequisite, after loadCalf, for a page after the dam pages: the
+ * calf's dam details and the page about its dam must be saved, otherwise
+ * the user is sent to the first of them not saved.
+ * @param {Request} request
+ * @param {ResponseToolkit} h
+ * @returns {symbol | object}
+ */
+export function demandDamComplete(request, h) {
+  const page = incompleteDamPage(request.pre.calf)
+
+  if (!page) {
+    return h.continue
+  }
+
+  const { cph, registrationId, calfNumber } = request.params
+
+  return h
+    .redirect(calfPagePath(cph, registrationId, calfNumber, page))
+    .takeover()
+}
