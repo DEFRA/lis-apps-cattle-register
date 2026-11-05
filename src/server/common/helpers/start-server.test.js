@@ -48,20 +48,24 @@ describe('#startServer', () => {
 
   describe('When server starts outside of tests', () => {
     let server
+    let configGetSpy
+    let loggerInfoSpy
 
     afterAll(async () => {
+      configGetSpy.mockRestore()
+      loggerInfoSpy.mockRestore()
       await server.stop({ timeout: 0 })
     })
 
     test('Should log the supported routes', async () => {
       const { config } = await import('../../../config/config.js')
       const get = config.get.bind(config)
-      vi.spyOn(config, 'get').mockImplementation((key) =>
-        key === 'isTest' ? false : get(key)
-      )
+      configGetSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) => (key === 'isTest' ? false : get(key)))
       const { logger } = await import('@defra/lis-hubs-infra-core')
       const infoSpy = vi.fn()
-      vi.spyOn(logger, 'info', 'get').mockReturnValue(infoSpy)
+      loggerInfoSpy = vi.spyOn(logger, 'info', 'get').mockReturnValue(infoSpy)
 
       server = await startServerImport.startServer()
 
