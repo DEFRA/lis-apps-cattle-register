@@ -1,7 +1,9 @@
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
+import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
 import { registrationClient } from '#server/services/registration-client.js'
 import { calfPagePath } from '../paths.js'
+import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { calfNotFound, registrationKey } from '../registration.js'
 import { getMessage } from './messages.js'
 
@@ -30,10 +32,11 @@ function buildViewModel({ request, earTagNumber, errors = [] }) {
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
-    calfEarTagNumber: request.pre.calf.calfDetails.earTagNumber,
+    calfEarTagNumber: formatEarTag(request.pre.calf.calfDetails.earTagNumber),
     backLinkHref: calfPagePath(cph, registrationId, calfNumber, 'dam-details'),
     formAction: calfPagePath(cph, registrationId, calfNumber, 'genetic-dam'),
     values: { earTagNumber },
+    maxFieldLength: MAX_FIELD_LENGTH,
     errorList,
     fieldErrors
   }

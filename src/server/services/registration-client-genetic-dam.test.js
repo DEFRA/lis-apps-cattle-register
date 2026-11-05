@@ -50,6 +50,22 @@ describe('registrationClient (stub) genetic dam', () => {
     expect(calf.geneticDam).toEqual({ earTagNumber: 'UK123456501100' })
   })
 
+  test('saveGeneticDam() saves the ear tag number trimmed', async () => {
+    // Arrange
+    const client = await clientWithDamType('genetic')
+
+    // Act
+    await client.saveGeneticDam({
+      ...registration,
+      calfNumber: 1,
+      answers: { earTagNumber: '  UK123456501100 ' }
+    })
+
+    // Assert
+    const calf = await client.getCalf({ ...registration, calfNumber: 1 })
+    expect(calf.geneticDam).toEqual({ earTagNumber: 'UK123456501100' })
+  })
+
   test.each([
     ['blank', ''],
     ['whitespace only', '   '],

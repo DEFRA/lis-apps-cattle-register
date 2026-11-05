@@ -339,7 +339,7 @@ export function createRegistrationClient({
     },
 
     /**
-     * Saves the answers when there are no errors. Throws when the calf was
+     * Saves the answers, trimmed, when there are no errors. Throws when the calf was
      * not born via a genetic dam.
      * @param {RegistrationKey & { calfNumber: number, answers: GeneticDamAnswers }} registration
      * @returns {Promise<{ errors: FieldResult[] } | null>} null, saving
@@ -360,7 +360,10 @@ export function createRegistrationClient({
       const errors = validateGeneticDam(answers)
 
       if (errors.length === 0) {
-        saveCalf(key, calfNumber, { ...calf, geneticDam: { ...answers } })
+        saveCalf(key, calfNumber, {
+          ...calf,
+          geneticDam: trimAnswers(answers)
+        })
       }
 
       return { errors }

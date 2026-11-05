@@ -37,7 +37,8 @@
             text: "Enter the full animal ear tag number. For example, UK123456123456"
           },
           errorMessage: fieldErrors.earTagNumber,
-          spellcheck: false
+          spellcheck: false,
+          attributes: { maxlength: maxFieldLength }
         }) }}
 
         {{ govukButton({
