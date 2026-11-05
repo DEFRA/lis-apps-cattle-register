@@ -4,11 +4,7 @@ import { getMessage } from './messages.js'
 
 describe('getMessage()', () => {
   test.each([
-    [
-      'earTagNumber',
-      'required',
-      'Enter all or part of the animal ear tag number you are registering'
-    ],
+    ['earTagNumber', 'required', 'Enter the animal ear tag number'],
     ['dateOfBirth', 'required', 'Enter the date the animal was born'],
     [
       'dateOfBirth',

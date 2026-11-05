@@ -317,7 +317,7 @@ describe('register routes', () => {
         'a blank ear tag',
         { earTagNumber: '' },
         'earTagNumber',
-        'Enter all or part of the animal ear tag number you are registering'
+        'Enter the animal ear tag number'
       ],
       [
         'a blank date of birth',
