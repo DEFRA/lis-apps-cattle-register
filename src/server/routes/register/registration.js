@@ -37,18 +37,32 @@ export function registrationKey(request) {
 }
 
 /**
+ * @param {Request} request
+ * @returns {Promise<boolean>} true when the registration in the path is
+ *   there (not never started, nor expired or evicted)
+ */
+async function isRegistrationKnown(request) {
+  const registration = await registrationClient.getRegistration(
+    registrationKey(request)
+  )
+
+  return registration !== null
+}
+
+/**
  * The response for a calf the registration does not have. Calf 1 is the
- * calf the calf details page enters, so until it is saved (or after its
- * draft has expired) the user is sent back there; any other missing calf is
- * a page that does not exist.
+ * calf the calf details page enters, so until it is saved the user is sent
+ * back there; so is any calf of a registration there is not (never started,
+ * or expired or evicted). Any other missing calf is a page that does not
+ * exist.
  * @param {Request} request
  * @param {ResponseToolkit} h
- * @returns {object} a redirect or a 404
+ * @returns {Promise<object>} a redirect or a 404
  */
-export function calfNotFound(request, h) {
+export async function calfNotFound(request, h) {
   const { cph, registrationId, calfNumber } = request.params
 
-  if (calfNumber === 1) {
+  if (calfNumber === 1 || !(await isRegistrationKnown(request))) {
     return h
       .redirect(registrationPagePath(cph, registrationId, 'calf-details'))
       .takeover()

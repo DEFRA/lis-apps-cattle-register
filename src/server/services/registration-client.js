@@ -21,6 +21,13 @@ import {
   isAddressableCalf,
   isEarTagTaken
 } from './registration-calves.js'
+import {
+  copyCalf,
+  findStoredCalf,
+  saveStoredCalf,
+  storedCalves,
+  storeKey
+} from './registration-store.js'
 
 const DAM_TYPES = new Set(['genetic', 'surrogate'])
 const FIRST_CALF = 1
@@ -120,75 +127,12 @@ function validateSurrogateDam(answers) {
 }
 
 /**
- * @param {RegistrationKey} key
- * @returns {string}
- */
-function storeKey({ cph, registrationId, userId }) {
-  return JSON.stringify([userId, cph, registrationId])
-}
-
-/**
- * @param {Calf} calf
- * @returns {Calf} a copy, so callers cannot change what is held
- */
-function copyCalf({
-  calfDetails,
-  damDetails,
-  geneticDam,
-  surrogateDam,
-  sireDetails,
-  checked
-}) {
-  return {
-    calfDetails: { ...calfDetails },
-    damDetails: { ...damDetails },
-    geneticDam: { ...geneticDam },
-    surrogateDam: { ...surrogateDam },
-    sireDetails: { ...sireDetails },
-    checked
-  }
-}
-
-/**
  * @param {FieldResult[]} warnings
  * @param {string[]} acknowledgedWarnings - warning codes the user confirmed
  * @returns {FieldResult[]} the warnings the user has not confirmed
  */
 function unacknowledged(warnings, acknowledgedWarnings) {
   return warnings.filter(({ code }) => !acknowledgedWarnings.includes(code))
-}
-
-/**
- * @param {object} store
- * @param {RegistrationKey} key
- * @returns {Calf[]} the calves saved so far, in order
- */
-function storedCalves(store, key) {
-  return store.get(storeKey(key)) ?? []
-}
-
-/**
- * @param {object} store
- * @param {RegistrationKey} key
- * @param {number} calfNumber
- * @returns {Calf | undefined}
- */
-function findStoredCalf(store, key, calfNumber) {
-  return store.get(storeKey(key))?.[calfNumber - 1]
-}
-
-/**
- * Writes the calf back, which also restarts the draft's expiry.
- * @param {object} store
- * @param {RegistrationKey} key
- * @param {number} calfNumber
- * @param {Calf} calf
- */
-function saveStoredCalf(store, key, calfNumber, calf) {
-  const calves = [...storedCalves(store, key)]
-
-  calves[calfNumber - 1] = calf
-  store.set(storeKey(key), calves, key.userId)
 }
 
 /**
@@ -306,7 +250,8 @@ function removeStoredCalf(store, { calfNumber, ...key }) {
 
   store.set(
     storeKey(key),
-    storedCalves(store, key).toSpliced(calfNumber - 1, 1)
+    storedCalves(store, key).toSpliced(calfNumber - 1, 1),
+    key.userId
   )
 
   return true

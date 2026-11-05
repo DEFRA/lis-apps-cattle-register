@@ -294,7 +294,7 @@ describe('sire details submit routes', () => {
       )
     })
 
-    test('it returns not found for a later calf that expires as the answers are sent', async () => {
+    test('it returns not found for a later calf removed as the answers are sent', async () => {
       // Arrange
       const registrationId = randomUUID()
       vi.spyOn(registrationClient, 'getCalf').mockResolvedValueOnce({
@@ -307,6 +307,11 @@ describe('sire details submit routes', () => {
       vi.spyOn(registrationClient, 'saveSireDetails').mockResolvedValueOnce(
         null
       )
+
+      vi.spyOn(registrationClient, 'getRegistration').mockResolvedValueOnce({
+        calves: [],
+        canAddCalf: true
+      })
 
       // Act
       const response = await post(
