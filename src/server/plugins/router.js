@@ -3,7 +3,6 @@ import {
   createSpokeAuth,
   getHubJwtCookieOptions
 } from '@defra/lis-hubs-infra-access/authentication'
-import { getBasePathForModule } from '@defra/lis-hubs-infra-registry'
 
 import { health } from '../routes/health/index.js'
 import { register } from '../routes/register/index.js'
@@ -20,7 +19,6 @@ const spokeAuth = createSpokeAuth({
     ttlSeconds: config.get('auth.hubJwt.ttlSeconds')
   }),
   port: config.get('port'),
-  basePath: getBasePathForModule('cattle-register'),
   secret: config.get('auth.hubJwt.secret'),
   audience: config.get('auth.hubJwt.audience'),
   moduleAccess
@@ -32,10 +30,7 @@ export const router = {
     async register(server) {
       await server.register([inert, spokeAuth])
       await server.register([health])
-      await server.register({
-        ...register,
-        options: { rootPath: '/' } // config.get('basePath') }
-      })
+      await server.register(register)
 
       await server.register(serveStaticFiles)
     }

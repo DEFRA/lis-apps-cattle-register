@@ -8,7 +8,7 @@ Dependencies: @defra/lis-infra-ui-services, @defra/lis-species-cattle, @defra/li
 
 Port: `8085`
 
-Primary URL path: `/cattle/register`
+Primary URL path: `/holdings/<cph>/cattle/register/...`, forwarded unchanged by the hubs. Assets are served at `/assets/cattle-register`.
 
 Run locally with `npm run dev`.
 Install dependencies locally with `npm install` from this project directory.

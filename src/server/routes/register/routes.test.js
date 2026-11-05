@@ -3,8 +3,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { spokeAuth } from '#test-helpers/spoke-auth.js'
 import { createServer } from '../../server.js'
 
-const ROOT_PATH = '/cattle/register'
-const CPH_PATH = '/10/081/1234'
+const CPH_PATH = '/holdings/10/081/1234/cattle/register'
 
 describe('register routes', () => {
   let server
@@ -45,22 +44,8 @@ describe('register routes', () => {
       url: `${CPH_PATH}/bundles`,
       auth
     })
-    return response.headers.location
-      .replace(ROOT_PATH, '')
-      .replace(/\/calf$/, '')
+    return response.headers.location.replace(/\/calf$/, '')
   }
-
-  test('GET / renders the registrations page for an authorised user', async () => {
-    const response = await server.inject({
-      method: 'GET',
-      url: '/',
-      auth
-    })
-
-    expect(response.statusCode).toBe(200)
-    expect(response.payload).toContain('Cattle registrations')
-    expect(response.payload).toContain('Start a new registration')
-  })
 
   test('GET calf renders the breed autocomplete text input', async () => {
     const startResponse = await server.inject({
@@ -68,7 +53,7 @@ describe('register routes', () => {
       url: `${CPH_PATH}/bundles`,
       auth
     })
-    const routeUrl = startResponse.headers.location.replace(ROOT_PATH, '')
+    const routeUrl = startResponse.headers.location
 
     const response = await server.inject({
       method: 'GET',
@@ -88,7 +73,7 @@ describe('register routes', () => {
   test('returns not found when the URL CPH does not match the bundle', async () => {
     const response = await server.inject({
       method: 'GET',
-      url: '/98/765/4321/bundles/REG-MNBX4Q2A',
+      url: '/holdings/98/765/4321/cattle/register/bundles/REG-MNBX4Q2A',
       auth
     })
 
@@ -126,19 +111,19 @@ describe('register routes', () => {
 
     const landing = await server.inject({
       method: 'GET',
-      url: '/10/081/1234',
+      url: '/holdings/10/081/1234/cattle/register',
       auth: holdingAuth
     })
     expect(landing.statusCode).toBe(200)
 
     const start = await server.inject({
       method: 'POST',
-      url: '/10/081/1234/bundles',
+      url: '/holdings/10/081/1234/cattle/register/bundles',
       auth: holdingAuth
     })
     expect(start.statusCode).toBe(302)
     expect(start.headers.location).toMatch(
-      /^\/cattle\/register\/10\/081\/1234\/bundles\/.+\/calf$/
+      /^\/holdings\/10\/081\/1234\/cattle\/register\/bundles\/.+\/calf$/
     )
   })
 
@@ -167,7 +152,7 @@ describe('register routes', () => {
 
     const response = await server.inject({
       method: 'GET',
-      url: '/21/456/7890/bundles/REG-MN7T6R4B',
+      url: '/holdings/21/456/7890/cattle/register/bundles/REG-MN7T6R4B',
       auth: backOfficeAuth
     })
 
@@ -179,7 +164,7 @@ describe('register routes', () => {
   test('rejects a request without a hub service token', async () => {
     const response = await server.inject({
       method: 'GET',
-      url: '/21/456/7890/bundles/REG-MN7T6R4B'
+      url: '/holdings/21/456/7890/cattle/register/bundles/REG-MN7T6R4B'
     })
 
     expect(response.statusCode).toBe(401)
@@ -196,7 +181,7 @@ describe('register routes', () => {
     })
     expect(landing.statusCode).toBe(200)
     expect(landing.payload).toContain(
-      'action="/cattle/register/10/081/1234/bundles"'
+      'action="/holdings/10/081/1234/cattle/register/bundles"'
     )
     expect(landing.payload).not.toContain('98/765/4321')
 
@@ -221,7 +206,7 @@ describe('register routes', () => {
   })
 
   test.each([
-    ['calf', `${ROOT_PATH}${CPH_PATH}`],
+    ['calf', CPH_PATH],
     ['dam', 'bundle/calf'],
     ['genetic-dam', 'bundle/dam'],
     ['surrogate-dam', 'bundle/dam'],
@@ -236,11 +221,10 @@ describe('register routes', () => {
         auth
       })
       const bundleUrl = startResponse.headers.location.replace(/\/calf$/, '')
-      const routeBundleUrl = bundleUrl.replace(ROOT_PATH, '')
 
       const response = await server.inject({
         method: 'GET',
-        url: `${routeBundleUrl}/${page}`,
+        url: `${bundleUrl}/${page}`,
         auth
       })
 
@@ -286,9 +270,7 @@ describe('register routes', () => {
     })
 
     expect(response.statusCode).toBe(302)
-    expect(response.headers.location).toBe(
-      `${ROOT_PATH}${bundleUrl}/${destination}`
-    )
+    expect(response.headers.location).toBe(`${bundleUrl}/${destination}`)
   })
 
   test.each([
@@ -319,7 +301,7 @@ describe('register routes', () => {
       auth
     })
     expect(checkResponse.statusCode).toBe(302)
-    expect(checkResponse.headers.location).toBe(`${ROOT_PATH}${bundleUrl}`)
+    expect(checkResponse.headers.location).toBe(`${bundleUrl}`)
 
     const listResponse = await server.inject({
       method: 'GET',
@@ -347,9 +329,7 @@ describe('register routes', () => {
       auth,
       payload: { add_more: 'no' }
     })
-    expect(listSubmitResponse.headers.location).toBe(
-      `${ROOT_PATH}${bundleUrl}/submit`
-    )
+    expect(listSubmitResponse.headers.location).toBe(`${bundleUrl}/submit`)
 
     const submitPage = await server.inject({
       method: 'GET',
@@ -364,9 +344,7 @@ describe('register routes', () => {
       url: `${bundleUrl}/submit`,
       auth
     })
-    expect(submitResponse.headers.location).toBe(
-      `${ROOT_PATH}${bundleUrl}/confirmation`
-    )
+    expect(submitResponse.headers.location).toBe(`${bundleUrl}/confirmation`)
 
     const confirmationResponse = await server.inject({
       method: 'GET',
@@ -386,7 +364,7 @@ describe('register routes', () => {
       payload: { add_more: 'yes' }
     })
 
-    expect(response.headers.location).toBe(`${ROOT_PATH}${bundleUrl}/calf`)
+    expect(response.headers.location).toBe(`${bundleUrl}/calf`)
   })
 
   test('rejects missing calves and prevents editing submitted bundles', async () => {

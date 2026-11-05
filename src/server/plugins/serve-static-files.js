@@ -1,9 +1,9 @@
 import { createStaticFilesPlugin } from '@defra/lis-infra-ui-services/static-files'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
-import { createBasePathHelpersForConfig } from '@defra/lis-infra-ui-services/base-path'
+import { createAssetPathHelpers } from '@defra/lis-infra-ui-services/asset-path'
 import { config } from '#config/config.js'
 
-const { getAssetPaths } = createBasePathHelpersForConfig({
+const { getAssetPaths } = createAssetPathHelpers({
   moduleId: 'cattle-register',
   assetPath: config.get('assetPath')
 })

@@ -1,7 +1,7 @@
 import Joi from 'joi'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import { breeds, getBreedName } from '@defra/lis-species-cattle'
-import { bundlePath, cphFromParams, holdingRoot } from '../paths.js'
+import { bundlePath, holdingRoot } from '../paths.js'
 
 const TEMPLATE = './register/calf.njk'
 const PAGE_TITLE = 'Calf details'
@@ -113,7 +113,7 @@ function viewModel(overrides = {}) {
 
 function requestContext(request) {
   return {
-    cph: request.app.cph ?? cphFromParams(request.params),
+    cph: request.app.cph ?? request.params.cph,
     bundleId: request.params.bundleId
   }
 }

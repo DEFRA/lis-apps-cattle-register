@@ -4,19 +4,20 @@ import { register } from './index.js'
 import { routes } from './routes.js'
 
 describe('register plugin defaults', () => {
-  test('builds routes with the default root path', () => {
+  test('builds routes under the holding mount', () => {
     expect(routes()).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ method: 'GET', path: '/' })
+        expect.objectContaining({
+          method: 'GET',
+          path: '/holdings/{cph*3}/cattle/register'
+        })
       ])
     )
   })
 
-  test('normalizes a trailing slash on a custom root path', () => {
-    expect(routes({ rootPath: '/custom/' })).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ method: 'GET', path: '/custom' })
-      ])
+  test('does not register a landing page without a CPH', () => {
+    expect(routes()).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ path: '/' })])
     )
   })
 

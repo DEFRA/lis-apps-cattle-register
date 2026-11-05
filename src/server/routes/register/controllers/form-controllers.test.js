@@ -15,9 +15,7 @@ import { sireSubmitController } from './sire-controller.js'
 const request = {
   app: {},
   params: {
-    county: '10',
-    parish: '081',
-    holding: '1234',
+    cph: '10/081/1234',
     bundleId: 'REG-123'
   }
 }

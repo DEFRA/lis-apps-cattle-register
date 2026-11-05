@@ -9,7 +9,6 @@ import { router } from './plugins/router.js'
 import { config } from '#config/config.js'
 import { pulse } from './plugins/pulse.js'
 import { catchAll } from '@defra/lis-infra-ui-services/errors'
-import { createBasePathHelpersForConfig } from '@defra/lis-infra-ui-services/base-path'
 import { setupProxy } from '@defra/lis-infra-ui-services/proxy/setup-proxy'
 import { requestTracing } from './plugins/request-tracing.js'
 import { getCacheEngine } from '@defra/lis-infra-ui-services/session-cache/cache-engine'
@@ -28,14 +27,9 @@ logger.serviceVersion = config.get('serviceVersion')
 logger.context.hashSecret = config.get('log.hashSecret')
 const requestLogger = logger.hapiPlugin
 const moduleId = 'cattle-register'
-const { getRequestBasePath } = createBasePathHelpersForConfig({
-  moduleId,
-  assetPath: config.get('assetPath')
-})
 const nunjucksConfig = createNunjucksConfig({
   config,
   logger,
-  getRequestBasePath,
   moduleId
 })
 
