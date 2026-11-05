@@ -78,10 +78,10 @@ export async function loadCalf(request, h) {
  * calf's dam details must have that answer, otherwise the user is sent back
  * to dam details.
  * @param {'genetic'|'surrogate'} damType
- * @returns {(request: Request, h: ResponseToolkit) => symbol | object}
+ * @returns {(request: Request, h: ResponseToolkit) => Promise<symbol | object>}
  */
 export function demandDamType(damType) {
-  return function (request, h) {
+  return async function (request, h) {
     if (request.pre.calf.damDetails.damType === damType) {
       return h.continue
     }
