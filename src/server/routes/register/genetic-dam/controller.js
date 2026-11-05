@@ -10,7 +10,6 @@ import { getMessage } from './messages.js'
 
 const TEMPLATE = 'register/genetic-dam/index'
 const PAGE_TITLE = 'Genetic dam details'
-// Not built yet (LREG-783 continues with sire details).
 const NEXT_PAGE = 'sire-details'
 
 /**

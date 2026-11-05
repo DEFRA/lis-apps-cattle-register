@@ -5,8 +5,9 @@
  * (see draft-store.js): not shared between instances, lost on restart, and
  * expired or evicted after a while. The rules below move to that service.
  * Keep the interface (getCalfDetails/saveCalfDetails/getCalf/saveDamDetails/
- * saveGeneticDam/saveSurrogateDam, field + code results, null for a calf the
- * registration does not have) when replacing it with the real client.
+ * saveGeneticDam/saveSurrogateDam/saveSireDetails, field + code results,
+ * null for a calf the registration does not have) when replacing it with the
+ * real client.
  */
 /** @import { CalendarDate } from '#server/common/helpers/calendar-date.js' */
 import { breedOptions } from '#server/common/helpers/breed-options.js'
@@ -52,11 +53,18 @@ const knownBreeds = new Set(breedOptions)
  */
 
 /**
+ * @typedef {object} SireDetailsAnswers - both optional; blank when not known
+ * @property {string} [sireEarTagNumber]
+ * @property {string} [sireName]
+ */
+
+/**
  * @typedef {object} Calf
  * @property {CalfDetailsAnswers} calfDetails
  * @property {DamDetailsAnswers} damDetails
  * @property {GeneticDamAnswers} geneticDam - empty unless damType is genetic
  * @property {SurrogateDamAnswers} surrogateDam - empty unless damType is surrogate
+ * @property {SireDetailsAnswers} sireDetails - empty until saved
  */
 
 /**
@@ -235,12 +243,19 @@ function storeKey({ cph, registrationId, userId }) {
  * @param {Calf} calf
  * @returns {Calf} a copy, so callers cannot change what is held
  */
-function copyCalf({ calfDetails, damDetails, geneticDam, surrogateDam }) {
+function copyCalf({
+  calfDetails,
+  damDetails,
+  geneticDam,
+  surrogateDam,
+  sireDetails
+}) {
   return {
     calfDetails: { ...calfDetails },
     damDetails: { ...damDetails },
     geneticDam: { ...geneticDam },
-    surrogateDam: { ...surrogateDam }
+    surrogateDam: { ...surrogateDam },
+    sireDetails: { ...sireDetails }
   }
 }
 
@@ -329,7 +344,7 @@ const SURROGATE_DAM = {
  * @param {object} [options]
  * @param {() => Date} [options.now] - the current instant; injectable for tests
  * @param {object} [options.store] - where drafts are held; injectable for tests
- * @returns {{ getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function, saveGeneticDam: Function, saveSurrogateDam: Function }}
+ * @returns {{ getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function, saveGeneticDam: Function, saveSurrogateDam: Function, saveSireDetails: Function }}
  */
 export function createRegistrationClient({
   now = () => new Date(),
@@ -372,7 +387,8 @@ export function createRegistrationClient({
           calfDetails: trimAnswers(answers),
           damDetails: calf?.damDetails ?? {},
           geneticDam: calf?.geneticDam ?? {},
-          surrogateDam: calf?.surrogateDam ?? {}
+          surrogateDam: calf?.surrogateDam ?? {},
+          sireDetails: calf?.sireDetails ?? {}
         })
       }
 
@@ -444,6 +460,33 @@ export function createRegistrationClient({
      */
     async saveSurrogateDam(registration) {
       return saveDamAnswers(store, SURROGATE_DAM, registration)
+    },
+
+    /**
+     * Saves the answers, trimmed, replacing any saved before so a cleared
+     * answer is not kept. Both are optional and nothing is checked against
+     * other animals yet, so there are never errors.
+     * @param {RegistrationKey & { calfNumber: number, answers: SireDetailsAnswers }} registration
+     * @returns {Promise<{ errors: FieldResult[] } | null>} null, saving
+     *   nothing, when the registration has no such calf (never started, or
+     *   expired or evicted since the page was shown)
+     */
+    async saveSireDetails({ calfNumber, answers, ...key }) {
+      const calf = findCalf(key, calfNumber)
+
+      if (!calf) {
+        return null
+      }
+
+      saveCalf(key, calfNumber, {
+        ...calf,
+        sireDetails: {
+          sireEarTagNumber: (answers.sireEarTagNumber ?? '').trim(),
+          sireName: (answers.sireName ?? '').trim()
+        }
+      })
+
+      return { errors: [] }
     }
   }
 }
