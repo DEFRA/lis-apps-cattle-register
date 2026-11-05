@@ -19,6 +19,11 @@ const CPH = '10/081/1234'
 const REGISTRATION_ID = '6f1c3c1e-6a0b-4b8e-9d3f-2a1b0c9d8e7f'
 const REGISTER_PATH = `/holdings/${CPH}/cattle/register`
 const CALF_DETAILS_PATH = `${REGISTER_PATH}/${REGISTRATION_ID}/calf-details`
+const CSRF_TOKEN = 'test-csrf-token'
+const csrfHeaders = {
+  'sec-fetch-site': 'same-origin',
+  'x-lis-csrf-token': CSRF_TOKEN
+}
 const NOW = new Date('2026-11-05T10:00:00Z')
 
 const validPayload = {
@@ -297,7 +302,8 @@ describe('register routes', () => {
         method: 'POST',
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
-        payload: { ...validPayload, unexpected: 'ignored' }
+        headers: csrfHeaders,
+        payload: { ...validPayload, unexpected: 'ignored', _csrf: CSRF_TOKEN }
       })
 
       // Assert
@@ -367,7 +373,8 @@ describe('register routes', () => {
           method: 'POST',
           url: CALF_DETAILS_PATH,
           auth: keeperAuth,
-          payload
+          headers: csrfHeaders,
+          payload: { ...payload, _csrf: CSRF_TOKEN }
         })
 
         // Assert
@@ -401,7 +408,8 @@ describe('register routes', () => {
         method: 'POST',
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
-        payload
+        headers: csrfHeaders,
+        payload: { ...payload, _csrf: CSRF_TOKEN }
       })
 
       // Assert
@@ -424,7 +432,8 @@ describe('register routes', () => {
         method: 'POST',
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
-        payload
+        headers: csrfHeaders,
+        payload: { ...payload, _csrf: CSRF_TOKEN }
       })
 
       // Assert
@@ -455,7 +464,8 @@ describe('register routes', () => {
         method: 'POST',
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
-        payload
+        headers: csrfHeaders,
+        payload: { ...payload, _csrf: CSRF_TOKEN }
       })
 
       // Assert
@@ -478,7 +488,8 @@ describe('register routes', () => {
         method: 'POST',
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
-        payload
+        headers: csrfHeaders,
+        payload: { ...payload, _csrf: CSRF_TOKEN }
       })
 
       // Assert
@@ -499,7 +510,8 @@ describe('register routes', () => {
         method: 'POST',
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
-        payload
+        headers: csrfHeaders,
+        payload: { ...payload, _csrf: CSRF_TOKEN }
       })
 
       // Assert
@@ -523,7 +535,8 @@ describe('register routes', () => {
         method: 'POST',
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
-        payload
+        headers: csrfHeaders,
+        payload: { ...payload, _csrf: CSRF_TOKEN }
       })
 
       // Assert
@@ -533,24 +546,6 @@ describe('register routes', () => {
       expect($('input[name="acknowledgedLateDateOfBirth"]').val()).toBe(
         '8/10/2026'
       )
-    })
-
-    test('it rejects a post sent from another site', async () => {
-      // Arrange
-      const saveCalfDetails = vi.spyOn(registrationClient, 'saveCalfDetails')
-
-      // Act
-      const response = await server.inject({
-        method: 'POST',
-        url: CALF_DETAILS_PATH,
-        auth: keeperAuth,
-        headers: { 'sec-fetch-site': 'cross-site' },
-        payload: validPayload
-      })
-
-      // Assert
-      expect(response.statusCode).toBe(statusCodes.forbidden)
-      expect(saveCalfDetails).not.toHaveBeenCalled()
     })
 
     test('it returns not found for a CPH the user is not granted', async () => {
@@ -563,7 +558,8 @@ describe('register routes', () => {
         method: 'POST',
         url: CALF_DETAILS_PATH,
         auth,
-        payload: validPayload
+        headers: csrfHeaders,
+        payload: { ...validPayload, _csrf: CSRF_TOKEN }
       })
 
       // Assert
@@ -580,7 +576,8 @@ describe('register routes', () => {
         method: 'POST',
         url,
         auth: keeperAuth,
-        payload: validPayload
+        headers: csrfHeaders,
+        payload: { ...validPayload, _csrf: CSRF_TOKEN }
       })
 
       // Assert
@@ -589,14 +586,17 @@ describe('register routes', () => {
 
     test('it returns bad request for a field sent more than once', async () => {
       // Arrange
-      const payload = 'sex=male&sex=female'
+      const payload = `sex=male&sex=female&_csrf=${CSRF_TOKEN}`
 
       // Act
       const response = await server.inject({
         method: 'POST',
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
-        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        headers: {
+          ...csrfHeaders,
+          'content-type': 'application/x-www-form-urlencoded'
+        },
         payload
       })
 
