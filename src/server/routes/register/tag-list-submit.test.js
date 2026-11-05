@@ -143,7 +143,8 @@ describe('tag list submit route', () => {
       expect($('.govuk-error-summary a').text().trim()).toBe(
         'Complete all required animal details before continuing'
       )
-      expect($('.govuk-error-summary a').attr('href')).toBe(
+      expect($('.govuk-error-summary a').attr('href')).toBe('#calf-2')
+      expect($('#calf-2').attr('href')).toBe(
         calfPath(registrationId, 'check-calf-details', 2)
       )
       expect($('.govuk-error-message')).toHaveLength(0)

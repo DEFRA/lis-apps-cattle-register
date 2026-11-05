@@ -31,7 +31,7 @@
       {% set calfRows = [] %}
       {% for calf in calves %}
         {% set earTagHtml %}
-          <a class="govuk-link" href="{{ calf.href }}">{{ calf.earTagNumber }}</a>
+          <a class="govuk-link" id="{{ calf.id }}" href="{{ calf.href }}">{{ calf.earTagNumber }}</a>
         {% endset %}
         {% set statusHtml %}
           {% if calf.isReady %}
@@ -42,15 +42,17 @@
         {% endset %}
         {% set calfRows = (calfRows.push([
           { html: earTagHtml },
-          { html: statusHtml, format: "numeric" }
+          { html: statusHtml }
         ]), calfRows) %}
       {% endfor %}
 
       {{ govukTable({
         attributes: { id: "calves" },
+        caption: "Animals in this registration",
+        captionClasses: "govuk-visually-hidden",
         head: [
           { text: "Tag number" },
-          { text: "Status", format: "numeric" }
+          { text: "Status" }
         ],
         rows: calfRows
       }) }}

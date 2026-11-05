@@ -33,20 +33,36 @@ function formValuesFrom(answers) {
 
 /**
  * @param {object} request
- * @returns {string} the page before calf details: the holding for the first
- *   calf, where the registration starts, otherwise the list of calves
+ * @returns {Promise<boolean>} true once the registration has a saved calf
  */
-function previousPath(request) {
+async function hasSavedCalf(request) {
+  const registration = await registrationClient.getRegistration(
+    registrationKey(request)
+  )
+
+  return (registration?.calves.length ?? 0) > 0
+}
+
+/**
+ * @param {object} request
+ * @returns {Promise<string>} the page before calf details: the list of
+ *   calves, except for the first calf of a registration with no calf saved
+ *   yet, where the registration starts from the holding
+ */
+async function previousPath(request) {
   const { cph, registrationId, calfNumber } = request.params
 
-  return calfNumber === 1
-    ? getMountPath('cattle-home', 'holding', { cph })
-    : registrationPagePath(cph, registrationId, TAG_LIST_PAGE)
+  if (calfNumber === 1 && !(await hasSavedCalf(request))) {
+    return getMountPath('cattle-home', 'holding', { cph })
+  }
+
+  return registrationPagePath(cph, registrationId, TAG_LIST_PAGE)
 }
 
 /**
  * @param {object} options
  * @param {object} options.request
+ * @param {string} options.previous - see previousPath()
  * @param {Record<string, string>} options.values
  * @param {{ field: string, code: string }[]} [options.errors]
  * @param {{ field: string, code: string }[]} [options.warnings]
@@ -55,6 +71,7 @@ function previousPath(request) {
  */
 function buildViewModel({
   request,
+  previous,
   values,
   errors = [],
   warnings = [],
@@ -66,7 +83,7 @@ function buildViewModel({
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
-    backLinkHref: backLinkPath(request, calfNumber, previousPath(request)),
+    backLinkHref: backLinkPath(request, calfNumber, previous),
     formAction: keepReturn(
       request,
       calfPagePath(cph, registrationId, calfNumber, 'calf-details')
@@ -97,7 +114,11 @@ export const calfDetailsController = {
 
     return h.view(
       TEMPLATE,
-      buildViewModel({ request, values: formValuesFrom(answers) })
+      buildViewModel({
+        request,
+        previous: await previousPath(request),
+        values: formValuesFrom(answers)
+      })
     )
   }
 }
@@ -137,6 +158,7 @@ export const calfDetailsSubmitController = {
           TEMPLATE,
           buildViewModel({
             request,
+            previous: await previousPath(request),
             values,
             errors,
             warnings: warningsToShow,
