@@ -161,7 +161,12 @@ describe('register CSRF protection', () => {
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
         headers: csrfHeaders,
-        payload: { ...validPayload, earTagNumber: '', _csrf: CSRF_TOKEN }
+        payload: {
+          ...validPayload,
+          calfEarTagNumber: validPayload.earTagNumber,
+          earTagNumber: '',
+          _csrf: CSRF_TOKEN
+        }
       }
 
       // Act

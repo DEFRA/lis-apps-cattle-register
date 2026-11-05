@@ -1,6 +1,14 @@
 import { randomUUID } from 'node:crypto'
 
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi
+} from 'vitest'
 import { load } from 'cheerio'
 
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
@@ -8,6 +16,7 @@ import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import { spokeAuth } from '#test-helpers/spoke-auth.js'
 import {
   CPH,
+  REGISTER_PATH,
   addCalf,
   calfPath,
   createUser,
@@ -43,6 +52,10 @@ describe('cancel registration route', () => {
     vi.useRealTimers()
   })
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   describe('GET cancel registration', () => {
     test('it asks to confirm cancelling the calf, showing its ear tag', async () => {
       // Arrange
@@ -58,7 +71,9 @@ describe('cancel registration route', () => {
       expect($('title').text().trim().startsWith(`${heading} - `)).toBe(true)
       expect($('h1').text().trim()).toBe(heading)
       expect($('h1')).toHaveLength(1)
-      expect($('#earTagNumber').text().trim()).toBe('UK 123456 301550')
+      expect($('main .govuk-caption-l').text().trim()).toBe(
+        'Official animal ear tag number: UK 123456 301550'
+      )
       expect($('.govuk-back-link').attr('href')).toBe(
         calfPath(registrationId, 'check-calf-details')
       )
@@ -66,7 +81,12 @@ describe('cancel registration route', () => {
         calfPath(registrationId, 'cancel')
       )
       expect($('main form').attr('method')).toBe('post')
-      expect($('main form button').text().trim()).toBe('Yes')
+      expect($('main form input[name="calfEarTagNumber"]').val()).toBe(
+        'UK123456301550'
+      )
+      const yes = $('main form button')
+      expect(yes.text().trim()).toBe('Yes')
+      expect(yes.attr('data-prevent-double-click')).toBe('true')
       const keep = $('main form .govuk-button-group a')
       expect(keep.text().trim()).toBe('No')
       expect(keep.attr('href')).toBe(
@@ -87,7 +107,12 @@ describe('cancel registration route', () => {
 
       // Assert
       const $ = load(response.payload)
-      expect($('#earTagNumber').text().trim()).toBe('UK 123456 301552')
+      expect($('main .govuk-caption-l').text().trim()).toBe(
+        'Official animal ear tag number: UK 123456 301552'
+      )
+      expect($('main form input[name="calfEarTagNumber"]').val()).toBe(
+        'UK123456301552'
+      )
       expect($('main form').attr('action')).toBe(
         calfPath(registrationId, 'cancel', 2)
       )
@@ -125,15 +150,37 @@ describe('cancel registration route', () => {
       expect(response.statusCode).toBe(statusCodes.notFound)
     })
 
-    test('it returns not found for a registration there is not', async () => {
+    test.each([1, 2])(
+      'it sends calf %s of a registration there is not to calf details',
+      async (calfNumber) => {
+        // Arrange
+        const registrationId = randomUUID()
+
+        // Act
+        const response = await get(
+          calfPath(registrationId, 'cancel', calfNumber)
+        )
+
+        // Assert
+        expect(response.statusCode).toBe(302)
+        expect(response.headers.location).toBe(
+          `${REGISTER_PATH}/${registrationId}/calf-details`
+        )
+      }
+    )
+
+    test('it returns not found for a user without an id', async () => {
       // Arrange
-      const registrationId = randomUUID()
+      const registrationId = await startRegistration(server)
+      const auth = spokeAuth({ ...createUser([CPH]), sub: undefined })
+      const getCalf = vi.spyOn(registrationClient, 'getCalf')
 
       // Act
-      const response = await get(calfPath(registrationId, 'cancel'))
+      const response = await get(calfPath(registrationId, 'cancel'), auth)
 
       // Assert
       expect(response.statusCode).toBe(statusCodes.notFound)
+      expect(getCalf).not.toHaveBeenCalled()
     })
 
     test('it returns not found for a CPH the user is not granted', async () => {

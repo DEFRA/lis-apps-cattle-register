@@ -4,7 +4,11 @@ import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 import { registrationClient } from '#server/services/registration-client.js'
 import { calfPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
-import { calfNotFound, registrationKey } from '../registration.js'
+import {
+  calfNotFound,
+  registrationKey,
+  storedEarTagNumber
+} from '../registration.js'
 import { formErrors } from '../form-errors.js'
 import { backLinkPath, keepReturn, pathAfterSave } from '../check-return.js'
 import { getMessage } from './messages.js'
@@ -28,6 +32,7 @@ function buildViewModel({ request, earTagNumber, errors = [] }) {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
     calfEarTagNumber: formatEarTag(request.pre.calf.calfDetails.earTagNumber),
+    storedCalfEarTagNumber: storedEarTagNumber(request.pre.calf),
     backLinkHref: backLinkPath(
       request,
       calfNumber,

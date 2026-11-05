@@ -36,10 +36,11 @@ describe('cancel registration submit route', () => {
   /**
    * @param {string} url
    * @param {object} [auth]
+   * @param {object} [payload] - see postForm()
    * @returns {Promise<object>} the response to confirming the cancel
    */
-  function cancel(url, auth = keeperAuth) {
-    return postForm(server, url, {}, auth)
+  function cancel(url, auth = keeperAuth, payload = {}) {
+    return postForm(server, url, payload, auth)
   }
 
   /**
@@ -140,7 +141,9 @@ describe('cancel registration submit route', () => {
       // Arrange
       const registrationId = await startRegistration(server)
       await addCalf(server, registrationId, 2)
-      await cancel(calfPath(registrationId, 'cancel', 2))
+      await cancel(calfPath(registrationId, 'cancel', 2), keeperAuth, {
+        calfEarTagNumber: 'UK123456301552'
+      })
 
       // Act
       const response = await server.inject({
@@ -213,6 +216,21 @@ describe('cancel registration submit route', () => {
       // Assert
       expect(response.statusCode).toBe(statusCodes.notFound)
       expect(removeCalf).not.toHaveBeenCalled()
+    })
+
+    test('it does not remove the calf for a user without an id', async () => {
+      // Arrange
+      const registrationId = await startRegistration(server)
+      const auth = spokeAuth({ ...createUser([CPH]), sub: undefined })
+      const removeCalf = vi.spyOn(registrationClient, 'removeCalf')
+
+      // Act
+      const response = await cancel(calfPath(registrationId, 'cancel'), auth)
+
+      // Assert
+      expect(response.statusCode).toBe(statusCodes.notFound)
+      expect(removeCalf).not.toHaveBeenCalled()
+      expect(await earTags(registrationId)).toEqual(['UK123456301550'])
     })
 
     test('it rejects a post with no CSRF token', async () => {

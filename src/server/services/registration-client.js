@@ -241,11 +241,11 @@ function findStoredRegistration(store, key) {
 /**
  * @param {object} store
  * @param {RegistrationKey & { calfNumber: number }} registration
- * @returns {boolean} see removeCalf()
+ * @returns {{ errors: FieldResult[] } | null} see removeCalf()
  */
 function removeStoredCalf(store, { calfNumber, ...key }) {
   if (!findStoredCalf(store, key, calfNumber)) {
-    return false
+    return null
   }
 
   store.set(
@@ -254,7 +254,7 @@ function removeStoredCalf(store, { calfNumber, ...key }) {
     key.userId
   )
 
-  return true
+  return { errors: [] }
 }
 
 /**
@@ -467,9 +467,9 @@ export function createRegistrationClient({
      * Removes the calf, so the calves after it each move up one place. The
      * registration is kept, with no calves once the last one is removed.
      * @param {RegistrationKey & { calfNumber: number }} registration
-     * @returns {Promise<boolean>} false, changing nothing, when the
-     *   registration has no such calf (never started, already removed, or
-     *   expired or evicted)
+     * @returns {Promise<{ errors: FieldResult[] } | null>} null, changing
+     *   nothing, when the registration has no such calf (never started,
+     *   already removed, or expired or evicted)
      */
     async removeCalf(registration) {
       return removeStoredCalf(store, registration)

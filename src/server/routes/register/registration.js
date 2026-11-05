@@ -2,6 +2,7 @@
 import Boom from '@hapi/boom'
 
 import { registrationClient } from '#server/services/registration-client.js'
+import { isSameEarTag } from '#server/services/registration-calves.js'
 import { calfPagePath, registrationPagePath } from './paths.js'
 
 /**
@@ -41,7 +42,7 @@ export function registrationKey(request) {
  * @returns {Promise<boolean>} true when the registration in the path is
  *   there (not never started, nor expired or evicted)
  */
-async function isRegistrationKnown(request) {
+export async function isRegistrationKnown(request) {
   const registration = await registrationClient.getRegistration(
     registrationKey(request)
   )
@@ -103,12 +104,70 @@ export async function loadRegistration(request, h) {
  * @returns {Promise<object>} the saved calf
  */
 export async function loadCalf(request, h) {
-  const calf = await registrationClient.getCalf({
+  return (await findCalf(request)) ?? calfNotFound(request, h)
+}
+
+/**
+ * Route prerequisite for a form post that copes with a missing calf itself.
+ * @param {Request} request
+ * @returns {Promise<object | null>} the saved calf in the path, or null
+ */
+export async function findCalf(request) {
+  return registrationClient.getCalf({
     ...registrationKey(request),
     calfNumber: request.params.calfNumber
   })
+}
 
-  return calf ?? calfNotFound(request, h)
+/**
+ * @param {object | null} calf - the saved calf, if any
+ * @returns {string} its ear tag, as saved, for the form about it to post
+ *   back (see demandSameCalf()); blank for a calf not saved yet
+ */
+export function storedEarTagNumber(calf) {
+  return calf?.calfDetails.earTagNumber ?? ''
+}
+
+/**
+ * Route prerequisite, after loadCalf or findCalf, for a form post about one
+ * calf. Calves are addressed by position, and cancelling one moves the
+ * calves after it up a place, so a form shown before then (or posted
+ * twice) would act on another calf. The form posts back the ear tag of the
+ * calf it was shown for; when the calf at that position now has another
+ * tag, or there is none, nothing is changed and the user is sent to the
+ * list of calves.
+ * @param {Request} request
+ * @param {ResponseToolkit} h
+ * @returns {symbol | object}
+ */
+export function demandSameCalf(request, h) {
+  const { calf } = request.pre
+  const { calfEarTagNumber } = request.payload
+
+  if (
+    calf &&
+    calfEarTagNumber !== undefined &&
+    isSameEarTag(calfEarTagNumber, storedEarTagNumber(calf))
+  ) {
+    return h.continue
+  }
+
+  const { cph, registrationId } = request.params
+
+  return h
+    .redirect(registrationPagePath(cph, registrationId, 'tag-list'))
+    .takeover()
+}
+
+/**
+ * Route prerequisite, after findCalf, for calf details: as demandSameCalf()
+ * for a saved calf; the next calf, not saved yet, has nothing to guard.
+ * @param {Request} request
+ * @param {ResponseToolkit} h
+ * @returns {symbol | object}
+ */
+export function demandSameCalfIfSaved(request, h) {
+  return request.pre.calf ? demandSameCalf(request, h) : h.continue
 }
 
 /**

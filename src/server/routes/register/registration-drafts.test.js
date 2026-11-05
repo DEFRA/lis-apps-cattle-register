@@ -87,7 +87,8 @@ describe('registration drafts', () => {
 
   /**
    * @param {string} url
-   * @param {object} payload
+   * @param {object} payload - posted, by default, as about the first
+   *   calf saved in these tests (see demandSameCalf())
    * @param {object} [auth]
    * @returns {Promise<object>} the response
    */
@@ -97,7 +98,11 @@ describe('registration drafts', () => {
       url,
       auth,
       headers: csrfHeaders,
-      payload: { ...payload, _csrf: CSRF_TOKEN }
+      payload: {
+        calfEarTagNumber: calfDetailsPayload.earTagNumber,
+        ...payload,
+        _csrf: CSRF_TOKEN
+      }
     })
   }
 
@@ -223,6 +228,46 @@ describe('registration drafts', () => {
       // Assert
       expect(response.statusCode).toBe(302)
       expect(response.headers.location).toBe(calfDetailsPath(registrationId))
+    })
+
+    test('calf details for a later calf sends the user back to calf details', async () => {
+      // Arrange
+      const registrationId = randomUUID()
+
+      // Act
+      const response = await server.inject({
+        method: 'GET',
+        url: `${REGISTER_PATH}/${registrationId}/calves/3/calf-details`,
+        auth: keeperAuth
+      })
+
+      // Assert
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(calfDetailsPath(registrationId))
+    })
+
+    test('calf details answers for a later calf go back to calf details', async () => {
+      // Arrange
+      const registrationId = randomUUID()
+      const saveCalfDetails = vi.spyOn(registrationClient, 'saveCalfDetails')
+
+      // Act
+      const response = await post(
+        `${REGISTER_PATH}/${registrationId}/calves/3/calf-details`,
+        calfDetailsPayload
+      )
+
+      // Assert
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(calfDetailsPath(registrationId))
+      expect(saveCalfDetails).toHaveBeenCalled()
+      expect(
+        await registrationClient.getRegistration({
+          cph: CPH,
+          registrationId,
+          userId: 'test-user'
+        })
+      ).toBeNull()
     })
 
     test('a genetic dam answer for a later calf goes back to calf details', async () => {

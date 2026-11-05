@@ -26,6 +26,8 @@ const csrfHeaders = {
 }
 const NOW = new Date('2026-11-05T10:00:00Z')
 
+// Every test posts to calf 1 of the same registration, saved by the first;
+// the posts carry its ear tag, as the page does (see demandSameCalf()).
 const validPayload = {
   earTagNumber: 'UK123456301550',
   dateOfBirth: '1/11/2026',
@@ -152,7 +154,11 @@ describe('calf details submit routes', () => {
           url: CALF_DETAILS_PATH,
           auth: keeperAuth,
           headers: csrfHeaders,
-          payload: { ...payload, _csrf: CSRF_TOKEN }
+          payload: {
+            calfEarTagNumber: validPayload.earTagNumber,
+            ...payload,
+            _csrf: CSRF_TOKEN
+          }
         })
 
         // Assert
@@ -187,7 +193,11 @@ describe('calf details submit routes', () => {
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
         headers: csrfHeaders,
-        payload: { ...payload, _csrf: CSRF_TOKEN }
+        payload: {
+          calfEarTagNumber: validPayload.earTagNumber,
+          ...payload,
+          _csrf: CSRF_TOKEN
+        }
       })
 
       // Assert
@@ -211,7 +221,11 @@ describe('calf details submit routes', () => {
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
         headers: csrfHeaders,
-        payload: { ...payload, _csrf: CSRF_TOKEN }
+        payload: {
+          calfEarTagNumber: validPayload.earTagNumber,
+          ...payload,
+          _csrf: CSRF_TOKEN
+        }
       })
 
       // Assert
@@ -243,7 +257,11 @@ describe('calf details submit routes', () => {
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
         headers: csrfHeaders,
-        payload: { ...payload, _csrf: CSRF_TOKEN }
+        payload: {
+          calfEarTagNumber: validPayload.earTagNumber,
+          ...payload,
+          _csrf: CSRF_TOKEN
+        }
       })
 
       // Assert
@@ -267,7 +285,11 @@ describe('calf details submit routes', () => {
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
         headers: csrfHeaders,
-        payload: { ...payload, _csrf: CSRF_TOKEN }
+        payload: {
+          calfEarTagNumber: validPayload.earTagNumber,
+          ...payload,
+          _csrf: CSRF_TOKEN
+        }
       })
 
       // Assert
@@ -289,7 +311,11 @@ describe('calf details submit routes', () => {
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
         headers: csrfHeaders,
-        payload: { ...payload, _csrf: CSRF_TOKEN }
+        payload: {
+          calfEarTagNumber: validPayload.earTagNumber,
+          ...payload,
+          _csrf: CSRF_TOKEN
+        }
       })
 
       // Assert
@@ -314,7 +340,11 @@ describe('calf details submit routes', () => {
         url: CALF_DETAILS_PATH,
         auth: keeperAuth,
         headers: csrfHeaders,
-        payload: { ...payload, _csrf: CSRF_TOKEN }
+        payload: {
+          calfEarTagNumber: validPayload.earTagNumber,
+          ...payload,
+          _csrf: CSRF_TOKEN
+        }
       })
 
       // Assert

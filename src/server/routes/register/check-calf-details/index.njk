@@ -22,16 +22,20 @@
       }) }}
 
       {% call lisForm({ action: formAction }) %}
-        {{ govukButton({
-          text: "Continue"
-        }) }}
-      {% endcall %}
+        {% include "partials/calf-guard.njk" %}
 
-      {{ govukButton({
-        text: "Cancel birth registration",
-        href: cancelHref,
-        classes: "govuk-button--secondary"
-      }) }}
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: "Continue"
+          }) }}
+
+          {{ govukButton({
+            text: "Cancel birth registration",
+            href: cancelHref,
+            classes: "govuk-button--secondary"
+          }) }}
+        </div>
+      {% endcall %}
     </div>
   </div>
 {% endblock %}

@@ -87,7 +87,8 @@ describe('sire details submit routes', () => {
 
   /**
    * @param {string} url
-   * @param {object} payload
+   * @param {object} payload - posted, by default, as about the first
+   *   calf saved in these tests (see demandSameCalf())
    * @param {object} [auth]
    * @returns {Promise<object>} the response
    */
@@ -97,7 +98,11 @@ describe('sire details submit routes', () => {
       url,
       auth,
       headers: csrfHeaders,
-      payload: { ...payload, _csrf: CSRF_TOKEN }
+      payload: {
+        calfEarTagNumber: calfDetailsPayload.earTagNumber,
+        ...payload,
+        _csrf: CSRF_TOKEN
+      }
     })
   }
 

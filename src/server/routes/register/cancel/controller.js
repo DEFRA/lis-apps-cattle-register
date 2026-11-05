@@ -1,9 +1,8 @@
-import Boom from '@hapi/boom'
 import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
 import { registrationClient } from '#server/services/registration-client.js'
 import { calfPagePath, registrationPagePath } from '../paths.js'
-import { registrationKey } from '../registration.js'
+import { registrationKey, storedEarTagNumber } from '../registration.js'
 import { CHECK_PAGE } from '../check-return.js'
 
 const TEMPLATE = 'register/cancel/index'
@@ -12,37 +11,19 @@ export const CANCEL_PAGE = 'cancel'
 const NEXT_PAGE = 'tag-list'
 
 /**
- * @param {object} request
- * @returns {Promise<object>} the calf in the path
- * @throws {Boom.Boom} a 404 for a calf the registration does not have:
- *   cancelling starts on check calf details, so only a saved calf has one
- */
-async function demandCalf(request) {
-  const calf = await registrationClient.getCalf({
-    ...registrationKey(request),
-    calfNumber: request.params.calfNumber
-  })
-
-  if (!calf) {
-    throw Boom.notFound()
-  }
-
-  return calf
-}
-
-/**
- * @param {object} request
- * @param {object} calf - the saved calf
+ * @param {object} request - with the saved calf in request.pre.calf
  * @returns {object} the cancel registration view model
  */
-function buildViewModel(request, calf) {
+function buildViewModel(request) {
+  const { calf } = request.pre
   const { cph, registrationId, calfNumber } = request.params
   const checkHref = calfPagePath(cph, registrationId, calfNumber, CHECK_PAGE)
 
   return {
     pageTitle: PAGE_TITLE,
     heading: PAGE_TITLE,
-    earTagNumber: formatEarTag(calf.calfDetails.earTagNumber),
+    calfEarTagNumber: formatEarTag(calf.calfDetails.earTagNumber),
+    storedCalfEarTagNumber: storedEarTagNumber(calf),
     backLinkHref: checkHref,
     keepHref: checkHref,
     formAction: calfPagePath(cph, registrationId, calfNumber, CANCEL_PAGE)
@@ -50,14 +31,15 @@ function buildViewModel(request, calf) {
 }
 
 export const cancelCalfController = {
-  async handler(request, h) {
-    return h.view(TEMPLATE, buildViewModel(request, await demandCalf(request)))
+  handler(request, h) {
+    return h.view(TEMPLATE, buildViewModel(request))
   }
 }
 
 export const cancelCalfSubmitController = {
   // A calf already removed, or a registration already gone, ends in the
-  // same place: the calf is not registered either way.
+  // same place, before this, in demandSameCalf(): the calf is not
+  // registered either way.
   async handler(request, h) {
     const { cph, registrationId, calfNumber } = request.params
 

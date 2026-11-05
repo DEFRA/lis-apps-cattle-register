@@ -84,7 +84,8 @@ describe('dam details routes', () => {
 
   /**
    * @param {string} registrationId
-   * @param {object} payload
+   * @param {object} payload - posted, by default, as about the first
+   *   calf saved in these tests (see demandSameCalf())
    * @param {object} [options]
    * @param {object} [options.auth]
    * @param {number|string} [options.calfNumber]
@@ -100,7 +101,11 @@ describe('dam details routes', () => {
       url: damDetailsPath(registrationId, calfNumber),
       auth,
       headers: csrfHeaders,
-      payload: { ...payload, _csrf: CSRF_TOKEN }
+      payload: {
+        calfEarTagNumber: calfDetailsPayload.earTagNumber,
+        ...payload,
+        _csrf: CSRF_TOKEN
+      }
     })
   }
 

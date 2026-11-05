@@ -39,6 +39,16 @@ function comparableEarTag(earTagNumber) {
 }
 
 /**
+ * @param {string} earTagNumber
+ * @param {string} otherEarTagNumber
+ * @returns {boolean} true when both are the same tag, compared as
+ *   isEarTagTaken() compares them
+ */
+export function isSameEarTag(earTagNumber, otherEarTagNumber) {
+  return comparableEarTag(earTagNumber) === comparableEarTag(otherEarTagNumber)
+}
+
+/**
  * @param {{ calfDetails: { earTagNumber?: string } }[]} calves
  * @param {number} calfNumber - the calf being saved, from 1
  * @param {string} earTagNumber

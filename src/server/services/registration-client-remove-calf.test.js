@@ -51,7 +51,7 @@ describe('registrationClient (stub) removeCalf()', () => {
     const result = await client.removeCalf({ ...registration, calfNumber: 2 })
 
     // Assert
-    expect(result).toBe(true)
+    expect(result).toEqual({ errors: [] })
     expect(await earTags(client)).toEqual(['UK12345631', 'UK12345633'])
   })
 
@@ -78,7 +78,7 @@ describe('registrationClient (stub) removeCalf()', () => {
     const result = await client.removeCalf({ ...registration, calfNumber: 2 })
 
     // Assert
-    expect(result).toBe(false)
+    expect(result).toBeNull()
     expect(await earTags(client)).toEqual(['UK12345631'])
   })
 
@@ -90,7 +90,7 @@ describe('registrationClient (stub) removeCalf()', () => {
     const result = await client.removeCalf({ ...registration, calfNumber: 1 })
 
     // Assert
-    expect(result).toBe(false)
+    expect(result).toBeNull()
     expect(await client.getRegistration(registration)).toBeNull()
   })
 
@@ -109,7 +109,7 @@ describe('registrationClient (stub) removeCalf()', () => {
     })
 
     // Assert
-    expect(result).toBe(false)
+    expect(result).toBeNull()
     expect(await earTags(client)).toEqual(['UK12345631'])
   })
 })
