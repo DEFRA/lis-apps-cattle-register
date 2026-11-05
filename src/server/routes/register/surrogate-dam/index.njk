@@ -39,7 +39,8 @@
             text: earTagHint
           },
           errorMessage: fieldErrors.geneticDamEarTagNumber,
-          spellcheck: false
+          spellcheck: false,
+          attributes: { maxlength: maxFieldLength }
         }) }}
 
         {{ govukInput({
@@ -55,7 +56,8 @@
             text: earTagHint
           },
           errorMessage: fieldErrors.surrogateDamEarTagNumber,
-          spellcheck: false
+          spellcheck: false,
+          attributes: { maxlength: maxFieldLength }
         }) }}
 
         {{ govukButton({

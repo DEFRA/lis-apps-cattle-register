@@ -434,7 +434,7 @@ export function createRegistrationClient({
     },
 
     /**
-     * Saves the answers, the surrogate dam and the calf's genetic dam, when
+     * Saves the answers, trimmed, the surrogate dam and the calf's genetic dam, when
      * there are no errors. Throws when the calf was not born via a surrogate
      * dam.
      * @param {RegistrationKey & { calfNumber: number, answers: SurrogateDamAnswers }} registration

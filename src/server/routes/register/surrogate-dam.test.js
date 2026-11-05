@@ -171,8 +171,10 @@ describe('surrogate dam routes', () => {
       )
       expect($('h1').text().trim()).toBe('Genetic and surrogate dam details')
       expect($('main .govuk-caption-l').text().trim()).toBe(
-        'Official animal ear tag number: UK123456301550'
+        'Official animal ear tag number: UK 123456 301550'
       )
+      expect($('#geneticDamEarTagNumber').attr('maxlength')).toBe('200')
+      expect($('#surrogateDamEarTagNumber').attr('maxlength')).toBe('200')
       expect($('.govuk-back-link').attr('href')).toBe(
         calfOnePath(registrationId, 'dam-details')
       )
