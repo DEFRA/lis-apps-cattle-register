@@ -213,24 +213,12 @@ export const config = convict({
       env: 'HUB_ORIGINS'
     },
     hubJwt: {
-      cookieName: {
-        doc: 'Cookie name that carries the hub-issued JWT',
-        format: String,
-        default: 'livestock_hub_jwt',
-        env: 'HUB_JWT_COOKIE_NAME'
-      },
       secret: {
         doc: 'Shared secret used to sign and verify hub-issued JWTs',
         format: String,
         default: null,
         env: 'HUB_JWT_SECRET',
         sensitive: true
-      },
-      ttlSeconds: {
-        doc: 'Hub-issued JWT time to live in seconds',
-        format: Number,
-        default: 14400,
-        env: 'HUB_JWT_TTL_SECONDS'
       },
       audience: {
         doc: 'Audience claim for the hub-issued JWT',

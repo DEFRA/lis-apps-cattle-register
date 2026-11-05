@@ -1,8 +1,5 @@
 import inert from '@hapi/inert'
-import {
-  createSpokeAuth,
-  getHubJwtCookieOptions
-} from '@defra/lis-hubs-infra-access/authentication'
+import { createSpokeAuth } from '@defra/lis-hubs-infra-access/authentication'
 
 import { health } from '../routes/health/index.js'
 import { register } from '../routes/register/index.js'
@@ -14,10 +11,6 @@ import { moduleAccess } from '../../../module-access.js'
 const spokeAuth = createSpokeAuth({
   spokeId: 'cattle-register',
   hubOrigins: config.get('auth.hubOrigins'),
-  cookieName: config.get('auth.hubJwt.cookieName'),
-  cookieOptions: getHubJwtCookieOptions({
-    ttlSeconds: config.get('auth.hubJwt.ttlSeconds')
-  }),
   port: config.get('port'),
   secret: config.get('auth.hubJwt.secret'),
   audience: config.get('auth.hubJwt.audience'),
