@@ -18,8 +18,9 @@ const {
   LayoutTwo: class {}
 }))
 
-const { initAllAutocompletes } = vi.hoisted(() => ({
-  initAllAutocompletes: vi.fn()
+const { initAllAutocompletes, DatePicker } = vi.hoisted(() => ({
+  initAllAutocompletes: vi.fn(),
+  DatePicker: class {}
 }))
 
 vi.mock('govuk-frontend', () => ({
@@ -38,6 +39,9 @@ vi.mock('@defra/lis-infra-ui-services/components/error-pages', () => ({
 vi.mock('@defra/lis-infra-ui-services/components/autocomplete', () => ({
   initAllAutocompletes
 }))
+vi.mock('@defra/lis-infra-ui-services/components/date-picker', () => ({
+  DatePicker
+}))
 
 describe('browser application bootstrap', () => {
   test('starts each shared layout component, each error page component, then each page-level GOV.UK component, starting a component listed twice once', async () => {
@@ -48,6 +52,7 @@ describe('browser application bootstrap', () => {
       [LayoutTwo],
       [Button],
       [Checkboxes],
+      [DatePicker],
       [ErrorSummary],
       [Radios]
     ])
