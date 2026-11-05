@@ -26,6 +26,8 @@
       {% endset %}
 
       {% call lisForm({ action: formAction }) %}
+        {% include "partials/calf-guard.njk" %}
+
         {{ govukRadios({
           idPrefix: "damType",
           name: "damType",

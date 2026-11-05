@@ -3,7 +3,12 @@ import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 import { registrationClient } from '#server/services/registration-client.js'
 import { calfPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
-import { calfNotFound, damPage, registrationKey } from '../registration.js'
+import {
+  calfNotFound,
+  damPage,
+  registrationKey,
+  storedEarTagNumber
+} from '../registration.js'
 import { backLinkPath, CHECK_PAGE, keepReturn } from '../check-return.js'
 
 const TEMPLATE = 'register/sire-details/index'
@@ -32,6 +37,7 @@ function buildViewModel(request) {
     pageTitle: PAGE_TITLE,
     heading: PAGE_TITLE,
     calfEarTagNumber: formatEarTag(calf.calfDetails.earTagNumber),
+    storedCalfEarTagNumber: storedEarTagNumber(calf),
     backLinkHref: backLinkPath(
       request,
       calfNumber,

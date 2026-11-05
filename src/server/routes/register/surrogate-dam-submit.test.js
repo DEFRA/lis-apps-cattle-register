@@ -82,7 +82,8 @@ describe('surrogate dam submit routes', () => {
 
   /**
    * @param {string} url
-   * @param {object} payload
+   * @param {object} payload - posted, by default, as about the first
+   *   calf saved in these tests (see demandSameCalf())
    * @param {object} [auth]
    * @returns {Promise<object>} the response
    */
@@ -92,7 +93,11 @@ describe('surrogate dam submit routes', () => {
       url,
       auth,
       headers: csrfHeaders,
-      payload: { ...payload, _csrf: CSRF_TOKEN }
+      payload: {
+        calfEarTagNumber: calfDetailsPayload.earTagNumber,
+        ...payload,
+        _csrf: CSRF_TOKEN
+      }
     })
   }
 
@@ -328,7 +333,7 @@ describe('surrogate dam submit routes', () => {
       )
     })
 
-    test('it returns not found for a later calf that expires as the answers are sent', async () => {
+    test('it returns not found for a later calf removed as the answers are sent', async () => {
       // Arrange
       const registrationId = randomUUID()
       vi.spyOn(registrationClient, 'getCalf').mockResolvedValueOnce({
@@ -340,6 +345,11 @@ describe('surrogate dam submit routes', () => {
       vi.spyOn(registrationClient, 'saveSurrogateDam').mockResolvedValueOnce(
         null
       )
+
+      vi.spyOn(registrationClient, 'getRegistration').mockResolvedValueOnce({
+        calves: [],
+        canAddCalf: true
+      })
 
       // Act
       const response = await post(

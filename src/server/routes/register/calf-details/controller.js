@@ -1,4 +1,3 @@
-import Boom from '@hapi/boom'
 import { getMountPath } from '@defra/lis-hubs-infra-registry'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
@@ -10,7 +9,12 @@ import {
 } from '#server/common/helpers/calendar-date.js'
 import { calfPagePath, registrationPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
-import { registrationKey } from '../registration.js'
+import {
+  calfNotFound,
+  isRegistrationKnown,
+  registrationKey,
+  storedEarTagNumber
+} from '../registration.js'
 import { formErrors } from '../form-errors.js'
 import { backLinkPath, keepReturn, pathAfterSave } from '../check-return.js'
 import { getMessage } from './messages.js'
@@ -33,26 +37,15 @@ function formValuesFrom(answers) {
 
 /**
  * @param {object} request
- * @returns {Promise<boolean>} true once the registration has a saved calf
- */
-async function hasSavedCalf(request) {
-  const registration = await registrationClient.getRegistration(
-    registrationKey(request)
-  )
-
-  return (registration?.calves.length ?? 0) > 0
-}
-
-/**
- * @param {object} request
  * @returns {Promise<string>} the page before calf details: the list of
- *   calves, except for the first calf of a registration with no calf saved
- *   yet, where the registration starts from the holding
+ *   calves, even with every calf cancelled, except for the first calf of a
+ *   registration there is not yet (or any more), which starts from the
+ *   holding
  */
 async function previousPath(request) {
   const { cph, registrationId, calfNumber } = request.params
 
-  if (calfNumber === 1 && !(await hasSavedCalf(request))) {
+  if (calfNumber === 1 && !(await isRegistrationKnown(request))) {
     return getMountPath('cattle-home', 'holding', { cph })
   }
 
@@ -61,7 +54,8 @@ async function previousPath(request) {
 
 /**
  * @param {object} options
- * @param {object} options.request
+ * @param {object} options.request - with the saved calf, or null, in
+ *   request.pre.calf
  * @param {string} options.previous - see previousPath()
  * @param {Record<string, string>} options.values
  * @param {{ field: string, code: string }[]} [options.errors]
@@ -88,6 +82,8 @@ function buildViewModel({
       request,
       calfPagePath(cph, registrationId, calfNumber, 'calf-details')
     ),
+    // The calf as saved, not as edited, so a post acts on no other calf.
+    storedCalfEarTagNumber: storedEarTagNumber(request.pre.calf),
     values,
     breedItems: breedOptions,
     maxFieldLength: MAX_FIELD_LENGTH,
@@ -107,7 +103,7 @@ export const calfDetailsController = {
     })
 
     if (!saved) {
-      return Boom.notFound()
+      return calfNotFound(request, h)
     }
 
     const { answers } = saved
@@ -146,7 +142,7 @@ export const calfDetailsSubmitController = {
     // The calves before this one have expired, or been evicted, since the
     // page was shown.
     if (!result) {
-      return Boom.notFound()
+      return calfNotFound(request, h)
     }
 
     const { errors, warnings } = result

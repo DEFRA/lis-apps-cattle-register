@@ -5,9 +5,9 @@
  * (see draft-store.js): not shared between instances, lost on restart, and
  * expired or evicted after a while. The rules below move to that service.
  * Keep the interface (getRegistration/getCalfDetails/saveCalfDetails/getCalf/
- * saveDamDetails/saveGeneticDam/saveSurrogateDam/saveSireDetails/confirmCalf,
- * field + code
- * results, null for a calf the registration does not have) when replacing
+ * saveDamDetails/saveGeneticDam/saveSurrogateDam/saveSireDetails/confirmCalf/
+ * removeCalf, field + code
+ * results, null for a registration or calf there is not) when replacing
  * it with the real client.
  */
 import { createDraftStore } from './draft-store.js'
@@ -21,6 +21,13 @@ import {
   isAddressableCalf,
   isEarTagTaken
 } from './registration-calves.js'
+import {
+  copyCalf,
+  findStoredCalf,
+  saveStoredCalf,
+  storedCalves,
+  storeKey
+} from './registration-store.js'
 
 const DAM_TYPES = new Set(['genetic', 'surrogate'])
 const FIRST_CALF = 1
@@ -120,75 +127,12 @@ function validateSurrogateDam(answers) {
 }
 
 /**
- * @param {RegistrationKey} key
- * @returns {string}
- */
-function storeKey({ cph, registrationId, userId }) {
-  return JSON.stringify([userId, cph, registrationId])
-}
-
-/**
- * @param {Calf} calf
- * @returns {Calf} a copy, so callers cannot change what is held
- */
-function copyCalf({
-  calfDetails,
-  damDetails,
-  geneticDam,
-  surrogateDam,
-  sireDetails,
-  checked
-}) {
-  return {
-    calfDetails: { ...calfDetails },
-    damDetails: { ...damDetails },
-    geneticDam: { ...geneticDam },
-    surrogateDam: { ...surrogateDam },
-    sireDetails: { ...sireDetails },
-    checked
-  }
-}
-
-/**
  * @param {FieldResult[]} warnings
  * @param {string[]} acknowledgedWarnings - warning codes the user confirmed
  * @returns {FieldResult[]} the warnings the user has not confirmed
  */
 function unacknowledged(warnings, acknowledgedWarnings) {
   return warnings.filter(({ code }) => !acknowledgedWarnings.includes(code))
-}
-
-/**
- * @param {object} store
- * @param {RegistrationKey} key
- * @returns {Calf[]} the calves saved so far, in order
- */
-function storedCalves(store, key) {
-  return store.get(storeKey(key)) ?? []
-}
-
-/**
- * @param {object} store
- * @param {RegistrationKey} key
- * @param {number} calfNumber
- * @returns {Calf | undefined}
- */
-function findStoredCalf(store, key, calfNumber) {
-  return store.get(storeKey(key))?.[calfNumber - 1]
-}
-
-/**
- * Writes the calf back, which also restarts the draft's expiry.
- * @param {object} store
- * @param {RegistrationKey} key
- * @param {number} calfNumber
- * @param {Calf} calf
- */
-function saveStoredCalf(store, key, calfNumber, calf) {
-  const calves = [...storedCalves(store, key)]
-
-  calves[calfNumber - 1] = calf
-  store.set(storeKey(key), calves, key.userId)
 }
 
 /**
@@ -277,6 +221,44 @@ function confirmStoredCalf(store, { calfNumber, ...key }) {
 
 /**
  * @param {object} store
+ * @param {RegistrationKey} key
+ * @returns {{ calves: Calf[], canAddCalf: boolean } | null} see
+ *   getRegistration()
+ */
+function findStoredRegistration(store, key) {
+  const calves = store.get(storeKey(key))
+
+  if (!calves) {
+    return null
+  }
+
+  return {
+    calves: calves.map(copyCalf),
+    canAddCalf: hasRoomForCalf(calves)
+  }
+}
+
+/**
+ * @param {object} store
+ * @param {RegistrationKey & { calfNumber: number }} registration
+ * @returns {{ errors: FieldResult[] } | null} see removeCalf()
+ */
+function removeStoredCalf(store, { calfNumber, ...key }) {
+  if (!findStoredCalf(store, key, calfNumber)) {
+    return null
+  }
+
+  store.set(
+    storeKey(key),
+    storedCalves(store, key).toSpliced(calfNumber - 1, 1),
+    key.userId
+  )
+
+  return { errors: [] }
+}
+
+/**
+ * @param {object} store
  * @param {Date} now
  * @param {RegistrationKey & { calfNumber?: number, answers: CalfDetailsAnswers, acknowledgedWarnings?: string[] }} registration
  * @returns {{ errors: FieldResult[], warnings: FieldResult[] } | null} see
@@ -321,7 +303,7 @@ function saveStoredCalfDetails(
  * @param {object} [options]
  * @param {() => Date} [options.now] - the current instant; injectable for tests
  * @param {object} [options.store] - where drafts are held; injectable for tests
- * @returns {{ getRegistration: Function, getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function, saveGeneticDam: Function, saveSurrogateDam: Function, saveSireDetails: Function, confirmCalf: Function }}
+ * @returns {{ getRegistration: Function, getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function, saveGeneticDam: Function, saveSurrogateDam: Function, saveSireDetails: Function, confirmCalf: Function, removeCalf: Function }}
  */
 export function createRegistrationClient({
   now = () => new Date(),
@@ -334,17 +316,13 @@ export function createRegistrationClient({
   return {
     /**
      * @param {RegistrationKey} key
-     * @returns {Promise<{ calves: Calf[], canAddCalf: boolean }>} the calves
-     *   saved so far, in order (none for a registration never started, or
-     *   expired or evicted), and whether there is room for another
+     * @returns {Promise<{ calves: Calf[], canAddCalf: boolean } | null>} the
+     *   calves saved so far, in order (none once every calf is removed), and
+     *   whether there is room for another; null for a registration never
+     *   started, or expired or evicted
      */
     async getRegistration(key) {
-      const calves = storedCalves(store, key)
-
-      return {
-        calves: calves.map(copyCalf),
-        canAddCalf: hasRoomForCalf(calves)
-      }
+      return findStoredRegistration(store, key)
     },
 
     /**
@@ -483,6 +461,18 @@ export function createRegistrationClient({
      */
     async confirmCalf(registration) {
       return confirmStoredCalf(store, registration)
+    },
+
+    /**
+     * Removes the calf, so the calves after it each move up one place. The
+     * registration is kept, with no calves once the last one is removed.
+     * @param {RegistrationKey & { calfNumber: number }} registration
+     * @returns {Promise<{ errors: FieldResult[] } | null>} null, changing
+     *   nothing, when the registration has no such calf (never started,
+     *   already removed, or expired or evicted)
+     */
+    async removeCalf(registration) {
+      return removeStoredCalf(store, registration)
     }
   }
 }

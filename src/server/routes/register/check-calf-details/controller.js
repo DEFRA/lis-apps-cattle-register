@@ -5,8 +5,13 @@ import {
 
 import { registrationClient } from '#server/services/registration-client.js'
 import { calfPagePath, registrationPagePath } from '../paths.js'
-import { calfNotFound, registrationKey } from '../registration.js'
+import {
+  calfNotFound,
+  registrationKey,
+  storedEarTagNumber
+} from '../registration.js'
 import { CHECK_PAGE, withReturnToCheck } from '../check-return.js'
+import { CANCEL_PAGE } from '../cancel/controller.js'
 
 const TEMPLATE = 'register/check-calf-details/index'
 const PAGE_TITLE = 'Check calf details'
@@ -131,8 +136,10 @@ function buildViewModel(request) {
     pageTitle: PAGE_TITLE,
     heading: PAGE_TITLE,
     calfEarTagNumber: formatEarTag(request.pre.calf.calfDetails.earTagNumber),
+    storedCalfEarTagNumber: storedEarTagNumber(request.pre.calf),
     backLinkHref: calfPagePath(cph, registrationId, calfNumber, 'sire-details'),
     formAction: calfPagePath(cph, registrationId, calfNumber, CHECK_PAGE),
+    cancelHref: calfPagePath(cph, registrationId, calfNumber, CANCEL_PAGE),
     rows: summaryRows(request.pre.calf, changeHref)
   }
 }

@@ -61,7 +61,9 @@ export function calfPath(registrationId, page, calfNumber = 1) {
 /**
  * @param {object} server
  * @param {string} url
- * @param {object} payload
+ * @param {object} payload - posted, by default, as about a calf with the
+ *   ear tag in calfDetailsPayload (see demandSameCalf()); set
+ *   calfEarTagNumber for another calf, or to undefined to leave it out
  * @param {object} [auth]
  * @returns {Promise<object>} the response to a post with a valid CSRF token
  */
@@ -71,7 +73,11 @@ export function postForm(server, url, payload, auth = keeperAuth) {
     url,
     auth,
     headers: csrfHeaders,
-    payload: { ...payload, _csrf: CSRF_TOKEN }
+    payload: {
+      calfEarTagNumber: calfDetailsPayload.earTagNumber,
+      ...payload,
+      _csrf: CSRF_TOKEN
+    }
   })
 }
 
@@ -82,21 +88,28 @@ export function postForm(server, url, payload, auth = keeperAuth) {
  */
 function registrationSteps(registrationId, options) {
   const { damType, damSaved, sireDetails, calfDetails } = options
+  const calf = { calfEarTagNumber: calfDetails.earTagNumber }
   const steps = [
     [`${REGISTER_PATH}/${registrationId}/calf-details`, calfDetails]
   ]
 
   if (damType) {
-    steps.push([calfPath(registrationId, 'dam-details'), { damType }])
+    steps.push([calfPath(registrationId, 'dam-details'), { ...calf, damType }])
   }
 
   if (damType && damSaved) {
     const page = `${damType}-dam`
-    steps.push([calfPath(registrationId, page), damPayloads[page]])
+    steps.push([
+      calfPath(registrationId, page),
+      { ...calf, ...damPayloads[page] }
+    ])
   }
 
   if (damType && damSaved && sireDetails) {
-    steps.push([calfPath(registrationId, 'sire-details'), sireDetails])
+    steps.push([
+      calfPath(registrationId, 'sire-details'),
+      { ...calf, ...sireDetails }
+    ])
   }
 
   return steps
@@ -172,22 +185,30 @@ export async function addCalf(
     ]
   ]
 
+  const calf = { calfEarTagNumber: earTagNumber }
+
   if (complete) {
     steps.push(
       [
         calfPath(registrationId, 'dam-details', calfNumber),
-        { damType: 'genetic' }
+        { ...calf, damType: 'genetic' }
       ],
       [
         calfPath(registrationId, 'genetic-dam', calfNumber),
-        damPayloads['genetic-dam']
+        { ...calf, ...damPayloads['genetic-dam'] }
       ],
-      [calfPath(registrationId, 'sire-details', calfNumber), sireDetailsPayload]
+      [
+        calfPath(registrationId, 'sire-details', calfNumber),
+        { ...calf, ...sireDetailsPayload }
+      ]
     )
   }
 
   if (complete && confirmed) {
-    steps.push([calfPath(registrationId, 'check-calf-details', calfNumber), {}])
+    steps.push([
+      calfPath(registrationId, 'check-calf-details', calfNumber),
+      calf
+    ])
   }
 
   for (const [url, payload] of steps) {

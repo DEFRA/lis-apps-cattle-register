@@ -31,7 +31,7 @@ async function saveCalves(client, count) {
 }
 
 describe('registrationClient (stub) with more than one calf', () => {
-  test('getRegistration() returns no calves for a registration never started', async () => {
+  test('getRegistration() returns null for a registration never started', async () => {
     // Arrange
     const client = createRegistrationClient({ now: () => NOW })
 
@@ -39,7 +39,7 @@ describe('registrationClient (stub) with more than one calf', () => {
     const result = await client.getRegistration(registration)
 
     // Assert
-    expect(result).toEqual({ calves: [], canAddCalf: true })
+    expect(result).toBeNull()
   })
 
   test('getRegistration() returns copies of the calves, in order', async () => {
@@ -133,7 +133,7 @@ describe('registrationClient (stub) with more than one calf', () => {
 
     // Assert
     expect(result).toBeNull()
-    expect((await client.getRegistration(registration)).calves).toEqual([])
+    expect(await client.getRegistration(registration)).toBeNull()
   })
 
   test('saveCalfDetails() refuses an ear tag another calf has, ignoring spaces and case', async () => {

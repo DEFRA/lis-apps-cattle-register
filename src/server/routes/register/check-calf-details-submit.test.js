@@ -134,7 +134,7 @@ describe('check calf details submit route', () => {
       )
     })
 
-    test('it returns not found for a later calf that expires as the page is sent', async () => {
+    test('it returns not found for a later calf removed as the page is sent', async () => {
       // Arrange
       const registrationId = randomUUID()
       vi.spyOn(registrationClient, 'getCalf').mockResolvedValueOnce({
@@ -146,6 +146,11 @@ describe('check calf details submit route', () => {
         checked: false
       })
       vi.spyOn(registrationClient, 'confirmCalf').mockResolvedValueOnce(null)
+
+      vi.spyOn(registrationClient, 'getRegistration').mockResolvedValueOnce({
+        calves: [],
+        canAddCalf: true
+      })
 
       // Act
       const response = await confirm(registrationId, { calfNumber: 2 })

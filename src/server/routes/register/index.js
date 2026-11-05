@@ -8,6 +8,9 @@ import {
   demandCalfComplete,
   demandDamComplete,
   demandDamType,
+  demandSameCalf,
+  demandSameCalfIfSaved,
+  findCalf,
   loadCalf,
   loadRegistration
 } from './registration.js'
@@ -41,6 +44,11 @@ import {
   tagListController,
   tagListSubmitController
 } from './tag-list/controller.js'
+import {
+  CANCEL_PAGE,
+  cancelCalfController,
+  cancelCalfSubmitController
+} from './cancel/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -109,25 +117,35 @@ const calfPrerequisites = [
   { method: loadCalf, assign: 'calf' }
 ]
 
-const geneticDamPrerequisites = [
-  ...calfPrerequisites,
-  { method: demandDamType('genetic') }
-]
+// A form post about a saved calf acts only on the calf it was shown for.
+const calfPostPrerequisites = [...calfPrerequisites, { method: demandSameCalf }]
 
-const surrogateDamPrerequisites = [
-  ...calfPrerequisites,
-  { method: demandDamType('surrogate') }
-]
+const geneticDamPrerequisites = [{ method: demandDamType('genetic') }]
+
+const surrogateDamPrerequisites = [{ method: demandDamType('surrogate') }]
 
 const formField = Joi.string().max(MAX_FIELD_LENGTH).allow('').default('')
 
+// Left out, it matches no calf; see demandSameCalf().
+const calfEarTagField = Joi.string().max(MAX_FIELD_LENGTH).allow('')
+
+const calfGuardPayload = Joi.object({
+  calfEarTagNumber: calfEarTagField
+}).options({ stripUnknown: true })
+
 const calfDetailsPayload = Joi.object({
+  calfEarTagNumber: calfEarTagField,
   earTagNumber: formField,
   dateOfBirth: formField,
   sex: formField,
   breed: formField,
   acknowledgedLateDateOfBirth: formField
 }).options({ stripUnknown: true })
+
+const calfDetailsPrerequisites = [
+  { method: demandRegisterAccess },
+  { method: findCalf, assign: 'calf' }
+]
 
 const calfDetailsRoutes = [
   [`${REGISTER_ROUTE}/{registrationId}/calf-details`, firstCalfDetailsParams],
@@ -140,7 +158,7 @@ const calfDetailsRoutes = [
     method: 'GET',
     path,
     ...calfDetailsController,
-    options: { validate, pre: [{ method: demandRegisterAccess }] }
+    options: { validate, pre: calfDetailsPrerequisites }
   },
   {
     method: 'POST',
@@ -148,16 +166,18 @@ const calfDetailsRoutes = [
     ...calfDetailsSubmitController,
     options: {
       validate: { ...validate, payload: calfDetailsPayload },
-      pre: [{ method: demandRegisterAccess }]
+      pre: [...calfDetailsPrerequisites, { method: demandSameCalfIfSaved }]
     }
   }
 ])
 
 const damDetailsPayload = Joi.object({
+  calfEarTagNumber: calfEarTagField,
   damType: formField
 }).options({ stripUnknown: true })
 
 const geneticDamPayload = Joi.object({
+  calfEarTagNumber: calfEarTagField,
   earTagNumber: formField
 }).options({ stripUnknown: true })
 
@@ -168,7 +188,7 @@ const geneticDamRoutes = [
     ...geneticDamController,
     options: {
       validate: changeableCalfParams,
-      pre: geneticDamPrerequisites
+      pre: [...calfPrerequisites, ...geneticDamPrerequisites]
     }
   },
   {
@@ -180,12 +200,13 @@ const geneticDamRoutes = [
         ...changeableCalfParams,
         payload: geneticDamPayload
       },
-      pre: geneticDamPrerequisites
+      pre: [...calfPostPrerequisites, ...geneticDamPrerequisites]
     }
   }
 ]
 
 const surrogateDamPayload = Joi.object({
+  calfEarTagNumber: calfEarTagField,
   geneticDamEarTagNumber: formField,
   surrogateDamEarTagNumber: formField
 }).options({ stripUnknown: true })
@@ -197,7 +218,7 @@ const surrogateDamRoutes = [
     ...surrogateDamController,
     options: {
       validate: changeableCalfParams,
-      pre: surrogateDamPrerequisites
+      pre: [...calfPrerequisites, ...surrogateDamPrerequisites]
     }
   },
   {
@@ -209,17 +230,15 @@ const surrogateDamRoutes = [
         ...changeableCalfParams,
         payload: surrogateDamPayload
       },
-      pre: surrogateDamPrerequisites
+      pre: [...calfPostPrerequisites, ...surrogateDamPrerequisites]
     }
   }
 ]
 
-const sireDetailsPrerequisites = [
-  ...calfPrerequisites,
-  { method: demandDamComplete }
-]
+const sireDetailsPrerequisites = [{ method: demandDamComplete }]
 
 const sireDetailsPayload = Joi.object({
+  calfEarTagNumber: calfEarTagField,
   sireEarTagNumber: formField,
   sireName: formField
 }).options({ stripUnknown: true })
@@ -231,7 +250,7 @@ const sireDetailsRoutes = [
     ...sireDetailsController,
     options: {
       validate: changeableCalfParams,
-      pre: sireDetailsPrerequisites
+      pre: [...calfPrerequisites, ...sireDetailsPrerequisites]
     }
   },
   {
@@ -243,14 +262,19 @@ const sireDetailsRoutes = [
         ...changeableCalfParams,
         payload: sireDetailsPayload
       },
-      pre: sireDetailsPrerequisites
+      pre: [...calfPostPrerequisites, ...sireDetailsPrerequisites]
     }
   }
 ]
 
-const checkCalfDetailsPrerequisites = [
-  ...calfPrerequisites,
-  { method: demandCalfComplete }
+const checkCalfDetailsPrerequisites = [{ method: demandCalfComplete }]
+
+// A calf already confirmed, or cancelled, or the registration gone, ends at
+// the list of calves, changing nothing; see demandSameCalf().
+const foundCalfPostPrerequisites = [
+  { method: demandRegisterAccess },
+  { method: findCalf, assign: 'calf' },
+  { method: demandSameCalf }
 ]
 
 const checkCalfDetailsRoutes = [
@@ -260,7 +284,7 @@ const checkCalfDetailsRoutes = [
     ...checkCalfDetailsController,
     options: {
       validate: calfParams,
-      pre: checkCalfDetailsPrerequisites
+      pre: [...calfPrerequisites, ...checkCalfDetailsPrerequisites]
     }
   },
   {
@@ -268,8 +292,29 @@ const checkCalfDetailsRoutes = [
     path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/check-calf-details`,
     ...checkCalfDetailsSubmitController,
     options: {
+      validate: { ...calfParams, payload: calfGuardPayload },
+      pre: [...foundCalfPostPrerequisites, ...checkCalfDetailsPrerequisites]
+    }
+  }
+]
+
+const cancelCalfRoutes = [
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/${CANCEL_PAGE}`,
+    ...cancelCalfController,
+    options: {
       validate: calfParams,
-      pre: checkCalfDetailsPrerequisites
+      pre: calfPrerequisites
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{registrationId}/calves/{calfNumber}/${CANCEL_PAGE}`,
+    ...cancelCalfSubmitController,
+    options: {
+      validate: { ...calfParams, payload: calfGuardPayload },
+      pre: foundCalfPostPrerequisites
     }
   }
 ]
@@ -337,13 +382,14 @@ export const register = {
               ...changeableCalfParams,
               payload: damDetailsPayload
             },
-            pre: calfPrerequisites
+            pre: calfPostPrerequisites
           }
         },
         ...geneticDamRoutes,
         ...surrogateDamRoutes,
         ...sireDetailsRoutes,
         ...checkCalfDetailsRoutes,
+        ...cancelCalfRoutes,
         ...tagListRoutes
       ])
     }

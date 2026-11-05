@@ -24,6 +24,8 @@
       <h1 class="govuk-heading-l">{{ heading }}</h1>
 
       {% call lisForm({ action: formAction }) %}
+        {% include "partials/calf-guard.njk" %}
+
         {{ govukInput({
           id: "earTagNumber",
           name: "earTagNumber",

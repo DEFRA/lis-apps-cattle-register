@@ -2,6 +2,7 @@
 import Boom from '@hapi/boom'
 
 import { registrationClient } from '#server/services/registration-client.js'
+import { isSameEarTag } from '#server/services/registration-calves.js'
 import { calfPagePath, registrationPagePath } from './paths.js'
 
 /**
@@ -37,18 +38,32 @@ export function registrationKey(request) {
 }
 
 /**
+ * @param {Request} request
+ * @returns {Promise<boolean>} true when the registration in the path is
+ *   there (not never started, nor expired or evicted)
+ */
+export async function isRegistrationKnown(request) {
+  const registration = await registrationClient.getRegistration(
+    registrationKey(request)
+  )
+
+  return registration !== null
+}
+
+/**
  * The response for a calf the registration does not have. Calf 1 is the
- * calf the calf details page enters, so until it is saved (or after its
- * draft has expired) the user is sent back there; any other missing calf is
- * a page that does not exist.
+ * calf the calf details page enters, so until it is saved the user is sent
+ * back there; so is any calf of a registration there is not (never started,
+ * or expired or evicted). Any other missing calf is a page that does not
+ * exist.
  * @param {Request} request
  * @param {ResponseToolkit} h
- * @returns {object} a redirect or a 404
+ * @returns {Promise<object>} a redirect or a 404
  */
-export function calfNotFound(request, h) {
+export async function calfNotFound(request, h) {
   const { cph, registrationId, calfNumber } = request.params
 
-  if (calfNumber === 1) {
+  if (calfNumber === 1 || !(await isRegistrationKnown(request))) {
     return h
       .redirect(registrationPagePath(cph, registrationId, 'calf-details'))
       .takeover()
@@ -59,7 +74,7 @@ export function calfNotFound(request, h) {
 
 /**
  * Route prerequisite for a page about every calf in the registration: a
- * registration with no calves (never started, or expired or evicted) is sent
+ * registration there is not (never started, or expired or evicted) is sent
  * to calf details, where its first calf is entered.
  * @param {Request} request
  * @param {ResponseToolkit} h
@@ -70,7 +85,7 @@ export async function loadRegistration(request, h) {
     registrationKey(request)
   )
 
-  if (registration.calves.length > 0) {
+  if (registration) {
     return registration
   }
 
@@ -82,19 +97,77 @@ export async function loadRegistration(request, h) {
 }
 
 /**
-Route prerequisite for a page about one calf: the calf in the path must
+ * Route prerequisite for a page about one calf: the calf in the path must
  * have its calf details saved, otherwise see calfNotFound().
  * @param {Request} request
  * @param {ResponseToolkit} h
  * @returns {Promise<object>} the saved calf
  */
 export async function loadCalf(request, h) {
-  const calf = await registrationClient.getCalf({
+  return (await findCalf(request)) ?? calfNotFound(request, h)
+}
+
+/**
+ * Route prerequisite for a form post that copes with a missing calf itself.
+ * @param {Request} request
+ * @returns {Promise<object | null>} the saved calf in the path, or null
+ */
+export async function findCalf(request) {
+  return registrationClient.getCalf({
     ...registrationKey(request),
     calfNumber: request.params.calfNumber
   })
+}
 
-  return calf ?? calfNotFound(request, h)
+/**
+ * @param {object | null} calf - the saved calf, if any
+ * @returns {string} its ear tag, as saved, for the form about it to post
+ *   back (see demandSameCalf()); blank for a calf not saved yet
+ */
+export function storedEarTagNumber(calf) {
+  return calf?.calfDetails.earTagNumber ?? ''
+}
+
+/**
+ * Route prerequisite, after loadCalf or findCalf, for a form post about one
+ * calf. Calves are addressed by position, and cancelling one moves the
+ * calves after it up a place, so a form shown before then (or posted
+ * twice) would act on another calf. The form posts back the ear tag of the
+ * calf it was shown for; when the calf at that position now has another
+ * tag, or there is none, nothing is changed and the user is sent to the
+ * list of calves.
+ * @param {Request} request
+ * @param {ResponseToolkit} h
+ * @returns {symbol | object}
+ */
+export function demandSameCalf(request, h) {
+  const { calf } = request.pre
+  const { calfEarTagNumber } = request.payload
+
+  if (
+    calf &&
+    calfEarTagNumber !== undefined &&
+    isSameEarTag(calfEarTagNumber, storedEarTagNumber(calf))
+  ) {
+    return h.continue
+  }
+
+  const { cph, registrationId } = request.params
+
+  return h
+    .redirect(registrationPagePath(cph, registrationId, 'tag-list'))
+    .takeover()
+}
+
+/**
+ * Route prerequisite, after findCalf, for calf details: as demandSameCalf()
+ * for a saved calf; the next calf, not saved yet, has nothing to guard.
+ * @param {Request} request
+ * @param {ResponseToolkit} h
+ * @returns {symbol | object}
+ */
+export function demandSameCalfIfSaved(request, h) {
+  return request.pre.calf ? demandSameCalf(request, h) : h.continue
 }
 
 /**

@@ -87,7 +87,8 @@ describe('registration drafts', () => {
 
   /**
    * @param {string} url
-   * @param {object} payload
+   * @param {object} payload - posted, by default, as about the first
+   *   calf saved in these tests (see demandSameCalf())
    * @param {object} [auth]
    * @returns {Promise<object>} the response
    */
@@ -97,7 +98,11 @@ describe('registration drafts', () => {
       url,
       auth,
       headers: csrfHeaders,
-      payload: { ...payload, _csrf: CSRF_TOKEN }
+      payload: {
+        calfEarTagNumber: calfDetailsPayload.earTagNumber,
+        ...payload,
+        _csrf: CSRF_TOKEN
+      }
     })
   }
 
@@ -209,6 +214,92 @@ describe('registration drafts', () => {
       expect(response.headers.location).toBe(calfDetailsPath(registrationId))
     })
 
+    test('dam details for a later calf sends the user back to calf details', async () => {
+      // Arrange
+      const registrationId = randomUUID()
+
+      // Act
+      const response = await server.inject({
+        method: 'GET',
+        url: damDetailsPath(registrationId, 3),
+        auth: keeperAuth
+      })
+
+      // Assert
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(calfDetailsPath(registrationId))
+    })
+
+    test('calf details for a later calf sends the user back to calf details', async () => {
+      // Arrange
+      const registrationId = randomUUID()
+
+      // Act
+      const response = await server.inject({
+        method: 'GET',
+        url: `${REGISTER_PATH}/${registrationId}/calves/3/calf-details`,
+        auth: keeperAuth
+      })
+
+      // Assert
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(calfDetailsPath(registrationId))
+    })
+
+    test('calf details answers for a later calf go back to calf details', async () => {
+      // Arrange
+      const registrationId = randomUUID()
+      const saveCalfDetails = vi.spyOn(registrationClient, 'saveCalfDetails')
+
+      // Act
+      const response = await post(
+        `${REGISTER_PATH}/${registrationId}/calves/3/calf-details`,
+        calfDetailsPayload
+      )
+
+      // Assert
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(calfDetailsPath(registrationId))
+      expect(saveCalfDetails).toHaveBeenCalled()
+      expect(
+        await registrationClient.getRegistration({
+          cph: CPH,
+          registrationId,
+          userId: 'test-user'
+        })
+      ).toBeNull()
+    })
+
+    test('a genetic dam answer for a later calf goes back to calf details', async () => {
+      // Arrange
+      const registrationId = randomUUID()
+
+      // Act
+      const response = await post(geneticDamPath(registrationId, 2), {
+        earTagNumber: 'UK123456501100'
+      })
+
+      // Assert
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(calfDetailsPath(registrationId))
+    })
+
+    test('dam details for a calf a started registration does not have is not found', async () => {
+      // Arrange
+      const registrationId = randomUUID()
+      await post(calfDetailsPath(registrationId), calfDetailsPayload)
+
+      // Act
+      const response = await server.inject({
+        method: 'GET',
+        url: damDetailsPath(registrationId, 2),
+        auth: keeperAuth
+      })
+
+      // Assert
+      expect(response.statusCode).toBe(statusCodes.notFound)
+    })
+
     test('a dam details answer sent as it expires goes back to calf details', async () => {
       // Arrange
       const registrationId = randomUUID()
@@ -225,7 +316,7 @@ describe('registration drafts', () => {
       expect(response.headers.location).toBe(calfDetailsPath(registrationId))
     })
 
-    test('a dam details answer for a later calf that has expired is not found', async () => {
+    test('a dam details answer for a later calf no longer in the registration is not found', async () => {
       // Arrange
       const registrationId = randomUUID()
       vi.spyOn(registrationClient, 'getCalf').mockResolvedValueOnce({
@@ -233,6 +324,11 @@ describe('registration drafts', () => {
         damDetails: {}
       })
       vi.spyOn(registrationClient, 'saveDamDetails').mockResolvedValueOnce(null)
+
+      vi.spyOn(registrationClient, 'getRegistration').mockResolvedValueOnce({
+        calves: [],
+        canAddCalf: true
+      })
 
       // Act
       const response = await post(damDetailsPath(registrationId, 2), {
@@ -260,7 +356,7 @@ describe('registration drafts', () => {
       expect(response.headers.location).toBe(calfDetailsPath(registrationId))
     })
 
-    test('a genetic dam answer for a later calf that has expired is not found', async () => {
+    test('a genetic dam answer for a later calf no longer in the registration is not found', async () => {
       // Arrange
       const registrationId = randomUUID()
       vi.spyOn(registrationClient, 'getCalf').mockResolvedValueOnce({
@@ -269,6 +365,11 @@ describe('registration drafts', () => {
         geneticDam: {}
       })
       vi.spyOn(registrationClient, 'saveGeneticDam').mockResolvedValueOnce(null)
+
+      vi.spyOn(registrationClient, 'getRegistration').mockResolvedValueOnce({
+        calves: [],
+        canAddCalf: true
+      })
 
       // Act
       const response = await post(geneticDamPath(registrationId, 2), {

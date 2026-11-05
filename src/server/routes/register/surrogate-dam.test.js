@@ -82,7 +82,8 @@ describe('surrogate dam routes', () => {
 
   /**
    * @param {string} url
-   * @param {object} payload
+   * @param {object} payload - posted, by default, as about the first
+   *   calf saved in these tests (see demandSameCalf())
    * @param {object} [auth]
    * @returns {Promise<object>} the response
    */
@@ -92,7 +93,11 @@ describe('surrogate dam routes', () => {
       url,
       auth,
       headers: csrfHeaders,
-      payload: { ...payload, _csrf: CSRF_TOKEN }
+      payload: {
+        calfEarTagNumber: calfDetailsPayload.earTagNumber,
+        ...payload,
+        _csrf: CSRF_TOKEN
+      }
     })
   }
 
@@ -118,7 +123,7 @@ describe('surrogate dam routes', () => {
     if (damType) {
       const damResponse = await post(
         calfOnePath(registrationId, 'dam-details'),
-        { damType }
+        { calfEarTagNumber: calfDetails.earTagNumber, damType }
       )
       expect(damResponse.statusCode).toBe(302)
     }

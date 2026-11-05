@@ -105,12 +105,31 @@ describe('calf details for each calf', () => {
       // Assert
       const $ = load(response.payload)
       expect($('#earTagNumber').val()).toBe(calfDetailsPayload.earTagNumber)
+      expect($('input[name="calfEarTagNumber"]').val()).toBe(
+        calfDetailsPayload.earTagNumber
+      )
       expect($('.govuk-back-link').attr('href')).toBe(
         `${REGISTER_PATH}/${registrationId}/tag-list`
       )
     })
 
-    test('it shows calf 1 back to the holding while no calf is saved', async () => {
+    test('it shows calf 1 back to the list of calves once every calf is cancelled', async () => {
+      // Arrange
+      const registrationId = await startRegistration(server)
+      await postForm(server, calfPath(registrationId, 'cancel'), {})
+
+      // Act
+      const response = await get(calfPath(registrationId, 'calf-details'))
+
+      // Assert
+      const $ = load(response.payload)
+      expect($('#earTagNumber').val()).toBe('')
+      expect($('.govuk-back-link').attr('href')).toBe(
+        `${REGISTER_PATH}/${registrationId}/tag-list`
+      )
+    })
+
+    test('it shows calf 1 of a registration not started back to the holding', async () => {
       // Arrange
       const registrationId = randomUUID()
 
@@ -120,6 +139,7 @@ describe('calf details for each calf', () => {
       // Assert
       const $ = load(response.payload)
       expect($('#earTagNumber').val()).toBe('')
+      expect($('input[name="calfEarTagNumber"]').val()).toBe('')
       expect($('.govuk-back-link').attr('href')).toBe(`/holdings/${CPH}/cattle`)
     })
 
@@ -140,7 +160,7 @@ describe('calf details for each calf', () => {
       expect(response.statusCode).toBe(statusCodes.notFound)
     })
 
-    test('it returns not found for calf 2 of a registration with no calves', async () => {
+    test('it sends calf 2 of a registration there is not to calf details', async () => {
       // Arrange
       const registrationId = randomUUID()
 
@@ -148,7 +168,10 @@ describe('calf details for each calf', () => {
       const response = await get(calfPath(registrationId, 'calf-details', 2))
 
       // Assert
-      expect(response.statusCode).toBe(statusCodes.notFound)
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(
+        `${REGISTER_PATH}/${registrationId}/calf-details`
+      )
     })
 
     test('it returns not found for a CPH the user is not granted', async () => {
