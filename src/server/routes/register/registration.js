@@ -2,7 +2,7 @@
 import Boom from '@hapi/boom'
 
 import { registrationClient } from '#server/services/registration-client.js'
-import { registrationPagePath } from './paths.js'
+import { calfPagePath, registrationPagePath } from './paths.js'
 
 /**
  * The id of the signed-in user. A user without one is refused, so that two
@@ -58,7 +58,7 @@ export function calfNotFound(request, h) {
 }
 
 /**
- * Route prerequisite for a page about one calf: the calf in the path must
+Route prerequisite for a page about one calf: the calf in the path must
  * have its calf details saved, otherwise see calfNotFound().
  * @param {Request} request
  * @param {ResponseToolkit} h
@@ -71,4 +71,25 @@ export async function loadCalf(request, h) {
   })
 
   return calf ?? calfNotFound(request, h)
+}
+
+/**
+ * Route prerequisite, after loadCalf, for a page about one type of dam: the
+ * calf's dam details must have that answer, otherwise the user is sent back
+ * to dam details.
+ * @param {'genetic'|'surrogate'} damType
+ * @returns {(request: Request, h: ResponseToolkit) => Promise<symbol | object>}
+ */
+export function demandDamType(damType) {
+  return async function (request, h) {
+    if (request.pre.calf.damDetails.damType === damType) {
+      return h.continue
+    }
+
+    const { cph, registrationId, calfNumber } = request.params
+
+    return h
+      .redirect(calfPagePath(cph, registrationId, calfNumber, 'dam-details'))
+      .takeover()
+  }
 }

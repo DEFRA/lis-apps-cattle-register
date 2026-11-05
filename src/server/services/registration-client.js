@@ -4,9 +4,9 @@
  * Until then answers are held in memory, per instance, in a bounded store
  * (see draft-store.js): not shared between instances, lost on restart, and
  * expired or evicted after a while. The rules below move to that service.
- * Keep the interface (getCalfDetails/saveCalfDetails/getCalf/saveDamDetails,
- * field + code results, null for a calf the registration does not have)
- * when replacing it with the real client.
+ * Keep the interface (getCalfDetails/saveCalfDetails/getCalf/saveDamDetails/
+ * saveGeneticDam, field + code results, null for a calf the registration
+ * does not have) when replacing it with the real client.
  */
 /** @import { CalendarDate } from '#server/common/helpers/calendar-date.js' */
 import { breedOptions } from '#server/common/helpers/breed-options.js'
@@ -41,9 +41,15 @@ const knownBreeds = new Set(breedOptions)
  */
 
 /**
+ * @typedef {object} GeneticDamAnswers
+ * @property {string} [earTagNumber]
+ */
+
+/**
  * @typedef {object} Calf
  * @property {CalfDetailsAnswers} calfDetails
  * @property {DamDetailsAnswers} damDetails
+ * @property {GeneticDamAnswers} geneticDam - empty unless damType is genetic
  */
 
 /**
@@ -58,6 +64,14 @@ const knownBreeds = new Set(breedOptions)
  * @property {'earTagNumber'|'dateOfBirth'|'sex'|'breed'|'damType'} field
  * @property {string} code
  */
+
+/**
+ * @param {string | undefined} text
+ * @returns {boolean} true when there is no text other than whitespace
+ */
+function isBlank(text) {
+  return (text ?? '').trim() === ''
+}
 
 /**
  * @param {string[]} parts - day, month and year text
@@ -147,8 +161,7 @@ function checkBreed(breed) {
 function validateCalfDetails(answers, now) {
   const dateCheck = checkDateOfBirth((answers.dateOfBirth ?? '').trim(), now)
   const codes = {
-    earTagNumber:
-      (answers.earTagNumber ?? '').trim() === '' ? 'required' : null,
+    earTagNumber: isBlank(answers.earTagNumber) ? 'required' : null,
     dateOfBirth: dateCheck.error ?? null,
     sex: SEXES.has(answers.sex) ? null : 'required',
     breed: checkBreed((answers.breed ?? '').trim())
@@ -174,6 +187,16 @@ function validateDamDetails(answers) {
 }
 
 /**
+ * @param {GeneticDamAnswers} answers
+ * @returns {FieldResult[]}
+ */
+function validateGeneticDam(answers) {
+  return isBlank(answers.earTagNumber)
+    ? [{ field: 'earTagNumber', code: 'required' }]
+    : []
+}
+
+/**
  * @param {RegistrationKey} key
  * @returns {string}
  */
@@ -185,8 +208,12 @@ function storeKey({ cph, registrationId, userId }) {
  * @param {Calf} calf
  * @returns {Calf} a copy, so callers cannot change what is held
  */
-function copyCalf({ calfDetails, damDetails }) {
-  return { calfDetails: { ...calfDetails }, damDetails: { ...damDetails } }
+function copyCalf({ calfDetails, damDetails, geneticDam }) {
+  return {
+    calfDetails: { ...calfDetails },
+    damDetails: { ...damDetails },
+    geneticDam: { ...geneticDam }
+  }
 }
 
 /**
@@ -202,7 +229,7 @@ function unacknowledged(warnings, acknowledgedWarnings) {
  * @param {object} [options]
  * @param {() => Date} [options.now] - the current instant; injectable for tests
  * @param {object} [options.store] - where drafts are held; injectable for tests
- * @returns {{ getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function }}
+ * @returns {{ getCalfDetails: Function, saveCalfDetails: Function, getCalf: Function, saveDamDetails: Function, saveGeneticDam: Function }}
  */
 export function createRegistrationClient({
   now = () => new Date(),
@@ -257,11 +284,12 @@ export function createRegistrationClient({
       }
 
       if (result.errors.length === 0 && result.warnings.length === 0) {
-        const damDetails = findCalf(key, FIRST_CALF)?.damDetails ?? {}
+        const calf = findCalf(key, FIRST_CALF)
 
         saveCalf(key, FIRST_CALF, {
           calfDetails: trimAnswers(answers),
-          damDetails
+          damDetails: calf?.damDetails ?? {},
+          geneticDam: calf?.geneticDam ?? {}
         })
       }
 
@@ -280,7 +308,8 @@ export function createRegistrationClient({
     },
 
     /**
-     * Saves the answers when there are no errors.
+     * Saves the answers when there are no errors. A changed dam type
+     * discards the dam answered for the other type.
      * @param {RegistrationKey & { calfNumber: number, answers: DamDetailsAnswers }} registration
      * @returns {Promise<{ errors: FieldResult[] } | null>} null, saving
      *   nothing, when the registration has no such calf (never started, or
@@ -296,7 +325,45 @@ export function createRegistrationClient({
       const errors = validateDamDetails(answers)
 
       if (errors.length === 0) {
-        saveCalf(key, calfNumber, { ...calf, damDetails: { ...answers } })
+        const geneticDam =
+          calf.damDetails.damType === answers.damType ? calf.geneticDam : {}
+
+        saveCalf(key, calfNumber, {
+          ...calf,
+          damDetails: { ...answers },
+          geneticDam
+        })
+      }
+
+      return { errors }
+    },
+
+    /**
+     * Saves the answers, trimmed, when there are no errors. Throws when the calf was
+     * not born via a genetic dam.
+     * @param {RegistrationKey & { calfNumber: number, answers: GeneticDamAnswers }} registration
+     * @returns {Promise<{ errors: FieldResult[] } | null>} null, saving
+     *   nothing, when the registration has no such calf (never started, or
+     *   expired or evicted since the page was shown)
+     */
+    async saveGeneticDam({ calfNumber, answers, ...key }) {
+      const calf = findCalf(key, calfNumber)
+
+      if (!calf) {
+        return null
+      }
+
+      if (calf.damDetails.damType !== 'genetic') {
+        throw new Error(`Calf ${calfNumber} was not born via a genetic dam`)
+      }
+
+      const errors = validateGeneticDam(answers)
+
+      if (errors.length === 0) {
+        saveCalf(key, calfNumber, {
+          ...calf,
+          geneticDam: trimAnswers(answers)
+        })
       }
 
       return { errors }
