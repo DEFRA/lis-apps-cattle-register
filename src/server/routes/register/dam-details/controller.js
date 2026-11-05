@@ -2,7 +2,7 @@ import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
 import { registrationClient } from '#server/services/registration-client.js'
 import { calfPagePath, registrationPagePath } from '../paths.js'
-import { registrationKey } from '../registration.js'
+import { calfNotFound, registrationKey } from '../registration.js'
 import { getMessage } from './messages.js'
 
 const TEMPLATE = 'register/dam-details/index'
@@ -10,6 +10,20 @@ const PAGE_TITLE = 'Dam details'
 const NEXT_PAGE_BY_DAM_TYPE = {
   genetic: 'genetic-dam',
   surrogate: 'surrogate-dam'
+}
+
+/**
+ * @param {string} damType
+ * @returns {string} the step that follows that dam type
+ */
+function nextPageFor(damType) {
+  const nextPage = NEXT_PAGE_BY_DAM_TYPE[damType]
+
+  if (!nextPage) {
+    throw new Error(`No page follows dam type "${damType}"`)
+  }
+
+  return nextPage
 }
 
 /**
@@ -57,11 +71,17 @@ export const damDetailsSubmitController = {
   async handler(request, h) {
     const { cph, registrationId, calfNumber } = request.params
     const { damType } = request.payload
-    const { errors } = await registrationClient.saveDamDetails({
+    const result = await registrationClient.saveDamDetails({
       ...registrationKey(request),
       calfNumber,
       answers: { damType }
     })
+
+    if (!result) {
+      return calfNotFound(request, h)
+    }
+
+    const { errors } = result
 
     if (errors.length) {
       return h
@@ -70,12 +90,7 @@ export const damDetailsSubmitController = {
     }
 
     return h.redirect(
-      calfPagePath(
-        cph,
-        registrationId,
-        calfNumber,
-        NEXT_PAGE_BY_DAM_TYPE[damType]
-      )
+      calfPagePath(cph, registrationId, calfNumber, nextPageFor(damType))
     )
   }
 }

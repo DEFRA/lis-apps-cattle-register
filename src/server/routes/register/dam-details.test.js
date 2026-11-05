@@ -25,8 +25,6 @@ const csrfHeaders = {
   'x-lis-csrf-token': CSRF_TOKEN
 }
 const NOW = new Date('2026-11-05T10:00:00Z')
-const DAM_TYPE_MESSAGE =
-  'Select if the calf was born via a genetic or surrogate dam'
 
 const calfDetailsPayload = {
   earTagNumber: 'UK123456301550',
@@ -68,20 +66,19 @@ describe('dam details routes', () => {
   let server
 
   /**
-   * Starts a registration whose first calf has its calf details saved.
+   * Starts a registration, for the keeper, whose first calf has its calf
+   * details saved.
    * @param {object} [answers]
    * @returns {Promise<string>} the registration id
    */
   async function registrationWithCalfDetails(answers = calfDetailsPayload) {
     const registrationId = randomUUID()
-    const response = await server.inject({
-      method: 'POST',
-      url: `${REGISTER_PATH}/${registrationId}/calf-details`,
-      auth: keeperAuth,
-      headers: csrfHeaders,
-      payload: { ...answers, _csrf: CSRF_TOKEN }
+    await registrationClient.saveCalfDetails({
+      cph: CPH,
+      registrationId,
+      userId: 'test-user',
+      answers
     })
-    expect(response.statusCode).toBe(302)
     return registrationId
   }
 
@@ -176,6 +173,7 @@ describe('dam details routes', () => {
       })
 
       // Assert
+      expect(response.statusCode).toBe(statusCodes.ok)
       const $ = load(response.payload)
       expect($('legend b')).toHaveLength(0)
       expect($('legend .govuk-caption-l').text().trim()).toBe(
@@ -196,6 +194,7 @@ describe('dam details routes', () => {
       })
 
       // Assert
+      expect(response.statusCode).toBe(statusCodes.ok)
       const $ = load(response.payload)
       expect($('input[name="damType"]:checked').val()).toBe('surrogate')
     })
@@ -313,167 +312,6 @@ describe('dam details routes', () => {
       // Assert
       expect(response.statusCode).toBe(statusCodes.notFound)
       expect(getCalf).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('POST dam details', () => {
-    test.each([
-      ['genetic', 'genetic-dam'],
-      ['surrogate', 'surrogate-dam']
-    ])('it saves a %s dam and continues to %s', async (damType, nextPage) => {
-      // Arrange
-      const registrationId = await registrationWithCalfDetails()
-      const saveDamDetails = vi.spyOn(registrationClient, 'saveDamDetails')
-
-      // Act
-      const response = await postDamDetails(registrationId, {
-        damType,
-        unexpected: 'ignored'
-      })
-
-      // Assert
-      expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe(
-        `${REGISTER_PATH}/${registrationId}/calves/1/${nextPage}`
-      )
-      expect(saveDamDetails).toHaveBeenCalledWith({
-        cph: CPH,
-        registrationId,
-        userId: 'test-user',
-        calfNumber: 1,
-        answers: { damType }
-      })
-    })
-
-    test.each([
-      ['no answer', {}],
-      ['a blank answer', { damType: '' }],
-      ['an answer that is not an option', { damType: 'adoptive' }]
-    ])('it shows the error for %s', async (_description, payload) => {
-      // Arrange
-      const registrationId = await registrationWithCalfDetails()
-
-      // Act
-      const response = await postDamDetails(registrationId, payload)
-
-      // Assert
-      expect(response.statusCode).toBe(statusCodes.badRequest)
-      const $ = load(response.payload)
-      expect($('title').text().trim()).toMatch(/^Error: Dam details - /)
-      expect($('.govuk-error-summary__title').text().trim()).toBe(
-        'There is a problem'
-      )
-      expect($('.govuk-error-summary__list a').text().trim()).toBe(
-        DAM_TYPE_MESSAGE
-      )
-      expect($('.govuk-error-summary__list a').attr('href')).toBe('#damType')
-      expect($('#damType-error').text().trim()).toBe(
-        `Error: ${DAM_TYPE_MESSAGE}`
-      )
-      expect($('legend .govuk-caption-l').text().trim()).toBe(
-        'Official animal ear tag number: UK123456301550'
-      )
-      expect($('input[name="damType"]:checked')).toHaveLength(0)
-    })
-
-    test('it keeps the saved answer when a later post has errors', async () => {
-      // Arrange
-      const registrationId = await registrationWithCalfDetails()
-      await postDamDetails(registrationId, { damType: 'genetic' })
-      await postDamDetails(registrationId, { damType: '' })
-
-      // Act
-      const response = await server.inject({
-        method: 'GET',
-        url: damDetailsPath(registrationId),
-        auth: keeperAuth
-      })
-
-      // Assert
-      const $ = load(response.payload)
-      expect($('input[name="damType"]:checked').val()).toBe('genetic')
-    })
-
-    test('it sends the user to calf details before calf details is saved', async () => {
-      // Arrange
-      const registrationId = randomUUID()
-      const saveDamDetails = vi.spyOn(registrationClient, 'saveDamDetails')
-
-      // Act
-      const response = await postDamDetails(registrationId, {
-        damType: 'genetic'
-      })
-
-      // Assert
-      expect(response.statusCode).toBe(302)
-      expect(response.headers.location).toBe(
-        `${REGISTER_PATH}/${registrationId}/calf-details`
-      )
-      expect(saveDamDetails).not.toHaveBeenCalled()
-    })
-
-    test('it returns not found for a calf the registration does not have', async () => {
-      // Arrange
-      const registrationId = await registrationWithCalfDetails()
-
-      // Act
-      const response = await postDamDetails(
-        registrationId,
-        { damType: 'genetic' },
-        { calfNumber: 2 }
-      )
-
-      // Assert
-      expect(response.statusCode).toBe(statusCodes.notFound)
-    })
-
-    test('it returns not found for a CPH the user is not granted', async () => {
-      // Arrange
-      const registrationId = await registrationWithCalfDetails()
-      const saveDamDetails = vi.spyOn(registrationClient, 'saveDamDetails')
-
-      // Act
-      const response = await postDamDetails(
-        registrationId,
-        { damType: 'genetic' },
-        { auth: spokeAuth(createUser(['22/002/0002'])) }
-      )
-
-      // Assert
-      expect(response.statusCode).toBe(statusCodes.notFound)
-      expect(saveDamDetails).not.toHaveBeenCalled()
-    })
-
-    test('it returns bad request for an answer longer than the field limit', async () => {
-      // Arrange
-      const registrationId = await registrationWithCalfDetails()
-
-      // Act
-      const response = await postDamDetails(registrationId, {
-        damType: 'g'.repeat(201)
-      })
-
-      // Assert
-      expect(response.statusCode).toBe(statusCodes.badRequest)
-    })
-
-    test('it rejects a post with no CSRF token', async () => {
-      // Arrange
-      const registrationId = await registrationWithCalfDetails()
-      const saveDamDetails = vi.spyOn(registrationClient, 'saveDamDetails')
-
-      // Act
-      const response = await server.inject({
-        method: 'POST',
-        url: damDetailsPath(registrationId),
-        auth: keeperAuth,
-        headers: csrfHeaders,
-        payload: { damType: 'genetic' }
-      })
-
-      // Assert
-      expect(response.statusCode).toBe(statusCodes.forbidden)
-      expect(saveDamDetails).not.toHaveBeenCalled()
     })
   })
 })
