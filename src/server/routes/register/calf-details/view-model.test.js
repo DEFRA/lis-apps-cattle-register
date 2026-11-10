@@ -40,7 +40,7 @@ describe('formValuesFrom()', () => {
 describe('buildViewModel()', () => {
   test('it builds the page with the values and no errors', () => {
     // Arrange
-    const options = { request, values }
+    const options = { request, values, earTagItems: [] }
 
     // Act
     const result = buildViewModel(options)
@@ -53,6 +53,7 @@ describe('buildViewModel()', () => {
       formAction:
         '/holdings/10/081/1234/cattle/register/7ZK-M3Q-A9D/calf-details',
       values,
+      earTagItems: [],
       maxFieldLength: 200,
       errorList: [],
       fieldErrors: {},
@@ -68,6 +69,7 @@ describe('buildViewModel()', () => {
     const options = {
       request,
       values,
+      earTagItems: [],
       errors: [
         { field: 'earTagNumber', code: 'required' },
         { field: 'sex', code: 'required' }
@@ -94,6 +96,7 @@ describe('buildViewModel()', () => {
     const options = {
       request,
       values,
+      earTagItems: [],
       warnings: [{ field: 'dateOfBirth', code: 'overDeadline' }],
       acknowledgedLateDateOfBirth: '1/11/2026'
     }
@@ -106,5 +109,20 @@ describe('buildViewModel()', () => {
       'Date of birth is over the 27-day deadline to report a calf birth.'
     ])
     expect(result.acknowledgedLateDateOfBirth).toBe('1/11/2026')
+  })
+
+  test('it offers the ear tags', () => {
+    // Arrange
+    const options = {
+      request,
+      values,
+      earTagItems: ['UK324537100001', 'UK324537100002']
+    }
+
+    // Act
+    const result = buildViewModel(options)
+
+    // Assert
+    expect(result.earTagItems).toEqual(['UK324537100001', 'UK324537100002'])
   })
 })

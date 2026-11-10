@@ -26,6 +26,7 @@ export function formValuesFrom(answers) {
  * @param {object} options
  * @param {object} options.request
  * @param {Record<string, string>} options.values
+ * @param {string[]} options.earTagItems - the holding's unallocated ear tags
  * @param {{ field: string, code: string }[]} [options.errors]
  * @param {{ field: string, code: string }[]} [options.warnings]
  * @param {string} [options.acknowledgedLateDateOfBirth]
@@ -34,6 +35,7 @@ export function formValuesFrom(answers) {
 export function buildViewModel({
   request,
   values,
+  earTagItems,
   errors = [],
   warnings = [],
   acknowledgedLateDateOfBirth = ''
@@ -53,6 +55,7 @@ export function buildViewModel({
     backLinkHref: getMountPath('cattle-home', 'holding', { cph }),
     formAction: submissionPagePath(cph, submissionId, 'calf-details'),
     values,
+    earTagItems,
     breedItems: breedOptions,
     maxFieldLength: MAX_FIELD_LENGTH,
     maxDateOfBirth: formatCalendarDate(toUkCalendarDate(new Date())),

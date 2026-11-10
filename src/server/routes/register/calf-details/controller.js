@@ -20,9 +20,18 @@ export const calfDetailsController = {
       return h.redirect(registerPath(cph))
     }
 
+    const earTagItems = await registrationClient.getUnallocatedEarTags({
+      cph,
+      submissionId
+    })
+
     return h.view(
       TEMPLATE,
-      buildViewModel({ request, values: formValuesFrom(calfDetails.answers) })
+      buildViewModel({
+        request,
+        values: formValuesFrom(calfDetails.answers),
+        earTagItems
+      })
     )
   }
 }
@@ -43,12 +52,17 @@ export const calfDetailsSubmitController = {
     const warningsToShow = errors.length || isAcknowledged ? [] : warnings
 
     if (errors.length || warningsToShow.length) {
+      const earTagItems = await registrationClient.getUnallocatedEarTags({
+        cph,
+        submissionId
+      })
       return h
         .view(
           TEMPLATE,
           buildViewModel({
             request,
             values,
+            earTagItems,
             errors,
             warnings: warningsToShow,
             acknowledgedLateDateOfBirth:

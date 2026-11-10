@@ -26,7 +26,8 @@ const validAnswers = {
 
 const mocks = {
   getCalfDetails: vi.mocked(registrationClient.getCalfDetails),
-  saveCalfDetails: vi.mocked(registrationClient.saveCalfDetails)
+  saveCalfDetails: vi.mocked(registrationClient.saveCalfDetails),
+  getUnallocatedEarTags: vi.mocked(registrationClient.getUnallocatedEarTags)
 }
 
 /**
@@ -46,6 +47,7 @@ function toolkit() {
 describe('calfDetailsController', () => {
   beforeAll(() => {
     mocks.saveCalfDetails.mockResolvedValue(true)
+    mocks.getUnallocatedEarTags.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -91,6 +93,32 @@ describe('calfDetailsController', () => {
       )
     })
 
+    test("it offers the holding's unallocated ear tags", async () => {
+      // Arrange
+      const request = { params: { cph: CPH, submissionId: SUBMISSION_ID } }
+      const { h } = toolkit()
+      mocks.getCalfDetails.mockResolvedValueOnce({ answers: {} })
+      mocks.getUnallocatedEarTags.mockResolvedValueOnce([
+        'UK324537100001',
+        'UK324537100002'
+      ])
+
+      // Act
+      await calfDetailsController.handler(request, h)
+
+      // Assert
+      expect(mocks.getUnallocatedEarTags).toHaveBeenCalledWith({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
+      })
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          earTagItems: ['UK324537100001', 'UK324537100002']
+        })
+      )
+    })
+
     test("it starts over when the submission is not the holding's", async () => {
       // Arrange
       const request = { params: { cph: CPH, submissionId: SUBMISSION_ID } }
@@ -103,6 +131,7 @@ describe('calfDetailsController', () => {
       // Assert
       expect(h.redirect).toHaveBeenCalledWith(START_PATH)
       expect(h.view).not.toHaveBeenCalled()
+      expect(mocks.getUnallocatedEarTags).not.toHaveBeenCalled()
       expect(result).toBe('redirected')
     })
   })
@@ -128,6 +157,7 @@ describe('calfDetailsController', () => {
       expect(h.redirect).toHaveBeenCalledWith(
         `${START_PATH}/${SUBMISSION_ID}/dam-details`
       )
+      expect(mocks.getUnallocatedEarTags).not.toHaveBeenCalled()
       expect(result).toBe('redirected')
     })
 
@@ -193,6 +223,33 @@ describe('calfDetailsController', () => {
       )
       expect(response.code).toHaveBeenCalledWith(400)
       expect(result).toBe(response)
+    })
+
+    test('it offers the unallocated ear tags again with the errors', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, submissionId: SUBMISSION_ID },
+        payload: {
+          ...validAnswers,
+          earTagNumber: '',
+          acknowledgedLateDateOfBirth: ''
+        }
+      }
+      const { h } = toolkit()
+      mocks.getUnallocatedEarTags.mockResolvedValueOnce(['UK324537100001'])
+
+      // Act
+      await calfDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getUnallocatedEarTags).toHaveBeenCalledWith({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
+      })
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({ earTagItems: ['UK324537100001'] })
+      )
     })
 
     test('it warns once about a late date of birth, saving nothing', async () => {

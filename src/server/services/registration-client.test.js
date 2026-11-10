@@ -94,6 +94,46 @@ describe('CattleRegisterBe4FeClient', () => {
     })
   })
 
+  describe('getUnallocatedEarTags()', () => {
+    test("it lists the holding's unallocated ear tags, excluding the submission's", async () => {
+      // Arrange
+      const get = vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({
+          cph: CPH,
+          eartags: [{ eartag: 'UK324537100001' }, { eartag: 'UK324537100002' }]
+        })
+      )
+
+      // Act
+      const result = await client.getUnallocatedEarTags({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
+      })
+
+      // Assert
+      expect(get).toHaveBeenCalledWith(
+        `data/eartags/unallocated?cph=10%2F081%2F1234&submission-id=${SUBMISSION_ID}`
+      )
+      expect(result).toEqual(['UK324537100001', 'UK324537100002'])
+    })
+
+    test('it returns no ear tags when the holding has none', async () => {
+      // Arrange
+      vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({ cph: CPH, eartags: [] })
+      )
+
+      // Act
+      const result = await client.getUnallocatedEarTags({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
+      })
+
+      // Assert
+      expect(result).toEqual([])
+    })
+  })
+
   describe('getCalfDetails()', () => {
     test('it returns empty answers before the calf is saved', async () => {
       // Arrange
