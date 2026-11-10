@@ -1,9 +1,16 @@
 const BREED_MESSAGE =
   'Enter the animal breed or breed code into the text box and select the correct one from the suggested options'
 
+// The prototype words one ear tag error. A tag that is not one the holding
+// can give the calf shows it too, as the prototype only takes a tag from its
+// list.
+const EAR_TAG_MESSAGE =
+  'Enter the last 6 digits of the animal ear tag number you are registering'
+
 const MESSAGES = {
   earTagNumber: {
-    required: 'Enter the animal ear tag number'
+    required: EAR_TAG_MESSAGE,
+    notAvailable: EAR_TAG_MESSAGE
   },
   dateOfBirth: {
     required: 'Enter the date the animal was born',

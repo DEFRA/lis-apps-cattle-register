@@ -23,12 +23,13 @@ const validAnswers = {
   earTagNumber: 'UK123456301550',
   dateOfBirth: TODAY,
   sex: 'female',
-  breed: 'Aberdeen Angus (AA)'
+  breed: 'AA'
 }
 
 const mocks = {
-  getCalfDetails: vi.mocked(registrationClient.getCalfDetails),
-  saveCalfDetails: vi.mocked(registrationClient.saveCalfDetails)
+  getAnimal: vi.mocked(registrationClient.getAnimal),
+  saveAnimal: vi.mocked(registrationClient.saveAnimal),
+  getUnallocatedEarTags: vi.mocked(registrationClient.getUnallocatedEarTags)
 }
 
 /**
@@ -47,7 +48,9 @@ function toolkit() {
 
 describe('calfDetailsController', () => {
   beforeAll(() => {
-    mocks.saveCalfDetails.mockResolvedValue(undefined)
+    mocks.getAnimal.mockResolvedValue({})
+    mocks.saveAnimal.mockResolvedValue(undefined)
+    mocks.getUnallocatedEarTags.mockResolvedValue([validAnswers.earTagNumber])
   })
 
   afterEach(() => {
@@ -59,13 +62,13 @@ describe('calfDetailsController', () => {
       // Arrange
       const request = { params: { cph: CPH, ...CALF } }
       const { h } = toolkit()
-      mocks.getCalfDetails.mockResolvedValueOnce(validAnswers)
+      mocks.getAnimal.mockResolvedValueOnce(validAnswers)
 
       // Act
       await calfDetailsController.handler(request, h)
 
       // Assert
-      expect(mocks.getCalfDetails).toHaveBeenCalledWith(CALF)
+      expect(mocks.getAnimal).toHaveBeenCalledWith(CALF)
       expect(h.view).toHaveBeenCalledWith(
         TEMPLATE,
         expect.objectContaining({ values: validAnswers, errorList: [] })
@@ -76,7 +79,7 @@ describe('calfDetailsController', () => {
       // Arrange
       const request = { params: { cph: CPH, ...CALF } }
       const { h } = toolkit()
-      mocks.getCalfDetails.mockResolvedValueOnce({})
+      mocks.getAnimal.mockResolvedValueOnce({})
 
       // Act
       await calfDetailsController.handler(request, h)
@@ -86,6 +89,32 @@ describe('calfDetailsController', () => {
         TEMPLATE,
         expect.objectContaining({
           values: { earTagNumber: '', dateOfBirth: '', sex: '', breed: '' }
+        })
+      )
+    })
+
+    test("it offers the holding's unallocated ear tags", async () => {
+      // Arrange
+      const request = { params: { cph: CPH, ...CALF } }
+      const { h } = toolkit()
+      mocks.getAnimal.mockResolvedValueOnce({})
+      mocks.getUnallocatedEarTags.mockResolvedValueOnce([
+        'UK324537100001',
+        'UK324537100002'
+      ])
+
+      // Act
+      await calfDetailsController.handler(request, h)
+
+      // Assert
+      expect(mocks.getUnallocatedEarTags).toHaveBeenCalledWith({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
+      })
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          earTagItems: ['UK324537100001', 'UK324537100002']
         })
       )
     })
@@ -104,12 +133,100 @@ describe('calfDetailsController', () => {
       const result = await calfDetailsSubmitController.handler(request, h)
 
       // Assert
-      expect(mocks.saveCalfDetails).toHaveBeenCalledWith({
+      expect(mocks.saveAnimal).toHaveBeenCalledWith({
         ...CALF,
-        answers: validAnswers
+        values: validAnswers
       })
       expect(h.redirect).toHaveBeenCalledWith(`${CALF_PATH}/dam-details`)
+      expect(mocks.getUnallocatedEarTags).toHaveBeenCalledWith({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
+      })
       expect(result).toBe('redirected')
+    })
+
+    test('it rejects an ear tag number the holding cannot give the calf, saving nothing', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: { ...validAnswers, acknowledgedLateDateOfBirth: '' }
+      }
+      const { h, response } = toolkit()
+      mocks.getUnallocatedEarTags.mockResolvedValueOnce(['UK324537100001'])
+
+      // Act
+      const result = await calfDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.saveAnimal).not.toHaveBeenCalled()
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          values: validAnswers,
+          earTagItems: ['UK324537100001'],
+          errorList: [
+            {
+              text: 'Enter the last 6 digits of the animal ear tag number you are registering',
+              href: '#earTagNumber'
+            }
+          ]
+        })
+      )
+      expect(response.code).toHaveBeenCalledWith(400)
+      expect(result).toBe(response)
+    })
+
+    test('it lets a calf keep the ear tag number it already has', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: {
+          ...validAnswers,
+          sex: 'male',
+          acknowledgedLateDateOfBirth: ''
+        }
+      }
+      const { h } = toolkit()
+      mocks.getAnimal.mockResolvedValueOnce(validAnswers)
+      mocks.getUnallocatedEarTags.mockResolvedValueOnce(['UK324537100001'])
+
+      // Act
+      const result = await calfDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.saveAnimal).toHaveBeenCalledWith({
+        ...CALF,
+        values: { ...validAnswers, sex: 'male' }
+      })
+      expect(result).toBe('redirected')
+    })
+
+    test("it keeps the calf's other answers when its details are saved again", async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: { ...validAnswers, acknowledgedLateDateOfBirth: '' }
+      }
+      const { h } = toolkit()
+      mocks.getAnimal.mockResolvedValueOnce({
+        ...validAnswers,
+        sex: 'male',
+        damType: 'genetic',
+        geneticDamEarTagNumber: 'UK200000000007'
+      })
+
+      // Act
+      await calfDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.saveAnimal).toHaveBeenCalledWith({
+        ...CALF,
+        values: {
+          ...validAnswers,
+          damType: 'genetic',
+          geneticDamEarTagNumber: 'UK200000000007'
+        }
+      })
     })
 
     test('it trims the answers before validating and saving them', async () => {
@@ -128,9 +245,9 @@ describe('calfDetailsController', () => {
       await calfDetailsSubmitController.handler(request, h)
 
       // Assert
-      expect(mocks.saveCalfDetails).toHaveBeenCalledWith({
+      expect(mocks.saveAnimal).toHaveBeenCalledWith({
         ...CALF,
-        answers: validAnswers
+        values: validAnswers
       })
     })
 
@@ -152,13 +269,16 @@ describe('calfDetailsController', () => {
       const result = await calfDetailsSubmitController.handler(request, h)
 
       // Assert
-      expect(mocks.saveCalfDetails).not.toHaveBeenCalled()
+      expect(mocks.saveAnimal).not.toHaveBeenCalled()
       expect(h.view).toHaveBeenCalledWith(
         TEMPLATE,
         expect.objectContaining({
           pageTitle: 'Error: Calf details',
           errorList: [
-            { text: 'Enter the animal ear tag number', href: '#earTagNumber' },
+            {
+              text: 'Enter the last 6 digits of the animal ear tag number you are registering',
+              href: '#earTagNumber'
+            },
             {
               text: 'Enter the date the animal was born',
               href: '#dateOfBirth'
@@ -173,6 +293,33 @@ describe('calfDetailsController', () => {
       )
       expect(response.code).toHaveBeenCalledWith(400)
       expect(result).toBe(response)
+    })
+
+    test('it offers the unallocated ear tags again with the errors', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: {
+          ...validAnswers,
+          earTagNumber: '',
+          acknowledgedLateDateOfBirth: ''
+        }
+      }
+      const { h } = toolkit()
+      mocks.getUnallocatedEarTags.mockResolvedValueOnce(['UK324537100001'])
+
+      // Act
+      await calfDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getUnallocatedEarTags).toHaveBeenCalledWith({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
+      })
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({ earTagItems: ['UK324537100001'] })
+      )
     })
 
     test('it warns once about a late date of birth, saving nothing', async () => {
@@ -191,7 +338,7 @@ describe('calfDetailsController', () => {
       await calfDetailsSubmitController.handler(request, h)
 
       // Assert
-      expect(mocks.saveCalfDetails).not.toHaveBeenCalled()
+      expect(mocks.saveAnimal).not.toHaveBeenCalled()
       expect(h.view).toHaveBeenCalledWith(
         TEMPLATE,
         expect.objectContaining({
@@ -221,9 +368,9 @@ describe('calfDetailsController', () => {
       await calfDetailsSubmitController.handler(request, h)
 
       // Assert
-      expect(mocks.saveCalfDetails).toHaveBeenCalledWith({
+      expect(mocks.saveAnimal).toHaveBeenCalledWith({
         ...CALF,
-        answers: { ...validAnswers, dateOfBirth: LATE_DATE }
+        values: { ...validAnswers, dateOfBirth: LATE_DATE }
       })
       expect(h.redirect).toHaveBeenCalledWith(`${CALF_PATH}/dam-details`)
     })
@@ -244,7 +391,7 @@ describe('calfDetailsController', () => {
       await calfDetailsSubmitController.handler(request, h)
 
       // Assert
-      expect(mocks.saveCalfDetails).not.toHaveBeenCalled()
+      expect(mocks.saveAnimal).not.toHaveBeenCalled()
       expect(h.view).toHaveBeenCalledWith(
         TEMPLATE,
         expect.objectContaining({ acknowledgedLateDateOfBirth: LATE_DATE })
@@ -259,7 +406,7 @@ describe('calfDetailsController', () => {
       }
       const { h } = toolkit()
       const failure = new Error('Request failed - 404')
-      mocks.saveCalfDetails.mockRejectedValueOnce(failure)
+      mocks.saveAnimal.mockRejectedValueOnce(failure)
 
       // Act
       let error

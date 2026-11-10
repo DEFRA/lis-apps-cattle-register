@@ -1,13 +1,12 @@
 import { getMountPath } from '@defra/lis-hubs-infra-registry'
 
-import {
-  formatCalendarDate,
-  toUkCalendarDate
-} from '#server/common/helpers/calendar-date.js'
+import { format } from 'date-fns'
+
+import { DATE_FORMAT, toUkDate } from '#server/common/helpers/calendar-date.js'
 import { calfPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { getMessage } from './messages.js'
-import { breedOptions } from './validation.js'
+import { breedOptions } from '../validation/calf-details.js'
 
 const PAGE_TITLE = 'Calf details'
 const FIELDS = ['earTagNumber', 'dateOfBirth', 'sex', 'breed']
@@ -26,6 +25,7 @@ export function formValuesFrom(answers) {
  * @param {object} options
  * @param {object} options.request
  * @param {Record<string, string>} options.values
+ * @param {string[]} options.earTagItems - the holding's unallocated ear tags
  * @param {{ field: string, code: string }[]} [options.errors]
  * @param {{ field: string, code: string }[]} [options.warnings]
  * @param {string} [options.acknowledgedLateDateOfBirth]
@@ -34,6 +34,7 @@ export function formValuesFrom(answers) {
 export function buildViewModel({
   request,
   values,
+  earTagItems,
   errors = [],
   warnings = [],
   acknowledgedLateDateOfBirth = ''
@@ -53,9 +54,10 @@ export function buildViewModel({
     backLinkHref: getMountPath('cattle-home', 'holding', { cph }),
     formAction: calfPagePath(cph, submissionId, animalId, 'calf-details'),
     values,
+    earTagItems,
     breedItems: breedOptions,
     maxFieldLength: MAX_FIELD_LENGTH,
-    maxDateOfBirth: formatCalendarDate(toUkCalendarDate(new Date())),
+    maxDateOfBirth: format(toUkDate(new Date()), DATE_FORMAT),
     errorList,
     fieldErrors,
     warnings: warnings.map(getMessage),

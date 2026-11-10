@@ -1,22 +1,63 @@
-import { describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { trimAnswers, validateCalfDetails } from './validation.js'
+import { registration } from './registration.js'
+
+/**
+ * @param {object} answers
+ * @param {string[]} unallocatedEarTags
+ * @returns {{ errors: object[], warnings: object[] }} what the calf details
+ *   rules make of the answers for a calf with nothing saved
+ */
+function validateCalfDetails(answers, unallocatedEarTags) {
+  return registration.validateStep('calf-details', {}, answers, {
+    unallocatedEarTags
+  })
+}
 
 const NOW = new Date('2026-11-05T10:00:00Z')
 const validAnswers = {
   earTagNumber: 'UK123456301550',
   dateOfBirth: '1/11/2026',
   sex: 'female',
-  breed: 'Aberdeen Angus (AA)'
+  breed: 'AA'
 }
 
+const AVAILABLE = ['UK123456301550', 'UK324537100001']
+
 describe('validateCalfDetails()', () => {
+  beforeEach(() => {
+    vi.setSystemTime(NOW)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test.each([
+    ['is not one the calf can be given', 'UK999999999999', AVAILABLE],
+    ['is given when the holding has none', 'UK123456301550', []]
+  ])(
+    'it rejects an ear tag number that %s',
+    (_description, earTagNumber, available) => {
+      // Arrange
+      const answers = { ...validAnswers, earTagNumber }
+
+      // Act
+      const result = validateCalfDetails(answers, available)
+
+      // Assert
+      expect(result.errors).toEqual([
+        { field: 'earTagNumber', code: 'notAvailable' }
+      ])
+    }
+  )
+
   test('it returns no errors or warnings for valid answers', () => {
     // Arrange
     const answers = validAnswers
 
     // Act
-    const result = validateCalfDetails(answers, NOW)
+    const result = validateCalfDetails(answers, AVAILABLE)
 
     // Assert
     expect(result).toEqual({ errors: [], warnings: [] })
@@ -27,7 +68,7 @@ describe('validateCalfDetails()', () => {
     const answers = {}
 
     // Act
-    const result = validateCalfDetails(answers, NOW)
+    const result = validateCalfDetails(answers, AVAILABLE)
 
     // Assert
     expect(result).toEqual({
@@ -46,7 +87,7 @@ describe('validateCalfDetails()', () => {
     const answers = { ...validAnswers, earTagNumber: '  ', breed: ' ' }
 
     // Act
-    const result = validateCalfDetails(answers, NOW)
+    const result = validateCalfDetails(answers, AVAILABLE)
 
     // Assert
     expect(result.errors).toEqual([
@@ -75,7 +116,7 @@ describe('validateCalfDetails()', () => {
       const answers = { ...validAnswers, dateOfBirth }
 
       // Act
-      const result = validateCalfDetails(answers, NOW)
+      const result = validateCalfDetails(answers, AVAILABLE)
 
       // Assert
       expect(result).toEqual({
@@ -96,19 +137,32 @@ describe('validateCalfDetails()', () => {
       const answers = { ...validAnswers, dateOfBirth }
 
       // Act
-      const result = validateCalfDetails(answers, NOW)
+      const result = validateCalfDetails(answers, AVAILABLE)
 
       // Assert
       expect(result).toEqual({ errors: [], warnings: [] })
     }
   )
 
+  test("it takes today as the UK's date, not the server's, in summer", () => {
+    // Arrange
+    const answers = { ...validAnswers, dateOfBirth: '1/7/2026' }
+    const halfPastMidnightInTheUk = new Date('2026-06-30T23:30:00Z')
+    vi.setSystemTime(halfPastMidnightInTheUk)
+
+    // Act
+    const result = validateCalfDetails(answers, AVAILABLE)
+
+    // Assert
+    expect(result).toEqual({ errors: [], warnings: [] })
+  })
+
   test('it warns, without an error, when the date of birth is 28 days ago', () => {
     // Arrange
     const answers = { ...validAnswers, dateOfBirth: '8/10/2026' }
 
     // Act
-    const result = validateCalfDetails(answers, NOW)
+    const result = validateCalfDetails(answers, AVAILABLE)
 
     // Assert
     expect(result).toEqual({
@@ -122,58 +176,25 @@ describe('validateCalfDetails()', () => {
     const answers = { ...validAnswers, sex: 'other' }
 
     // Act
-    const result = validateCalfDetails(answers, NOW)
+    const result = validateCalfDetails(answers, AVAILABLE)
 
     // Assert
     expect(result.errors).toEqual([{ field: 'sex', code: 'required' }])
   })
 
   test.each([
-    ['a breed code alone', 'AA'],
-    ['a name that is not listed', 'Unicorn (UN)'],
-    ['a listed name with the wrong code', 'Aberdeen Angus (AB)']
+    ['a code that is not listed', 'ZZ'],
+    ['a listed name with its code', 'Aberdeen Angus (AA)'],
+    ['a listed code in lower case', 'aa'],
+    ['a name that is not listed', 'Unicorn (UN)']
   ])('it rejects %s as an unknown breed', (_d, breed) => {
     // Arrange
     const answers = { ...validAnswers, breed }
 
     // Act
-    const result = validateCalfDetails(answers, NOW)
+    const result = validateCalfDetails(answers, AVAILABLE)
 
     // Assert
     expect(result.errors).toEqual([{ field: 'breed', code: 'unknown' }])
-  })
-})
-
-describe('trimAnswers()', () => {
-  test('it removes the spaces around every answer', () => {
-    // Arrange
-    const answers = {
-      earTagNumber: ' UK123456301550 ',
-      dateOfBirth: '1/11/2026 ',
-      sex: 'female',
-      breed: '  Aberdeen Angus (AA)'
-    }
-
-    // Act
-    const result = trimAnswers(answers)
-
-    // Assert
-    expect(result).toEqual({
-      earTagNumber: 'UK123456301550',
-      dateOfBirth: '1/11/2026',
-      sex: 'female',
-      breed: 'Aberdeen Angus (AA)'
-    })
-  })
-
-  test('it leaves a blank answer blank', () => {
-    // Arrange
-    const answers = { earTagNumber: '   ', breed: '' }
-
-    // Act
-    const result = trimAnswers(answers)
-
-    // Assert
-    expect(result).toEqual({ earTagNumber: '', breed: '' })
   })
 })
