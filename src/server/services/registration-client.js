@@ -116,6 +116,19 @@ class CattleRegisterBe4FeClient extends BaseClient {
   }
 
   /**
+   * The ear tags issued to the holding that are not yet on an animal, nor
+   * used by another calf of the submission.
+   * @param {{ cph: string, submissionId: string }} submission
+   * @returns {Promise<string[]>}
+   */
+  async getUnallocatedEarTags({ cph, submissionId }) {
+    const { payload } = await this._get(
+      `data/eartags/unallocated?cph=${encodeURIComponent(cph)}&submission-id=${encodeURIComponent(submissionId)}`
+    )
+    return (payload.eartags ?? []).map(({ eartag }) => eartag)
+  }
+
+  /**
    * @param {CalfKey} calf
    * @returns {Promise<CalfDetailsAnswers>} the calf's saved answers, empty
    *   before its first save

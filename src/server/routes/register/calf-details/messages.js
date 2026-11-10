@@ -3,7 +3,8 @@ const BREED_MESSAGE =
 
 const MESSAGES = {
   earTagNumber: {
-    required: 'Enter the animal ear tag number'
+    required:
+      'Enter the last 6 digits of the animal ear tag number you are registering'
   },
   dateOfBirth: {
     required: 'Enter the date the animal was born',

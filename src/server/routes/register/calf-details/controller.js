@@ -9,15 +9,19 @@ const TEMPLATE = 'register/calf-details/index'
 
 export const calfDetailsController = {
   async handler(request, h) {
-    const { submissionId, animalId } = request.params
-    const answers = await registrationClient.getCalfDetails({
-      submissionId,
-      animalId
-    })
+    const { cph, submissionId, animalId } = request.params
+    const [answers, earTagItems] = await Promise.all([
+      registrationClient.getCalfDetails({ submissionId, animalId }),
+      registrationClient.getUnallocatedEarTags({ cph, submissionId })
+    ])
 
     return h.view(
       TEMPLATE,
-      buildViewModel({ request, values: formValuesFrom(answers) })
+      buildViewModel({
+        request,
+        values: formValuesFrom(answers),
+        earTagItems
+      })
     )
   }
 }
@@ -38,12 +42,17 @@ export const calfDetailsSubmitController = {
     const warningsToShow = errors.length || isAcknowledged ? [] : warnings
 
     if (errors.length || warningsToShow.length) {
+      const earTagItems = await registrationClient.getUnallocatedEarTags({
+        cph,
+        submissionId
+      })
       return h
         .view(
           TEMPLATE,
           buildViewModel({
             request,
             values,
+            earTagItems,
             errors,
             warnings: warningsToShow,
             acknowledgedLateDateOfBirth:

@@ -28,7 +28,8 @@ const validAnswers = {
 
 const mocks = {
   getCalfDetails: vi.mocked(registrationClient.getCalfDetails),
-  saveCalfDetails: vi.mocked(registrationClient.saveCalfDetails)
+  saveCalfDetails: vi.mocked(registrationClient.saveCalfDetails),
+  getUnallocatedEarTags: vi.mocked(registrationClient.getUnallocatedEarTags)
 }
 
 /**
@@ -48,6 +49,7 @@ function toolkit() {
 describe('calfDetailsController', () => {
   beforeAll(() => {
     mocks.saveCalfDetails.mockResolvedValue(undefined)
+    mocks.getUnallocatedEarTags.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -89,6 +91,32 @@ describe('calfDetailsController', () => {
         })
       )
     })
+
+    test("it offers the holding's unallocated ear tags", async () => {
+      // Arrange
+      const request = { params: { cph: CPH, ...CALF } }
+      const { h } = toolkit()
+      mocks.getCalfDetails.mockResolvedValueOnce({})
+      mocks.getUnallocatedEarTags.mockResolvedValueOnce([
+        'UK324537100001',
+        'UK324537100002'
+      ])
+
+      // Act
+      await calfDetailsController.handler(request, h)
+
+      // Assert
+      expect(mocks.getUnallocatedEarTags).toHaveBeenCalledWith({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
+      })
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          earTagItems: ['UK324537100001', 'UK324537100002']
+        })
+      )
+    })
   })
 
   describe('POST', () => {
@@ -109,6 +137,7 @@ describe('calfDetailsController', () => {
         answers: validAnswers
       })
       expect(h.redirect).toHaveBeenCalledWith(`${CALF_PATH}/dam-details`)
+      expect(mocks.getUnallocatedEarTags).not.toHaveBeenCalled()
       expect(result).toBe('redirected')
     })
 
@@ -158,7 +187,10 @@ describe('calfDetailsController', () => {
         expect.objectContaining({
           pageTitle: 'Error: Calf details',
           errorList: [
-            { text: 'Enter the animal ear tag number', href: '#earTagNumber' },
+            {
+              text: 'Enter the last 6 digits of the animal ear tag number you are registering',
+              href: '#earTagNumber'
+            },
             {
               text: 'Enter the date the animal was born',
               href: '#dateOfBirth'
@@ -173,6 +205,33 @@ describe('calfDetailsController', () => {
       )
       expect(response.code).toHaveBeenCalledWith(400)
       expect(result).toBe(response)
+    })
+
+    test('it offers the unallocated ear tags again with the errors', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: {
+          ...validAnswers,
+          earTagNumber: '',
+          acknowledgedLateDateOfBirth: ''
+        }
+      }
+      const { h } = toolkit()
+      mocks.getUnallocatedEarTags.mockResolvedValueOnce(['UK324537100001'])
+
+      // Act
+      await calfDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getUnallocatedEarTags).toHaveBeenCalledWith({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
+      })
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({ earTagItems: ['UK324537100001'] })
+      )
     })
 
     test('it warns once about a late date of birth, saving nothing', async () => {
