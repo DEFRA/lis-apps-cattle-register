@@ -14,6 +14,14 @@ const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
   .required()
 
+// The BE4FE's submission id: three groups of three Crockford base32
+// characters, which it reads case-insensitively
+const submissionId = Joi.string()
+  .pattern(
+    /^[0-9A-HJKMNP-TV-Z]{3}-[0-9A-HJKMNP-TV-Z]{3}-[0-9A-HJKMNP-TV-Z]{3}$/i
+  )
+  .required()
+
 /**
  * A malformed path parameter is a page that does not exist; a malformed
  * form post (a field sent twice, or too long) is a bad request.
@@ -35,10 +43,13 @@ const holdingParams = {
   failAction: failValidation
 }
 
-const registrationParams = {
+const calfParams = {
   params: Joi.object({
     cph,
-    registrationId: Joi.string().guid().required()
+    submissionId,
+    animalId: Joi.string()
+      .pattern(/^[1-9]\d{0,2}$/)
+      .required()
   }),
   failAction: failValidation
 }
@@ -69,20 +80,20 @@ export const register = {
         },
         {
           method: 'GET',
-          path: `${REGISTER_ROUTE}/{registrationId}/calf-details`,
+          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/calf-details`,
           ...calfDetailsController,
           options: {
-            validate: registrationParams,
+            validate: calfParams,
             pre: [{ method: demandRegisterAccess }]
           }
         },
         {
           method: 'POST',
-          path: `${REGISTER_ROUTE}/{registrationId}/calf-details`,
+          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/calf-details`,
           ...calfDetailsSubmitController,
           options: {
             validate: {
-              ...registrationParams,
+              ...calfParams,
               payload: calfDetailsPayload
             },
             pre: [{ method: demandRegisterAccess }]

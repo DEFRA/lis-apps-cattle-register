@@ -1,167 +1,143 @@
 /*
- * TEMPORARY STUB until the cattle-register backend-for-frontend lands under
- * LREG-876. The spoke is stateless: draft answers and validation belong to
- * that service, so nothing here is persisted and the rules below move there.
- * Keep the interface (getCalfDetails/saveCalfDetails, field + code results)
- * when replacing it with the real client.
+ * The cattle-register backend-for-frontend holds each holding's unsubmitted
+ * registration (its "submission") as animals, each with named sections of
+ * untyped key/value data. This client keeps one section per page of a calf,
+ * with the page's answers as its keys. The BE4FE stores whatever it is
+ * given: each page validates its answers before asking for a save.
  */
-/** @import { CalendarDate } from '#server/common/helpers/calendar-date.js' */
-import { breedOptions } from '#server/common/helpers/breed-options.js'
-import {
-  daysBetween,
-  toUkCalendarDate
-} from '#server/common/helpers/calendar-date.js'
+/** @import { CalfDetailsAnswers } from '#server/routes/register/calf-details/validation.js' */
+import { BaseClient } from '@defra/lis-hubs-infra-core'
 
-const SEXES = new Set(['male', 'female'])
-const BIRTH_REPORTING_DEADLINE_DAYS = 27
-const DATE_PARTS = 3
-const DAY_OR_MONTH_PATTERN = /^\d{1,2}$/
-const YEAR_PATTERN = /^\d{4}$/
-
-const knownBreeds = new Set(breedOptions)
+import { config } from '#config/config.js'
 
 /**
- * @typedef {object} CalfDetailsAnswers
- * @property {string} [earTagNumber]
- * @property {string} [dateOfBirth] - D/M/YYYY
- * @property {string} [sex] - male or female
- * @property {string} [breed] - "Name (CODE)"
+ * @typedef {object} CalfKey
+ * @property {string} submissionId - the BE4FE's submission id
+ * @property {string} animalId - the calf's id in the submission: its number,
+ *   from 1, as a string
  */
+
+const CALF_DETAILS_SECTION = 'CALF-DETAILS'
+const FIRST_ANIMAL_ID = '1'
+const DRAFT = 'DRAFT'
+const STRING = 'STRING'
+
+// The compose stack publishes the BE4FE on this port (lis-dev
+// .tools/compose/cattle-register.yml), so a sideloaded app reaches it there.
+const localPort = 8089
 
 /**
- * @typedef {object} FieldResult
- * @property {'earTagNumber'|'dateOfBirth'|'sex'|'breed'} field
- * @property {string} code
+ * @param {Record<string, string>} answers
+ * @returns {{ key: string, value: string, type: string }[]} the section's data
  */
-
-/**
- * @param {string[]} parts - day, month and year text
- * @returns {CalendarDate | null}
- */
-function toRealDate([dayText, monthText, yearText]) {
-  if (
-    !DAY_OR_MONTH_PATTERN.test(dayText) ||
-    !DAY_OR_MONTH_PATTERN.test(monthText) ||
-    !YEAR_PATTERN.test(yearText)
-  ) {
-    return null
-  }
-
-  const [day, month, year] = [dayText, monthText, yearText].map(Number)
-  const date = new Date(Date.UTC(year, month - 1, day))
-
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== month - 1 ||
-    date.getUTCDate() !== day
-  ) {
-    return null
-  }
-
-  return { day, month, year }
+function toData(answers) {
+  return Object.entries(answers).map(([key, value]) => ({
+    key,
+    value,
+    type: STRING
+  }))
 }
 
 /**
- * Follows the prototype: anything that is not three "/"-separated parts,
- * blank included, is a missing date.
- * @param {string} dateOfBirth
- * @param {Date} now
- * @returns {{ error?: string, birthDate?: CalendarDate }}
+ * @param {{ key: string, value: string }[]} data - a section's data
+ * @returns {Record<string, string>} the answers, empty when nothing is saved
  */
-function checkDateOfBirth(dateOfBirth, now) {
-  const parts = dateOfBirth.split('/')
-
-  if (parts.length !== DATE_PARTS || !parts.every(Boolean)) {
-    return { error: 'required' }
-  }
-
-  const birthDate = toRealDate(parts)
-
-  if (!birthDate) {
-    return { error: 'invalid' }
-  }
-
-  if (daysBetween(birthDate, toUkCalendarDate(now)) < 0) {
-    return { error: 'future' }
-  }
-
-  return { birthDate }
+function fromData(data) {
+  return Object.fromEntries(data.map(({ key, value }) => [key, value]))
 }
 
-/**
- * Provisional, non-blocking late-registration warning. Kept apart from the
- * date rules so it can be removed on its own.
- * @param {CalendarDate} birthDate
- * @param {Date} now
- * @returns {FieldResult[]}
- */
-function lateRegistrationWarnings(birthDate, now) {
-  return daysBetween(birthDate, toUkCalendarDate(now)) >
-    BIRTH_REPORTING_DEADLINE_DAYS
-    ? [{ field: 'dateOfBirth', code: 'overDeadline' }]
-    : []
-}
-
-/**
- * @param {string} breed
- * @returns {string | null} the error code, or null when the breed is listed
- */
-function checkBreed(breed) {
-  if (breed === '') {
-    return 'required'
+class CattleRegisterBe4FeClient extends BaseClient {
+  /**
+   * @param {object} options
+   * @param {string} options.environment 'local' | 'docker_compose' | 'dev' | 'test' | 'ext-test' | 'perf-test' | 'prod'
+   * @param {string} [options.apiKey] API key sent to the cattle-register BE4FE as x-api-key
+   * @param {number} [options.timeout] total milliseconds allowed for the response headers and body
+   * @param {{ failureThreshold?: number, resetTimeout?: number }} [options.circuitBreaker] circuit breaker settings; see BaseClient for the defaults
+   */
+  constructor({ environment, apiKey, timeout, circuitBreaker }) {
+    super({
+      environment,
+      serviceName: 'lis-be4fe-cattle-register',
+      port: localPort,
+      apiKey,
+      timeout,
+      circuitBreaker
+    })
   }
 
-  return knownBreeds.has(breed) ? null : 'unknown'
-}
-
-/**
- * @param {CalfDetailsAnswers} answers
- * @param {Date} now
- * @returns {{ errors: FieldResult[], warnings: FieldResult[] }}
- */
-function validateCalfDetails(answers, now) {
-  const dateCheck = checkDateOfBirth((answers.dateOfBirth ?? '').trim(), now)
-  const codes = {
-    earTagNumber:
-      (answers.earTagNumber ?? '').trim() === '' ? 'required' : null,
-    dateOfBirth: dateCheck.error ?? null,
-    sex: SEXES.has(answers.sex) ? null : 'required',
-    breed: checkBreed((answers.breed ?? '').trim())
+  /**
+   * @param {CalfKey} calf
+   * @param {string} section
+   * @returns {Promise<Record<string, string>>} the answers saved in the
+   *   section, empty when nothing has been
+   */
+  async #getAnimalSection({ submissionId, animalId }, section) {
+    const { payload } = await this._get(
+      `submission/${encodeURIComponent(submissionId)}/${encodeURIComponent(animalId)}/${section}`
+    )
+    return fromData(payload.data ?? [])
   }
-  const errors = Object.entries(codes)
-    .filter(([, code]) => code !== null)
-    .map(([field, code]) => ({ field, code }))
-  const warnings = dateCheck.birthDate
-    ? lateRegistrationWarnings(dateCheck.birthDate, now)
-    : []
 
-  return { errors, warnings }
-}
+  /**
+   * Saves a page's answers as the animal's section, replacing what the
+   * section held. Adds the animal to the submission when it is new.
+   * @param {CalfKey} calf
+   * @param {string} section
+   * @param {Record<string, string>} answers
+   * @returns {Promise<void>}
+   */
+  async #updateAnimalSection({ submissionId, animalId }, section, answers) {
+    await this._post(`submission/${encodeURIComponent(submissionId)}:update`, {
+      payload: {
+        'animal-id': animalId,
+        section,
+        status: DRAFT,
+        data: toData(answers)
+      }
+    })
+  }
 
-/**
- * @param {object} [options]
- * @param {() => Date} [options.now] - the current instant; injectable for tests
- * @returns {{ getCalfDetails: Function, saveCalfDetails: Function }}
- */
-export function createRegistrationClient({ now = () => new Date() } = {}) {
-  return {
-    /**
-     * @param {{ cph: string, registrationId: string }} _registration
-     * @returns {Promise<{ answers: CalfDetailsAnswers }>}
-     */
-    async getCalfDetails(_registration) {
-      return { answers: {} }
-    },
-
-    /**
-     * Saves the answers when there are no errors. Warnings do not stop a save.
-     * @param {{ cph: string, registrationId: string, answers: CalfDetailsAnswers }} registration
-     * @returns {Promise<{ errors: FieldResult[], warnings: FieldResult[] }>}
-     */
-    async saveCalfDetails({ answers }) {
-      return validateCalfDetails(answers, now())
+  /**
+   * Starts the holding's registration, or continues the one it has. The
+   * BE4FE adds a calf on its first save, under whatever id it is given, so
+   * calves are numbered from 1 and a new registration's calf is 1.
+   * @param {{ cph: string }} holding
+   * @returns {Promise<CalfKey>} the registration's calf, to continue with
+   */
+  async startRegistration({ cph }) {
+    const { payload } = await this._get(
+      `submission/start?cph=${encodeURIComponent(cph)}`
+    )
+    const [animal] = payload.animals ?? []
+    return {
+      submissionId: payload['submission-id'],
+      animalId: animal?.['animal-id'] ?? FIRST_ANIMAL_ID
     }
   }
+
+  /**
+   * @param {CalfKey} calf
+   * @returns {Promise<CalfDetailsAnswers>} the calf's saved answers, empty
+   *   before its first save
+   */
+  getCalfDetails(calf) {
+    return this.#getAnimalSection(calf, CALF_DETAILS_SECTION)
+  }
+
+  /**
+   * Saves the calf's answers, validated by the page, replacing what was
+   * saved. The calf is added to the submission on its first save.
+   * @param {CalfKey & { answers: CalfDetailsAnswers }} calf
+   * @returns {Promise<void>}
+   */
+  saveCalfDetails({ answers, ...calf }) {
+    return this.#updateAnimalSection(calf, CALF_DETAILS_SECTION, answers)
+  }
 }
 
-export const registrationClient = createRegistrationClient()
+export const registrationClient = new CattleRegisterBe4FeClient({
+  environment: config.get('environment'),
+  apiKey: config.get('cattleRegisterApi.apiKey'),
+  timeout: config.get('cattleRegisterApi.timeout'),
+  circuitBreaker: config.get('cattleRegisterApi.circuitBreaker')
+})
