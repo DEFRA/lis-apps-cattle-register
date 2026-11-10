@@ -6,6 +6,7 @@
  * given: each page validates its answers before asking for a save.
  */
 /** @import { CalfDetailsAnswers } from '#server/routes/register/calf-details/validation.js' */
+/** @import { DamDetailsAnswers } from '#server/routes/register/dam-details/validation.js' */
 import { BaseClient } from '@defra/lis-hubs-infra-core'
 
 import { config } from '#config/config.js'
@@ -18,6 +19,7 @@ import { config } from '#config/config.js'
  */
 
 const CALF_DETAILS_SECTION = 'CALF-DETAILS'
+const DAM_DETAILS_SECTION = 'DAM-DETAILS'
 const FIRST_ANIMAL_ID = '1'
 const DRAFT = 'DRAFT'
 const STRING = 'STRING'
@@ -145,6 +147,25 @@ class CattleRegisterBe4FeClient extends BaseClient {
    */
   saveCalfDetails({ answers, ...calf }) {
     return this.#updateAnimalSection(calf, CALF_DETAILS_SECTION, answers)
+  }
+
+  /**
+   * @param {CalfKey} calf
+   * @returns {Promise<DamDetailsAnswers>} the calf's saved dam details,
+   *   empty before its first save
+   */
+  getDamDetails(calf) {
+    return this.#getAnimalSection(calf, DAM_DETAILS_SECTION)
+  }
+
+  /**
+   * Saves the calf's dam details, validated by the page, replacing what was
+   * saved.
+   * @param {CalfKey & { answers: DamDetailsAnswers }} calf
+   * @returns {Promise<void>}
+   */
+  saveDamDetails({ answers, ...calf }) {
+    return this.#updateAnimalSection(calf, DAM_DETAILS_SECTION, answers)
   }
 }
 

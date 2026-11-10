@@ -244,4 +244,64 @@ describe('CattleRegisterBe4FeClient', () => {
       expect(error).toBe(failure)
     })
   })
+
+  describe('getDamDetails()', () => {
+    test('it returns the saved dam details of the calf', async () => {
+      // Arrange
+      const get = vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({
+          'animal-id': ANIMAL_ID,
+          section: 'DAM-DETAILS',
+          data: [{ key: 'damType', value: 'genetic', type: 'STRING' }]
+        })
+      )
+
+      // Act
+      const result = await client.getDamDetails(CALF)
+
+      // Assert
+      expect(get).toHaveBeenCalledWith(
+        `submission/${SUBMISSION_ID}/${ANIMAL_ID}/DAM-DETAILS`
+      )
+      expect(result).toEqual({ damType: 'genetic' })
+    })
+
+    test('it returns empty answers before the dam is saved', async () => {
+      // Arrange
+      vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({ 'animal-id': ANIMAL_ID, section: 'DAM-DETAILS', data: [] })
+      )
+
+      // Act
+      const result = await client.getDamDetails(CALF)
+
+      // Assert
+      expect(result).toEqual({})
+    })
+  })
+
+  describe('saveDamDetails()', () => {
+    test("it saves the calf's dam details under its animal id", async () => {
+      // Arrange
+      const post = vi
+        .spyOn(client, '_post')
+        .mockResolvedValueOnce(response(null))
+
+      // Act
+      await client.saveDamDetails({
+        ...CALF,
+        answers: { damType: 'surrogate' }
+      })
+
+      // Assert
+      expect(post).toHaveBeenCalledWith(UPDATE_PATH, {
+        payload: {
+          'animal-id': ANIMAL_ID,
+          section: 'DAM-DETAILS',
+          status: 'DRAFT',
+          data: [{ key: 'damType', value: 'surrogate', type: 'STRING' }]
+        }
+      })
+    })
+  })
 })
