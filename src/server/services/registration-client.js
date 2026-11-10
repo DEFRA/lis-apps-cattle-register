@@ -7,6 +7,7 @@
  */
 /** @import { CalfDetailsAnswers } from '#server/routes/register/calf-details/validation.js' */
 /** @import { DamDetailsAnswers } from '#server/routes/register/dam-details/validation.js' */
+/** @import { GeneticDamAnswers } from '#server/routes/register/genetic-dam/validation.js' */
 import { BaseClient } from '@defra/lis-hubs-infra-core'
 
 import { config } from '#config/config.js'
@@ -20,6 +21,7 @@ import { config } from '#config/config.js'
 
 const CALF_DETAILS_SECTION = 'CALF-DETAILS'
 const DAM_DETAILS_SECTION = 'DAM-DETAILS'
+const GENETIC_DAM_SECTION = 'GENETIC-DAM'
 const FIRST_ANIMAL_ID = '1'
 const DRAFT = 'DRAFT'
 const STRING = 'STRING'
@@ -131,6 +133,18 @@ class CattleRegisterBe4FeClient extends BaseClient {
   }
 
   /**
+   * The ear tags of the holding's animals that can be a dam.
+   * @param {{ cph: string }} holding
+   * @returns {Promise<string[]>}
+   */
+  async getDamEarTags({ cph }) {
+    const { payload } = await this._get(
+      `data/eartags/dams?cph=${encodeURIComponent(cph)}`
+    )
+    return (payload.animals ?? []).map(({ eartag }) => eartag)
+  }
+
+  /**
    * @param {CalfKey} calf
    * @returns {Promise<CalfDetailsAnswers>} the calf's saved answers, empty
    *   before its first save
@@ -166,6 +180,25 @@ class CattleRegisterBe4FeClient extends BaseClient {
    */
   saveDamDetails({ answers, ...calf }) {
     return this.#updateAnimalSection(calf, DAM_DETAILS_SECTION, answers)
+  }
+
+  /**
+   * @param {CalfKey} calf
+   * @returns {Promise<GeneticDamAnswers>} the calf's saved genetic dam,
+   *   empty before its first save
+   */
+  getGeneticDam(calf) {
+    return this.#getAnimalSection(calf, GENETIC_DAM_SECTION)
+  }
+
+  /**
+   * Saves the calf's genetic dam, validated by the page, replacing what was
+   * saved.
+   * @param {CalfKey & { answers: GeneticDamAnswers }} calf
+   * @returns {Promise<void>}
+   */
+  saveGeneticDam({ answers, ...calf }) {
+    return this.#updateAnimalSection(calf, GENETIC_DAM_SECTION, answers)
   }
 }
 

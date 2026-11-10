@@ -13,6 +13,10 @@ import {
   damDetailsController,
   damDetailsSubmitController
 } from './dam-details/controller.js'
+import {
+  geneticDamController,
+  geneticDamSubmitController
+} from './genetic-dam/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -72,63 +76,90 @@ const damDetailsPayload = Joi.object({
   damType: formField
 }).options({ stripUnknown: true })
 
+const geneticDamPayload = Joi.object({
+  earTagNumber: formField
+}).options({ stripUnknown: true })
+
+const routes = [
+  {
+    method: 'GET',
+    path: REGISTER_ROUTE,
+    ...startRegistrationController,
+    options: {
+      validate: holdingParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/calf-details`,
+    ...calfDetailsController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/calf-details`,
+    ...calfDetailsSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: calfDetailsPayload
+      },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
+    ...damDetailsController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
+    ...damDetailsSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: damDetailsPayload
+      },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/genetic-dam`,
+    ...geneticDamController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/genetic-dam`,
+    ...geneticDamSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: geneticDamPayload
+      },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  }
+]
+
 export const register = {
   plugin: {
     name: 'register',
     register(server) {
-      server.route([
-        {
-          method: 'GET',
-          path: REGISTER_ROUTE,
-          ...startRegistrationController,
-          options: {
-            validate: holdingParams,
-            pre: [{ method: demandRegisterAccess }]
-          }
-        },
-        {
-          method: 'GET',
-          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/calf-details`,
-          ...calfDetailsController,
-          options: {
-            validate: calfParams,
-            pre: [{ method: demandRegisterAccess }]
-          }
-        },
-        {
-          method: 'POST',
-          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/calf-details`,
-          ...calfDetailsSubmitController,
-          options: {
-            validate: {
-              ...calfParams,
-              payload: calfDetailsPayload
-            },
-            pre: [{ method: demandRegisterAccess }]
-          }
-        },
-        {
-          method: 'GET',
-          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
-          ...damDetailsController,
-          options: {
-            validate: calfParams,
-            pre: [{ method: demandRegisterAccess }]
-          }
-        },
-        {
-          method: 'POST',
-          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
-          ...damDetailsSubmitController,
-          options: {
-            validate: {
-              ...calfParams,
-              payload: damDetailsPayload
-            },
-            pre: [{ method: demandRegisterAccess }]
-          }
-        }
-      ])
+      server.route(routes)
     }
   }
 }

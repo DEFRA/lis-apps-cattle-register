@@ -145,6 +145,41 @@ describe('CattleRegisterBe4FeClient', () => {
     })
   })
 
+  describe('getDamEarTags()', () => {
+    test("it lists the ear tags of the holding's possible dams", async () => {
+      // Arrange
+      const get = vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({
+          cph: CPH,
+          animals: [
+            { eartag: 'UK200000000007', breed: 'AA', sex: 'F' },
+            { eartag: 'UK200000000008', breed: 'HE', sex: 'F' }
+          ]
+        })
+      )
+
+      // Act
+      const result = await client.getDamEarTags({ cph: CPH })
+
+      // Assert
+      expect(get).toHaveBeenCalledWith('data/eartags/dams?cph=10%2F081%2F1234')
+      expect(result).toEqual(['UK200000000007', 'UK200000000008'])
+    })
+
+    test('it returns no ear tags when the holding has no possible dams', async () => {
+      // Arrange
+      vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({ cph: CPH, animals: [] })
+      )
+
+      // Act
+      const result = await client.getDamEarTags({ cph: CPH })
+
+      // Assert
+      expect(result).toEqual([])
+    })
+  })
+
   describe('getCalfDetails()', () => {
     test('it returns the saved answers of the calf', async () => {
       // Arrange
@@ -300,6 +335,70 @@ describe('CattleRegisterBe4FeClient', () => {
           section: 'DAM-DETAILS',
           status: 'DRAFT',
           data: [{ key: 'damType', value: 'surrogate', type: 'STRING' }]
+        }
+      })
+    })
+  })
+
+  describe('getGeneticDam()', () => {
+    test('it returns the saved genetic dam of the calf', async () => {
+      // Arrange
+      const get = vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({
+          'animal-id': ANIMAL_ID,
+          section: 'GENETIC-DAM',
+          data: [
+            { key: 'earTagNumber', value: 'UK200000000007', type: 'STRING' }
+          ]
+        })
+      )
+
+      // Act
+      const result = await client.getGeneticDam(CALF)
+
+      // Assert
+      expect(get).toHaveBeenCalledWith(
+        `submission/${SUBMISSION_ID}/${ANIMAL_ID}/GENETIC-DAM`
+      )
+      expect(result).toEqual({ earTagNumber: 'UK200000000007' })
+    })
+
+    test('it returns empty answers before the genetic dam is saved', async () => {
+      // Arrange
+      vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({ 'animal-id': ANIMAL_ID, section: 'GENETIC-DAM', data: [] })
+      )
+
+      // Act
+      const result = await client.getGeneticDam(CALF)
+
+      // Assert
+      expect(result).toEqual({})
+    })
+  })
+
+  describe('saveGeneticDam()', () => {
+    test("it saves the calf's genetic dam under its animal id", async () => {
+      // Arrange
+      const post = vi
+        .spyOn(client, '_post')
+        .mockResolvedValueOnce(response(null))
+
+      // Act
+      await client.saveGeneticDam({
+        ...CALF,
+        answers: { earTagNumber: 'UK200000000007' }
+      })
+
+      // Assert
+      expect(post).toHaveBeenCalledWith(UPDATE_PATH, {
+        payload: {
+          'animal-id': ANIMAL_ID,
+          section: 'GENETIC-DAM',
+          status: 'DRAFT',
+          data: [
+            { key: 'earTagNumber', value: 'UK200000000007', type: 'STRING' }
+          ]
         }
       })
     })
