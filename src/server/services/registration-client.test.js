@@ -1,12 +1,16 @@
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
-import { createRegistrationClient } from './registration-client.js'
+import { registrationClient as client } from './registration-client.js'
 
-const NOW = new Date('2026-11-05T10:00:00Z')
-const registration = {
-  cph: '10/081/1234',
-  registrationId: '6f1c3c1e-6a0b-4b8e-9d3f-2a1b0c9d8e7f'
-}
+const CPH = '10/081/1234'
+const SUBMISSION_ID = '7ZK-M3Q-A9D'
+const ANIMAL_ID = '6f1c3c1e-6a0b-4b8e-9d3f-2a1b0c9d8e7f'
+const START_PATH = 'submission/start?cph=10%2F081%2F1234'
+const UPDATE_PATH = `submission/${SUBMISSION_ID}:update`
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+const OK = 200
+
 const validAnswers = {
   earTagNumber: 'UK123456301550',
   dateOfBirth: '1/11/2026',
@@ -14,185 +18,268 @@ const validAnswers = {
   breed: 'Aberdeen Angus (AA)'
 }
 
-describe('registrationClient (stub)', () => {
-  test('getCalfDetails() returns no saved answers', async () => {
-    // Arrange
-    const client = createRegistrationClient({ now: () => NOW })
+/**
+ * @param {object} payload
+ * @returns {{ res: { statusCode: number }, payload: object }} as BaseClient
+ *   resolves a call
+ */
+function response(payload) {
+  return { res: { statusCode: OK }, payload }
+}
 
-    // Act
-    const result = await client.getCalfDetails(registration)
+/**
+ * @param {string[]} animalIds
+ * @returns {object} the BE4FE's answer to starting the holding's submission
+ */
+function submission(animalIds) {
+  return {
+    'submission-id': SUBMISSION_ID,
+    'created-date': '2026-11-05T10:00:00+00:00',
+    animals: animalIds.map((id) => ({ 'animal-id': id, status: 'DRAFT' }))
+  }
+}
 
-    // Assert
-    expect(result).toEqual({ answers: {} })
+describe('CattleRegisterBe4FeClient', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllEnvs()
   })
 
-  test('saveCalfDetails() returns no errors or warnings for valid answers', async () => {
+  test('it sends the configured BE4FE API key', async () => {
     // Arrange
-    const client = createRegistrationClient({ now: () => NOW })
+    vi.stubEnv('CATTLE_REGISTER_API_KEY', 'test-api-key')
+    vi.resetModules()
 
     // Act
-    const result = await client.saveCalfDetails({
-      ...registration,
-      answers: validAnswers
-    })
+    const { registrationClient: reloadedClient } =
+      await import('./registration-client.js')
 
     // Assert
-    expect(result).toEqual({ errors: [], warnings: [] })
-  })
-
-  test('saveCalfDetails() reports every blank field as required, in page order', async () => {
-    // Arrange
-    const client = createRegistrationClient({ now: () => NOW })
-
-    // Act
-    const result = await client.saveCalfDetails({
-      ...registration,
-      answers: {}
-    })
-
-    // Assert
-    expect(result).toEqual({
-      errors: [
-        { field: 'earTagNumber', code: 'required' },
-        { field: 'dateOfBirth', code: 'required' },
-        { field: 'sex', code: 'required' },
-        { field: 'breed', code: 'required' }
-      ],
-      warnings: []
-    })
-  })
-
-  test('saveCalfDetails() treats whitespace-only answers as blank', async () => {
-    // Arrange
-    const client = createRegistrationClient({ now: () => NOW })
-
-    // Act
-    const result = await client.saveCalfDetails({
-      ...registration,
-      answers: { ...validAnswers, earTagNumber: '  ', breed: ' ' }
-    })
-
-    // Assert
-    expect(result.errors).toEqual([
-      { field: 'earTagNumber', code: 'required' },
-      { field: 'breed', code: 'required' }
-    ])
+    expect(reloadedClient._apiKey).toBe('test-api-key')
+    expect(reloadedClient._serviceName).toBe('lis-be4fe-cattle-register')
   })
 
   test.each([
-    ['not three parts', 'yesterday', 'required'],
-    ['four parts', '1/11/2026/1', 'required'],
-    ['missing its month', '1//2026', 'required'],
-    ['three letters parts', 'a/b/c', 'invalid'],
-    ['spaced around the slashes', '1 / 11 / 2026', 'invalid'],
-    ['longer than 10 characters', '01/011/2026', 'invalid'],
-    ['a 2 digit year', '1/11/26', 'invalid'],
-    ['a 3 digit day', '001/1/2026', 'invalid'],
-    ['dashes instead of slashes', '1-11-2026', 'required'],
-    ['an impossible day', '31/2/2026', 'invalid'],
-    ['month 13', '1/13/2026', 'invalid'],
-    ['tomorrow', '6/11/2026', 'future']
+    ['default', undefined, 5000],
+    ['environment override', '12000', 12000]
   ])(
-    'saveCalfDetails() rejects a date of birth that is %s',
-    async (_description, dateOfBirth, code) => {
+    'it passes the %s timeout to the base client',
+    async (_, value, expected) => {
       // Arrange
-      const client = createRegistrationClient({ now: () => NOW })
+      vi.stubEnv('CATTLE_REGISTER_API_TIMEOUT', value)
+      vi.resetModules()
 
       // Act
-      const result = await client.saveCalfDetails({
-        ...registration,
-        answers: { ...validAnswers, dateOfBirth }
-      })
+      const { registrationClient: reloadedClient } =
+        await import('./registration-client.js')
 
       // Assert
-      expect(result).toEqual({
-        errors: [{ field: 'dateOfBirth', code }],
-        warnings: []
-      })
+      expect(reloadedClient._timeout).toBe(expected)
     }
   )
 
-  test.each([
-    ['today', '5/11/2026'],
-    ['today with leading zeros', '05/11/2026'],
-    ['exactly 27 days ago', '9/10/2026']
-  ])(
-    'saveCalfDetails() accepts a date of birth of %s without a warning',
-    async (_description, dateOfBirth) => {
+  describe('startRegistration()', () => {
+    test("it starts, or continues, the holding's registration", async () => {
       // Arrange
-      const client = createRegistrationClient({ now: () => NOW })
+      const get = vi
+        .spyOn(client, '_get')
+        .mockResolvedValueOnce(response(submission([ANIMAL_ID])))
 
       // Act
-      const result = await client.saveCalfDetails({
-        ...registration,
-        answers: { ...validAnswers, dateOfBirth }
+      const result = await client.startRegistration({ cph: CPH })
+
+      // Assert
+      expect(get).toHaveBeenCalledWith(START_PATH)
+      expect(result).toEqual({ submissionId: SUBMISSION_ID })
+    })
+  })
+
+  describe('getCalfDetails()', () => {
+    test('it returns empty answers before the calf is saved', async () => {
+      // Arrange
+      const get = vi
+        .spyOn(client, '_get')
+        .mockResolvedValueOnce(response(submission([])))
+
+      // Act
+      const result = await client.getCalfDetails({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
       })
 
       // Assert
-      expect(result).toEqual({ errors: [], warnings: [] })
-    }
-  )
-
-  test('saveCalfDetails() warns, without an error, when the date of birth is 28 days ago', async () => {
-    // Arrange
-    const client = createRegistrationClient({ now: () => NOW })
-
-    // Act
-    const result = await client.saveCalfDetails({
-      ...registration,
-      answers: { ...validAnswers, dateOfBirth: '8/10/2026' }
+      expect(result).toEqual({ answers: {} })
+      expect(get).toHaveBeenCalledTimes(1)
     })
 
-    // Assert
-    expect(result).toEqual({
-      errors: [],
-      warnings: [{ field: 'dateOfBirth', code: 'overDeadline' }]
+    test('it returns the saved answers of the calf', async () => {
+      // Arrange
+      const get = vi
+        .spyOn(client, '_get')
+        .mockResolvedValueOnce(response(submission([ANIMAL_ID])))
+        .mockResolvedValueOnce(
+          response({
+            'animal-id': ANIMAL_ID,
+            section: 'CALF-DETAILS',
+            data: [
+              { key: 'earTagNumber', value: 'UK123456301550', type: 'STRING' },
+              { key: 'dateOfBirth', value: '1/11/2026', type: 'STRING' },
+              { key: 'sex', value: 'female', type: 'STRING' },
+              { key: 'breed', value: 'Aberdeen Angus (AA)', type: 'STRING' }
+            ]
+          })
+        )
+
+      // Act
+      const result = await client.getCalfDetails({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
+      })
+
+      // Assert
+      expect(get).toHaveBeenNthCalledWith(
+        2,
+        `submission/${SUBMISSION_ID}/${ANIMAL_ID}/CALF-DETAILS`
+      )
+      expect(result).toEqual({ answers: validAnswers })
+    })
+
+    test('it reads the submission id case-insensitively', async () => {
+      // Arrange
+      vi.spyOn(client, '_get').mockResolvedValueOnce(response(submission([])))
+
+      // Act
+      const result = await client.getCalfDetails({
+        cph: CPH,
+        submissionId: SUBMISSION_ID.toLowerCase()
+      })
+
+      // Assert
+      expect(result).toEqual({ answers: {} })
+    })
+
+    test("it returns null for a registration that is not the holding's", async () => {
+      // Arrange
+      vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({ ...submission([]), 'submission-id': 'AAA-BBB-CCC' })
+      )
+
+      // Act
+      const result = await client.getCalfDetails({
+        cph: CPH,
+        submissionId: SUBMISSION_ID
+      })
+
+      // Assert
+      expect(result).toBeNull()
     })
   })
 
-  test('saveCalfDetails() rejects a sex other than male or female', async () => {
-    // Arrange
-    const client = createRegistrationClient({ now: () => NOW })
+  describe('saveCalfDetails()', () => {
+    test('it adds the calf as a new animal', async () => {
+      // Arrange
+      vi.spyOn(client, '_get').mockResolvedValueOnce(response(submission([])))
+      const post = vi
+        .spyOn(client, '_post')
+        .mockResolvedValueOnce(response(null))
 
-    // Act
-    const result = await client.saveCalfDetails({
-      ...registration,
-      answers: { ...validAnswers, sex: 'other' }
+      // Act
+      const result = await client.saveCalfDetails({
+        cph: CPH,
+        submissionId: SUBMISSION_ID,
+        answers: validAnswers
+      })
+
+      // Assert
+      expect(result).toBe(true)
+      expect(post).toHaveBeenCalledTimes(1)
+      const [path, { payload }] = post.mock.calls[0]
+      expect(path).toBe(UPDATE_PATH)
+      expect(payload['animal-id']).toMatch(UUID_PATTERN)
+      expect(payload).toMatchObject({
+        section: 'CALF-DETAILS',
+        status: 'DRAFT',
+        data: [
+          { key: 'earTagNumber', value: 'UK123456301550', type: 'STRING' },
+          { key: 'dateOfBirth', value: '1/11/2026', type: 'STRING' },
+          { key: 'sex', value: 'female', type: 'STRING' },
+          { key: 'breed', value: 'Aberdeen Angus (AA)', type: 'STRING' }
+        ]
+      })
     })
 
-    // Assert
-    expect(result.errors).toEqual([{ field: 'sex', code: 'required' }])
-  })
+    test("it replaces a saved calf's answers under its animal id", async () => {
+      // Arrange
+      vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response(submission([ANIMAL_ID]))
+      )
+      const post = vi
+        .spyOn(client, '_post')
+        .mockResolvedValueOnce(response(null))
 
-  test.each([
-    ['a breed code alone', 'AA'],
-    ['a name that is not listed', 'Unicorn (UN)'],
-    ['a listed name with the wrong code', 'Aberdeen Angus (AB)']
-  ])('saveCalfDetails() rejects %s as an unknown breed', async (_d, breed) => {
-    // Arrange
-    const client = createRegistrationClient({ now: () => NOW })
+      // Act
+      const result = await client.saveCalfDetails({
+        cph: CPH,
+        submissionId: SUBMISSION_ID,
+        answers: { ...validAnswers, sex: 'male' }
+      })
 
-    // Act
-    const result = await client.saveCalfDetails({
-      ...registration,
-      answers: { ...validAnswers, breed }
+      // Assert
+      expect(result).toBe(true)
+      expect(post).toHaveBeenCalledWith(UPDATE_PATH, {
+        payload: {
+          'animal-id': ANIMAL_ID,
+          section: 'CALF-DETAILS',
+          status: 'DRAFT',
+          data: [
+            { key: 'earTagNumber', value: 'UK123456301550', type: 'STRING' },
+            { key: 'dateOfBirth', value: '1/11/2026', type: 'STRING' },
+            { key: 'sex', value: 'male', type: 'STRING' },
+            { key: 'breed', value: 'Aberdeen Angus (AA)', type: 'STRING' }
+          ]
+        }
+      })
     })
 
-    // Assert
-    expect(result.errors).toEqual([{ field: 'breed', code: 'unknown' }])
-  })
+    test("it saves nothing for a registration that is not the holding's", async () => {
+      // Arrange
+      vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({ ...submission([]), 'submission-id': 'AAA-BBB-CCC' })
+      )
+      const post = vi.spyOn(client, '_post')
 
-  test('the default client reads the current time when saving', async () => {
-    // Arrange
-    const client = createRegistrationClient()
+      // Act
+      const result = await client.saveCalfDetails({
+        cph: CPH,
+        submissionId: SUBMISSION_ID,
+        answers: validAnswers
+      })
 
-    // Act
-    const result = await client.saveCalfDetails({
-      ...registration,
-      answers: { ...validAnswers, dateOfBirth: '1/1/2999' }
+      // Assert
+      expect(result).toBe(false)
+      expect(post).not.toHaveBeenCalled()
     })
 
-    // Assert
-    expect(result.errors).toEqual([{ field: 'dateOfBirth', code: 'future' }])
+    test('it rethrows a BE4FE failure', async () => {
+      // Arrange
+      vi.spyOn(client, '_get').mockResolvedValueOnce(response(submission([])))
+      const failure = new Error('503 - Service unavailable')
+      vi.spyOn(client, '_post').mockRejectedValueOnce(failure)
+
+      // Act
+      let error
+      try {
+        await client.saveCalfDetails({
+          cph: CPH,
+          submissionId: SUBMISSION_ID,
+          answers: validAnswers
+        })
+      } catch (e) {
+        error = e
+      }
+
+      // Assert
+      expect(error).toBe(failure)
+    })
   })
 })

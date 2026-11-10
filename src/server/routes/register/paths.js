@@ -4,10 +4,19 @@ export const REGISTER_ROUTE = '/holdings/{cph*3}/cattle/register'
 
 /**
  * @param {string} cph
- * @param {string} registrationId
+ * @param {string} submissionId
  * @param {string} page
- * @returns {string} the path of a page in one registration
+ * @returns {string} the path of a page in one submission
  */
-export function registrationPagePath(cph, registrationId, page) {
-  return `${getMountPath('cattle-register', 'holding', { cph })}/${registrationId}/${page}`
+export function submissionPagePath(cph, submissionId, page) {
+  return `${getMountPath('cattle-register', 'holding', { cph })}/${submissionId}/${page}`
+}
+
+/**
+ * @param {string} cph
+ * @returns {string} the path that starts, or continues, the holding's
+ *   registration
+ */
+export function registerPath(cph) {
+  return getMountPath('cattle-register', 'holding', { cph })
 }

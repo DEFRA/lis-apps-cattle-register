@@ -4,7 +4,11 @@ import { fileURLToPath } from 'node:url'
 
 import convictFormatWithValidator from 'convict-format-with-validator'
 
-import { duration } from '@defra/lis-infra-ui-services/config-formats'
+import {
+  cdpEnvironment,
+  duration,
+  positiveInteger
+} from '@defra/lis-infra-ui-services/config-formats'
 import { milliseconds } from '@defra/lis-infra-ui-services/duration'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -26,7 +30,9 @@ const trustedHubOrigins = [
 const sessionTtl = duration({ max: 'P7D' })
 
 convict.addFormats(convictFormatWithValidator)
+convict.addFormat(cdpEnvironment)
 convict.addFormat(sessionTtl)
+convict.addFormat(positiveInteger)
 
 export const config = convict({
   serviceVersion: {
@@ -35,6 +41,12 @@ export const config = convict({
     nullable: true,
     default: null,
     env: 'SERVICE_VERSION'
+  },
+  environment: {
+    doc: 'The current environment',
+    format: cdpEnvironment.name,
+    default: 'local',
+    env: 'ENVIRONMENT'
   },
   host: {
     doc: 'The IP address to bind',
@@ -197,6 +209,35 @@ export const config = convict({
       doc: 'Use a cache and recompile templates each time',
       format: Boolean,
       default: isDevelopment
+    }
+  },
+  cattleRegisterApi: {
+    apiKey: {
+      doc: 'API key sent to the cattle-register BE4FE as x-api-key',
+      format: String,
+      default: '',
+      env: 'CATTLE_REGISTER_API_KEY',
+      sensitive: true
+    },
+    timeout: {
+      doc: 'Total milliseconds allowed for a cattle-register BE4FE API response, headers and body',
+      format: positiveInteger.name,
+      default: 5000,
+      env: 'CATTLE_REGISTER_API_TIMEOUT'
+    },
+    circuitBreaker: {
+      failureThreshold: {
+        doc: 'Consecutive cattle-register BE4FE transport failures (connection refused, timeout) that open its circuit breaker',
+        format: positiveInteger.name,
+        default: 5,
+        env: 'CATTLE_REGISTER_API_CIRCUIT_BREAKER_FAILURE_THRESHOLD'
+      },
+      resetTimeout: {
+        doc: 'Milliseconds the cattle-register BE4FE circuit breaker stays open before letting a probe request through',
+        format: positiveInteger.name,
+        default: 30000,
+        env: 'CATTLE_REGISTER_API_CIRCUIT_BREAKER_RESET_TIMEOUT'
+      }
     }
   },
   auth: {
