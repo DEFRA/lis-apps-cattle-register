@@ -23,6 +23,16 @@ export function submissionPath(cph, submissionId) {
 /**
  * @param {string} cph
  * @param {string} submissionId
+ * @param {string} page
+ * @returns {string} the path of a page about a whole submission
+ */
+export function submissionPagePath(cph, submissionId, page) {
+  return `${submissionPath(cph, submissionId)}/${page}`
+}
+
+/**
+ * @param {string} cph
+ * @param {string} submissionId
  * @param {string} animalId - the calf's id in the submission
  * @param {string} page
  * @returns {string} the path of a page about one calf in a submission
