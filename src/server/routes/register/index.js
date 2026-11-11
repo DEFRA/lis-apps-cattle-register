@@ -9,6 +9,10 @@ import {
   calfDetailsController,
   calfDetailsSubmitController
 } from './calf-details/controller.js'
+import {
+  damDetailsController,
+  damDetailsSubmitController
+} from './dam-details/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -64,6 +68,10 @@ const calfDetailsPayload = Joi.object({
   acknowledgedLateDateOfBirth: formField
 }).options({ stripUnknown: true })
 
+const damDetailsPayload = Joi.object({
+  damType: formField
+}).options({ stripUnknown: true })
+
 export const register = {
   plugin: {
     name: 'register',
@@ -95,6 +103,27 @@ export const register = {
             validate: {
               ...calfParams,
               payload: calfDetailsPayload
+            },
+            pre: [{ method: demandRegisterAccess }]
+          }
+        },
+        {
+          method: 'GET',
+          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
+          ...damDetailsController,
+          options: {
+            validate: calfParams,
+            pre: [{ method: demandRegisterAccess }]
+          }
+        },
+        {
+          method: 'POST',
+          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
+          ...damDetailsSubmitController,
+          options: {
+            validate: {
+              ...calfParams,
+              payload: damDetailsPayload
             },
             pre: [{ method: demandRegisterAccess }]
           }
