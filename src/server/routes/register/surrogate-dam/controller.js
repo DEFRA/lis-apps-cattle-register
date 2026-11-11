@@ -8,7 +8,6 @@ import { buildViewModel } from './view-model.js'
 
 const TEMPLATE = 'register/surrogate-dam/index'
 const PAGE = 'surrogate-dam'
-// Not built yet (LREG-897 continues with sire details).
 const NEXT_PAGE = 'sire-details'
 
 export const surrogateDamController = {
