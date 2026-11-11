@@ -164,7 +164,9 @@ describe('registration', () => {
       const animal = {
         ...calfDetails,
         damType: 'genetic',
-        geneticDamEarTagNumber: 'UK200000000007'
+        geneticDamEarTagNumber: 'UK200000000007',
+        sireEarTagNumber: '',
+        sireName: ''
       }
 
       // Act
@@ -182,7 +184,9 @@ describe('registration', () => {
       const animal = {
         ...calfDetails,
         damType: 'genetic',
-        geneticDamEarTagNumber: 'UK200000000007'
+        geneticDamEarTagNumber: 'UK200000000007',
+        sireEarTagNumber: '',
+        sireName: ''
       }
 
       // Act
@@ -193,6 +197,24 @@ describe('registration', () => {
 
       // Assert
       expect(result).toBeUndefined()
+    })
+
+    test('it is sire details until that page has been saved', () => {
+      // Arrange
+      const animal = {
+        ...calfDetails,
+        damType: 'genetic',
+        geneticDamEarTagNumber: 'UK200000000007'
+      }
+
+      // Act
+      const result = firstIncompleteStep(animal, {
+        unallocatedEarTags: TAGS,
+        damEarTags: ['UK200000000007']
+      })
+
+      // Assert
+      expect(result.page).toBe('sire-details')
     })
 
     test('it is the genetic dam for a calf born via one that is not given', () => {
@@ -215,7 +237,9 @@ describe('registration', () => {
         ...calfDetails,
         damType: 'surrogate',
         geneticDamEarTagNumber: 'UK123456501100',
-        surrogateDamEarTagNumber: 'UK200000000007'
+        surrogateDamEarTagNumber: 'UK200000000007',
+        sireEarTagNumber: '',
+        sireName: ''
       }
 
       // Act
