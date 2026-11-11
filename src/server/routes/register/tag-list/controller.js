@@ -5,12 +5,11 @@ import { CHECK_PAGE } from '../check-return.js'
 import { calfPagePath, submissionPagePath } from '../paths.js'
 import { registration } from '#server/journeys/register/registration.js'
 import { MAX_CALVES } from './messages.js'
-import { buildViewModel } from './view-model.js'
+import { buildViewModel, FIRST_ANIMAL_ID } from './view-model.js'
 
 /** @import { ListedCalf } from './view-model.js' */
 
 const TEMPLATE = 'register/tag-list/index'
-const FIRST_ANIMAL_ID = '1'
 // Not built yet: the prototype continues, once every calf is ready, with
 // the page that sends the registration.
 const SUBMIT_PAGE = 'submit'
@@ -63,6 +62,10 @@ function validate(addAnother, calves) {
       : [{ field: 'addAnother', code: 'tooMany' }]
   }
 
+  if (addAnother === 'no' && !calves.length) {
+    return [{ field: 'addAnother', code: 'noCalves' }]
+  }
+
   if (addAnother === 'no') {
     return calves.every((calf) => calf.isReady)
       ? []
@@ -74,33 +77,20 @@ function validate(addAnother, calves) {
 
 /**
  * @param {ListedCalf[]} calves
- * @returns {string} the id for the next calf: calves are numbered from 1
+ * @returns {string} the id for the next calf: one more than the highest
+ *   there is, as a cancelled calf leaves the others with their ids
  */
 function nextAnimalId(calves) {
+  if (!calves.length) {
+    return FIRST_ANIMAL_ID
+  }
+
   return String(Math.max(...calves.map(({ animalId }) => Number(animalId))) + 1)
-}
-
-/**
- * @param {object} request
- * @param {object} h
- * @returns {object} to the first calf's details, for a registration with no
- *   calf saved yet
- */
-function startFirstCalf(request, h) {
-  const { cph, submissionId } = request.params
-
-  return h.redirect(
-    calfPagePath(cph, submissionId, FIRST_ANIMAL_ID, 'calf-details')
-  )
 }
 
 export const tagListController = {
   async handler(request, h) {
     const calves = await listCalves(request.params)
-
-    if (!calves.length) {
-      return startFirstCalf(request, h)
-    }
 
     return h.view(TEMPLATE, buildViewModel({ request, calves }))
   }
@@ -111,11 +101,6 @@ export const tagListSubmitController = {
     const { cph, submissionId } = request.params
     const { addAnother } = request.payload
     const calves = await listCalves(request.params)
-
-    if (!calves.length) {
-      return startFirstCalf(request, h)
-    }
-
     const errors = validate(addAnother, calves)
 
     if (errors.length) {

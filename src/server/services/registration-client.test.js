@@ -311,6 +311,90 @@ describe('CattleRegisterBe4FeClient', () => {
     })
   })
 
+  describe('removeAnimal()', () => {
+    test('it takes the calf out of the submission, leaving the others with their ids', async () => {
+      // Arrange
+      const calf = await client.startRegistration({ cph: '10/081/0021' })
+      const second = { submissionId: calf.submissionId, animalId: '2' }
+      await client.saveAnimal({ ...calf, values: validAnswers })
+      await client.saveAnimal({
+        ...second,
+        values: { ...validAnswers, earTagNumber: 'UK123456301551' }
+      })
+
+      // Act
+      await client.removeAnimal(calf)
+
+      // Assert
+      const submission = await client.getSubmission(calf)
+      expect(submission.animals).toEqual([
+        { animalId: '2', earTagNumber: 'UK123456301551' }
+      ])
+    })
+
+    test('it leaves a calf that is already gone as gone', async () => {
+      // Arrange
+      const calf = await client.startRegistration({ cph: '10/081/0022' })
+
+      // Act
+      await client.removeAnimal(calf)
+
+      // Assert
+      const submission = await client.getSubmission(calf)
+      expect(submission.animals).toEqual([])
+    })
+
+    test('it answers not found for a submission that was never started', async () => {
+      // Arrange
+      const calf = { submissionId: 'AAA-AAA-AAA', animalId: '1' }
+
+      // Act
+      let thrown
+      try {
+        await client.removeAnimal(calf)
+      } catch (error) {
+        thrown = error
+      }
+
+      // Assert
+      expect(thrown.statusCode).toBe(404)
+    })
+  })
+
+  describe('removeSubmission()', () => {
+    test("it discards the submission, so the holding's next start is a new one", async () => {
+      // Arrange
+      const cph = '10/081/0023'
+      const calf = await client.startRegistration({ cph })
+      await client.saveAnimal({ ...calf, values: validAnswers })
+
+      // Act
+      await client.removeSubmission(calf)
+
+      // Assert
+      expect(await client.listSubmissions({ cph })).toEqual([])
+      const next = await client.startRegistration({ cph })
+      expect(next.submissionId).not.toBe(calf.submissionId)
+      expect(await client.getAnimal(next)).toEqual({})
+    })
+
+    test('it answers not found for a submission that was never started', async () => {
+      // Arrange
+      const submission = { submissionId: 'AAA-AAA-AAA' }
+
+      // Act
+      let thrown
+      try {
+        await client.removeSubmission(submission)
+      } catch (error) {
+        thrown = error
+      }
+
+      // Assert
+      expect(thrown.statusCode).toBe(404)
+    })
+  })
+
   describe('submitRegistration()', () => {
     test('it marks the submission as submitted', async () => {
       // Arrange

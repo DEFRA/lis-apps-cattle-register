@@ -12,7 +12,9 @@
  *   GET   /{submissionId}/{animalId}   getAnimal
  *   POST  /{submissionId}/{animalId}   saveAnimal
  *   PATCH /{submissionId}/{animalId}   updateAnimal
+ *   DELETE /{submissionId}/{animalId}  removeAnimal (not in the contract yet)
  *   POST  /{submissionId}              submitRegistration
+ *   DELETE /{submissionId}             removeSubmission (not in the contract yet)
  * The ear tag lists still go to the real BE4FE.
  */
 import { randomInt } from 'node:crypto'
@@ -195,6 +197,29 @@ export async function updateAnimal({ submissionId, animalId, values }) {
   const { animals } = stubbedSubmission(submissionId)
 
   animals.set(animalId, { ...animals.get(animalId), ...values })
+}
+
+/**
+ * Stubbed: see the note at the top of the file, and not in the contract
+ * yet. Takes the calf out of the submission; the other calves keep their ids.
+ * A calf already gone is left gone.
+ * @param {{ submissionId: string, animalId: string }} calf
+ * @returns {Promise<void>}
+ */
+export async function removeAnimal({ submissionId, animalId }) {
+  stubbedSubmission(submissionId).animals.delete(animalId)
+}
+
+/**
+ * Stubbed: see the note at the top of the file, and not in the contract
+ * yet. Discards the submission and its calves, after which the holding's
+ * next start is a new one.
+ * @param {{ submissionId: string }} submission
+ * @returns {Promise<void>}
+ */
+export async function removeSubmission({ submissionId }) {
+  stubbedSubmission(submissionId)
+  stubbedSubmissions.delete(submissionId)
 }
 
 /**
