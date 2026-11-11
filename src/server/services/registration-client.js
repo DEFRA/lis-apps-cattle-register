@@ -13,7 +13,7 @@
  *   POST  /{submissionId}/{animalId}   saveAnimal
  *   PATCH /{submissionId}/{animalId}   updateAnimal
  *   POST  /{submissionId}              submitRegistration
- * The ear tag list still goes to the real BE4FE.
+ * The ear tag lists still go to the real BE4FE.
  */
 import { randomInt } from 'node:crypto'
 
@@ -205,6 +205,18 @@ export async function updateAnimal({ submissionId, animalId, values }) {
  */
 export async function submitRegistration({ submissionId }) {
   stubbedSubmission(submissionId).status = SUBMITTED
+}
+
+/**
+ * The ear tags of the holding's animals that can be a dam.
+ * @param {{ cph: string }} holding
+ * @returns {Promise<string[]>}
+ */
+export async function getDamEarTags({ cph }) {
+  const { payload } = await be4fe.get(
+    `data/eartags/dams?cph=${encodeURIComponent(cph)}`
+  )
+  return (payload.animals ?? []).map(({ eartag }) => eartag)
 }
 
 /**
