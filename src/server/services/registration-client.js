@@ -24,6 +24,8 @@ import { DATE_FORMAT } from '#server/common/helpers/calendar-date.js'
  * @property {string} [damType]
  * @property {string} [geneticDamEarTagNumber]
  * @property {string} [surrogateDamEarTagNumber]
+ * @property {string | null} [sireEarTagNumber]
+ * @property {string | null} [sireName]
  */
 
 /**

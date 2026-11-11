@@ -302,6 +302,29 @@ describe('CattleRegisterBe4FeClient', () => {
       expect(result).toEqual({ dateOfBirth: 'last week' })
     })
 
+    test('it reads an answer given as nothing as null', async () => {
+      // Arrange
+      service.get.mockResolvedValueOnce(
+        response({
+          'animal-id': 'UK123456301550',
+          status: 'draft',
+          data: [
+            ...validItems,
+            { key: 'sireEarTagNumber', value: null, type: 'STRING' }
+          ]
+        })
+      )
+
+      // Act
+      const result = await client.getAnimal({
+        submissionId: '7ZK-M3Q-A9D',
+        animalId: 'UK123456301550'
+      })
+
+      // Assert
+      expect(result).toEqual({ ...validAnswers, sireEarTagNumber: null })
+    })
+
     test('it returns an empty calf, without asking the BE4FE, for a calf with no id yet', async () => {
       // Act
       const result = await client.getAnimal({ submissionId: '7ZK-M3Q-A9D' })
@@ -486,6 +509,33 @@ describe('CattleRegisterBe4FeClient', () => {
             status: 'draft',
             data: [
               { key: 'earTagNumber', value: 'UK123456301550', type: 'STRING' }
+            ]
+          }
+        }
+      )
+    })
+
+    test('it sends an answer given as nothing with a null value', async () => {
+      // Arrange
+      service.post.mockResolvedValueOnce(response(null))
+
+      // Act
+      await client.saveAnimal({
+        submissionId: '7ZK-M3Q-A9D',
+        animalId: 'UK123456301550',
+        values: { ...validAnswers, sireEarTagNumber: null, sireName: null }
+      })
+
+      // Assert
+      expect(service.post).toHaveBeenCalledWith(
+        'submission/7ZK-M3Q-A9D/UK123456301550',
+        {
+          payload: {
+            status: 'draft',
+            data: [
+              ...validItems,
+              { key: 'sireEarTagNumber', value: null, type: 'STRING' },
+              { key: 'sireName', value: null, type: 'STRING' }
             ]
           }
         }

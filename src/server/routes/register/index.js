@@ -25,6 +25,10 @@ import {
   surrogateDamController,
   surrogateDamSubmitController
 } from './surrogate-dam/controller.js'
+import {
+  sireDetailsController,
+  sireDetailsSubmitController
+} from './sire-details/controller.js'
 
 /** @import { Server, ServerRoute } from '@hapi/hapi' */
 
@@ -100,6 +104,11 @@ const geneticDamPayload = Joi.object({
 const surrogateDamPayload = Joi.object({
   geneticDamEarTagNumber: formField,
   surrogateDamEarTagNumber: formField
+}).options({ stripUnknown: true })
+
+const sireDetailsPayload = Joi.object({
+  sireEarTagNumber: formField,
+  sireName: formField
 }).options({ stripUnknown: true })
 
 // A calf has no id until its details, and so its ear tag number, are saved
@@ -218,6 +227,27 @@ const routes = [
       validate: {
         ...calfParams,
         payload: surrogateDamPayload
+      },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/sire-details`,
+    ...sireDetailsController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/sire-details`,
+    ...sireDetailsSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: sireDetailsPayload
       },
       pre: [{ method: demandRegisterAccess }]
     }
