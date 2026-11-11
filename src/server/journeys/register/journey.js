@@ -135,10 +135,10 @@ export function createJourney(steps) {
    * @param {string} page
    * @param {JourneyRecord} record - as saved
    * @param {Record<string, string>} values - the page's answers, trimmed
-   * @param {Options} options
+   * @param {Options} [options]
    * @returns {StepResult}
    */
-  function validateStep(page, record, values, options) {
+  function validateStep(page, record, values, options = {}) {
     return judge(
       stepFor(page),
       withAnswers(page, record, values),
@@ -147,5 +147,19 @@ export function createJourney(steps) {
     )
   }
 
-  return { steps, firstIncompleteStep, validateStep, withAnswers }
+  /**
+   * Whether the record belongs on a page yet. Asks only whether the earlier
+   * steps have their answers: those were validated when they were saved.
+   * @param {string} page
+   * @param {JourneyRecord} record - as saved
+   * @returns {string | undefined} the page of the first earlier step with an
+   *   answer missing; undefined when the record belongs on the page
+   */
+  function pageOwed(page, record) {
+    return steps
+      .slice(0, steps.indexOf(stepFor(page)))
+      .find((step) => keysOf(step).some((key) => !record[key]))?.page
+  }
+
+  return { steps, firstIncompleteStep, pageOwed, validateStep, withAnswers }
 }

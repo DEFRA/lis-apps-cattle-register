@@ -121,6 +121,39 @@ describe('journey', () => {
       expect(result).toEqual({ name: 'Daisy', age: '3' })
     })
 
+    test('it owes the page of the first earlier step with an answer missing', () => {
+      // Arrange
+      const journey = createJourney([nameStep, ageStep])
+
+      // Act
+      const result = journey.pageOwed('age', { name: '' })
+
+      // Assert
+      expect(result).toBe('name')
+    })
+
+    test('it owes nothing when the earlier steps are answered', () => {
+      // Arrange
+      const journey = createJourney([nameStep, ageStep])
+
+      // Act
+      const result = journey.pageOwed('age', { name: 'Daisy' })
+
+      // Assert
+      expect(result).toBeUndefined()
+    })
+
+    test('it owes nothing for the first step', () => {
+      // Arrange
+      const journey = createJourney([nameStep, ageStep])
+
+      // Act
+      const result = journey.pageOwed('name', {})
+
+      // Assert
+      expect(result).toBeUndefined()
+    })
+
     test('it refuses a page that is not one of its steps', () => {
       // Arrange
       const journey = createJourney([nameStep])

@@ -4,6 +4,7 @@
  * per step.
  */
 import { calfDetailsSchema } from './calf-details.js'
+import { damDetailsSchema } from './dam-details.js'
 import { createJourney } from './journey.js'
 
 /**
@@ -20,5 +21,9 @@ export const registration = createJourney([
     context: ({ unallocatedEarTags }, saved) => ({
       availableEarTags: [...unallocatedEarTags, saved.earTagNumber]
     })
+  },
+  {
+    page: 'dam-details',
+    schema: damDetailsSchema
   }
 ])
