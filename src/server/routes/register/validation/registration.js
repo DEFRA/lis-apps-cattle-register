@@ -4,14 +4,16 @@
  * per step.
  */
 import { calfDetailsSchema } from './calf-details.js'
+import { damDetailsSchema } from './dam-details.js'
 import { createJourney } from './journey.js'
 
 /** @import { Journey } from './journey.js' */
 /** @import { CalfDetailsAnswers } from './calf-details.js' */
+/** @import { DamDetailsAnswers } from './dam-details.js' */
 
 /**
  * A calf's answers so far.
- * @typedef {CalfDetailsAnswers} Animal
+ * @typedef {CalfDetailsAnswers & DamDetailsAnswers} Animal
  */
 
 /**
@@ -30,5 +32,9 @@ export const registration = createJourney([
     context: ({ unallocatedEarTags }, saved) => ({
       availableEarTags: [...unallocatedEarTags, saved.earTagNumber]
     })
+  },
+  {
+    page: 'dam-details',
+    schema: damDetailsSchema
   }
 ])

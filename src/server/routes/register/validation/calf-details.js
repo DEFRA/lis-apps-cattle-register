@@ -8,8 +8,8 @@ import { differenceInCalendarDays, isValid, parse } from 'date-fns'
 import Joi from 'joi'
 
 import { DATE_FORMAT, toUkDate } from '#server/common/helpers/calendar-date.js'
+import { answer, REQUIRED } from './answer.js'
 
-const REQUIRED = 'required'
 const OVER_DEADLINE = 'calf.overDeadline'
 const BIRTH_REPORTING_DEADLINE_DAYS = 27
 const DATE_PARTS = 3
@@ -24,17 +24,6 @@ export const breedOptions = Object.entries(breeds).map(([code, name]) => ({
   value: code,
   text: `${name} (${code})`
 }))
-
-/**
- * @returns {Joi.StringSchema} an answer that must be given: a blank one, or
- *   one of only spaces, counts as not given
- */
-function answer() {
-  return Joi.string()
-    .trim()
-    .empty(Joi.string().allow('').pattern(/^\s*$/))
-    .required()
-}
 
 /**
  * @typedef {object} CalfDetailsAnswers

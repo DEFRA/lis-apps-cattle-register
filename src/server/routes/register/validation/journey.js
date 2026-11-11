@@ -49,6 +49,7 @@
  * @typedef {object} Journey
  * @property {Step<TRecord, TOptions>[]} steps - in order
  * @property {(record: Partial<TRecord>, options: TOptions) => Step<TRecord, TOptions> | undefined} firstIncompleteStep
+ * @property {(page: string, record: Partial<TRecord>) => string | undefined} pageOwed
  * @property {(page: string, record: Partial<TRecord>, values: Partial<TRecord>, options?: TOptions) => StepResult} validateStep
  * @property {(page: string, record: Partial<TRecord>, answers: Partial<TRecord>) => Partial<TRecord>} withAnswers
  */
@@ -155,10 +156,10 @@ export function createJourney(steps) {
    * @param {string} page
    * @param {Partial<TRecord>} record - as saved
    * @param {Partial<TRecord>} values - the page's answers, trimmed
-   * @param {TOptions} options
+   * @param {TOptions} [options]
    * @returns {StepResult}
    */
-  function validateStep(page, record, values, options) {
+  function validateStep(page, record, values, options = {}) {
     return judge(
       stepFor(page),
       withAnswers(page, record, values),
@@ -167,5 +168,19 @@ export function createJourney(steps) {
     )
   }
 
-  return { steps, firstIncompleteStep, validateStep, withAnswers }
+  /**
+   * Whether the record belongs on a page yet. Asks only whether the earlier
+   * steps have their answers: those were validated when they were saved.
+   * @param {string} page
+   * @param {Partial<TRecord>} record - as saved
+   * @returns {string | undefined} the page of the first earlier step with an
+   *   answer missing; undefined when the record belongs on the page
+   */
+  function pageOwed(page, record) {
+    return steps
+      .slice(0, steps.indexOf(stepFor(page)))
+      .find((step) => keysOf(step).some((key) => !record[key]))?.page
+  }
+
+  return { steps, firstIncompleteStep, pageOwed, validateStep, withAnswers }
 }
