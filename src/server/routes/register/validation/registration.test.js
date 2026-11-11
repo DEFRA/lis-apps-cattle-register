@@ -161,11 +161,16 @@ describe('registration', () => {
   describe('firstIncompleteStep()', () => {
     test('it is undefined for a calf with every step answered', () => {
       // Arrange
-      const animal = { ...calfDetails, damType: 'genetic' }
+      const animal = {
+        ...calfDetails,
+        damType: 'genetic',
+        geneticDamEarTagNumber: 'UK200000000007'
+      }
 
       // Act
       const result = firstIncompleteStep(animal, {
-        unallocatedEarTags: TAGS
+        unallocatedEarTags: TAGS,
+        damEarTags: ['UK200000000007']
       })
 
       // Assert
@@ -174,11 +179,44 @@ describe('registration', () => {
 
     test('it counts the ear tag number a saved calf has as its own', () => {
       // Arrange
+      const animal = {
+        ...calfDetails,
+        damType: 'genetic',
+        geneticDamEarTagNumber: 'UK200000000007'
+      }
+
+      // Act
+      const result = firstIncompleteStep(animal, {
+        unallocatedEarTags: [],
+        damEarTags: ['UK200000000007']
+      })
+
+      // Assert
+      expect(result).toBeUndefined()
+    })
+
+    test('it is the genetic dam for a calf born via one that is not given', () => {
+      // Arrange
       const animal = { ...calfDetails, damType: 'genetic' }
 
       // Act
       const result = firstIncompleteStep(animal, {
-        unallocatedEarTags: []
+        unallocatedEarTags: TAGS,
+        damEarTags: ['UK200000000007']
+      })
+
+      // Assert
+      expect(result.page).toBe('genetic-dam')
+    })
+
+    test('it passes over the genetic dam for a calf born via a surrogate', () => {
+      // Arrange
+      const animal = { ...calfDetails, damType: 'surrogate' }
+
+      // Act
+      const result = firstIncompleteStep(animal, {
+        unallocatedEarTags: TAGS,
+        damEarTags: []
       })
 
       // Assert

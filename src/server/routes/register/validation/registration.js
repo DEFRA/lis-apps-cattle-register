@@ -5,15 +5,17 @@
  */
 import { calfDetailsSchema } from './calf-details.js'
 import { damDetailsSchema } from './dam-details.js'
+import { geneticDamSchema } from './genetic-dam.js'
 import { createJourney } from './journey.js'
 
 /** @import { Journey } from './journey.js' */
 /** @import { CalfDetailsAnswers } from './calf-details.js' */
 /** @import { DamDetailsAnswers } from './dam-details.js' */
+/** @import { GeneticDamAnswers } from './genetic-dam.js' */
 
 /**
  * A calf's answers so far.
- * @typedef {CalfDetailsAnswers & DamDetailsAnswers} Animal
+ * @typedef {CalfDetailsAnswers & DamDetailsAnswers & GeneticDamAnswers} Animal
  */
 
 /**
@@ -21,6 +23,8 @@ import { createJourney } from './journey.js'
  *   animal
  * @property {string[]} unallocatedEarTags - the ear tags issued to the
  *   holding that are not on an animal, nor on another calf of the submission
+ * @property {string[]} damEarTags - the ear tags of the holding's possible
+ *   dams
  */
 
 /** @type {Journey<Animal, RegistrationOptions>} */
@@ -35,6 +39,15 @@ export const registration = createJourney([
   },
   {
     page: 'dam-details',
-    schema: damDetailsSchema
+    schema: damDetailsSchema,
+    // The cow that calved is the genetic dam of one birth and the surrogate
+    // of the other, so the answer does not carry over.
+    clearsOnChange: ['geneticDamEarTagNumber']
+  },
+  {
+    page: 'genetic-dam',
+    schema: geneticDamSchema,
+    appliesTo: (animal) => animal.damType === 'genetic',
+    context: ({ damEarTags }) => ({ damEarTags })
   }
 ])
