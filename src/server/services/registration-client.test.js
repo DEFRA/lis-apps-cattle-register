@@ -69,7 +69,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Assert
       expect(result.submissionId).toMatch(
-        /^[0-9A-Z]{3}-[0-9A-Z]{3}-[0-9A-Z]{3}$/
+        /^[0-9A-HJKMNP-TV-Z]{3}-[0-9A-HJKMNP-TV-Z]{3}-[0-9A-HJKMNP-TV-Z]{3}$/
       )
       expect(result.animalId).toBe('1')
     })
