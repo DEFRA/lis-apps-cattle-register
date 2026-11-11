@@ -30,9 +30,9 @@
  * @property {string} page - the step's page, as in its path
  * @property {ObjectSchema} schema - the step's rules, over
  *   the answers the step owns; each rule's message is the code of its error
- * @property {(options: Options, saved: JourneyRecord) => object} context
+ * @property {(options: Options, saved: JourneyRecord) => object} [context]
  *   what the schema's rules refer to, from the options and the record as it
- *   is saved
+ *   is saved; absent when they refer to nothing
  */
 
 /**
@@ -76,7 +76,7 @@ function judge(step, record, options, saved) {
   const { error, warning } = step.schema.validate(record, {
     abortEarly: false,
     allowUnknown: true,
-    context: step.context(options, saved)
+    context: step.context?.(options, saved) ?? {}
   })
 
   return { errors: fieldResults(error), warnings: fieldResults(warning) }

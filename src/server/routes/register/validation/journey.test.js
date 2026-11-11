@@ -19,8 +19,7 @@ const ageStep = {
   page: 'age',
   schema: Joi.object({
     age: Joi.string().required().messages({ 'any.required': 'required' })
-  }),
-  context: () => ({})
+  })
 }
 const OPTIONS = { allowedNames: ['Daisy'] }
 
