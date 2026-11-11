@@ -21,6 +21,10 @@ import {
   surrogateDamController,
   surrogateDamSubmitController
 } from './surrogate-dam/controller.js'
+import {
+  sireDetailsController,
+  sireDetailsSubmitController
+} from './sire-details/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -87,6 +91,11 @@ const geneticDamPayload = Joi.object({
 const surrogateDamPayload = Joi.object({
   geneticDamEarTagNumber: formField,
   surrogateDamEarTagNumber: formField
+}).options({ stripUnknown: true })
+
+const sireDetailsPayload = Joi.object({
+  sireEarTagNumber: formField,
+  sireName: formField
 }).options({ stripUnknown: true })
 
 const routes = [
@@ -179,6 +188,27 @@ const routes = [
       validate: {
         ...calfParams,
         payload: surrogateDamPayload
+      },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/sire-details`,
+    ...sireDetailsController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/sire-details`,
+    ...sireDetailsSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: sireDetailsPayload
       },
       pre: [{ method: demandRegisterAccess }]
     }

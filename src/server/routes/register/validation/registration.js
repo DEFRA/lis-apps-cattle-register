@@ -6,6 +6,7 @@
 import { calfDetailsSchema } from './calf-details.js'
 import { damDetailsSchema } from './dam-details.js'
 import { geneticDamSchema } from './genetic-dam.js'
+import { sireDetailsSchema } from './sire-details.js'
 import { surrogateDamSchema } from './surrogate-dam.js'
 import { createJourney } from './journey.js'
 
@@ -45,5 +46,10 @@ export const registration = createJourney([
     schema: surrogateDamSchema,
     appliesTo: (animal) => animal.damType === 'surrogate',
     context: ({ damEarTags }) => ({ damEarTags })
+  },
+  {
+    page: 'sire-details',
+    schema: sireDetailsSchema,
+    context: () => ({})
   }
 ])

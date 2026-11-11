@@ -136,7 +136,7 @@ describe('journey', () => {
       const journey = createJourney([nameStep, ageStep])
 
       // Act
-      const result = journey.pageOwed('age', { name: '' })
+      const result = journey.pageOwed('age', {})
 
       // Assert
       expect(result).toBe('name')
@@ -211,6 +211,28 @@ describe('journey', () => {
 
       // Assert
       expect(result).toEqual({ name: 'Daisy', nickname: 'Dee' })
+    })
+
+    test('it gives the step the record went through before a page', () => {
+      // Arrange
+      const journey = createJourney([nameStep, nicknameStep, ageStep])
+
+      // Act
+      const result = journey.previousPage('age', { name: 'Buttercup' })
+
+      // Assert
+      expect(result).toBe('name')
+    })
+
+    test('it gives no step before the first', () => {
+      // Arrange
+      const journey = createJourney([nameStep, ageStep])
+
+      // Act
+      const result = journey.previousPage('name', {})
+
+      // Assert
+      expect(result).toBeUndefined()
     })
 
     test('it refuses a page that is not one of its steps', () => {
