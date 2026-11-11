@@ -13,6 +13,10 @@ import {
   calfDetailsController,
   calfDetailsSubmitController
 } from './calf-details/controller.js'
+import {
+  damDetailsController,
+  damDetailsSubmitController
+} from './dam-details/controller.js'
 
 /** @import { Server, ServerRoute } from '@hapi/hapi' */
 
@@ -77,6 +81,10 @@ const calfDetailsPayload = Joi.object({
   acknowledgedLateDateOfBirth: formField
 }).options({ stripUnknown: true })
 
+const damDetailsPayload = Joi.object({
+  damType: formField
+}).options({ stripUnknown: true })
+
 // A calf has no id until its details, and so its ear tag number, are saved
 const newCalfRoutes = [
   {
@@ -130,6 +138,27 @@ const routes = [
       validate: {
         ...calfParams,
         payload: calfDetailsPayload
+      },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
+    ...damDetailsController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
+    ...damDetailsSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: damDetailsPayload
       },
       pre: [{ method: demandRegisterAccess }]
     }

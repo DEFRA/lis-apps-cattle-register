@@ -21,6 +21,7 @@ import { DATE_FORMAT } from '#server/common/helpers/calendar-date.js'
  * @property {string} [dateOfBirth]
  * @property {string} [sex]
  * @property {string} [breed]
+ * @property {string} [damType]
  */
 
 /**

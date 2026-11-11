@@ -4,6 +4,7 @@
  * per step.
  */
 import { calfDetailsSchema } from './calf-details.js'
+import { damDetailsSchema } from './dam-details.js'
 import { createJourney } from '@defra/lis-infra-ui-services/journey'
 /** @import { Step } from '@defra/lis-infra-ui-services/journey' */
 /** @import { DraftAnimal } from '#server/services/registration-client.js' */
@@ -23,6 +24,10 @@ const steps = [
     context: ({ unallocatedEarTags }, saved) => ({
       availableEarTags: [...unallocatedEarTags, saved.earTagNumber]
     })
+  },
+  {
+    page: 'dam-details',
+    schema: damDetailsSchema
   }
 ]
 
