@@ -6,6 +6,7 @@
 import { calfDetailsSchema } from './calf-details.js'
 import { damDetailsSchema } from './dam-details.js'
 import { geneticDamSchema } from './genetic-dam.js'
+import { surrogateDamSchema } from './surrogate-dam.js'
 import { createJourney } from './journey.js'
 
 /**
@@ -30,13 +31,19 @@ export const registration = createJourney([
     schema: damDetailsSchema,
     context: () => ({}),
     // The cow that calved is the genetic dam of one birth and the surrogate
-    // of the other, so the answer does not carry over.
-    clearsOnChange: ['geneticDamEarTagNumber']
+    // of the other, so neither answer carries over.
+    clearsOnChange: ['geneticDamEarTagNumber', 'surrogateDamEarTagNumber']
   },
   {
     page: 'genetic-dam',
     schema: geneticDamSchema,
     appliesTo: (animal) => animal.damType === 'genetic',
+    context: ({ damEarTags }) => ({ damEarTags })
+  },
+  {
+    page: 'surrogate-dam',
+    schema: surrogateDamSchema,
+    appliesTo: (animal) => animal.damType === 'surrogate',
     context: ({ damEarTags }) => ({ damEarTags })
   }
 ])

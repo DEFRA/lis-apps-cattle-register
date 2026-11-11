@@ -17,6 +17,10 @@ import {
   geneticDamController,
   geneticDamSubmitController
 } from './genetic-dam/controller.js'
+import {
+  surrogateDamController,
+  surrogateDamSubmitController
+} from './surrogate-dam/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -78,6 +82,11 @@ const damDetailsPayload = Joi.object({
 
 const geneticDamPayload = Joi.object({
   geneticDamEarTagNumber: formField
+}).options({ stripUnknown: true })
+
+const surrogateDamPayload = Joi.object({
+  geneticDamEarTagNumber: formField,
+  surrogateDamEarTagNumber: formField
 }).options({ stripUnknown: true })
 
 const routes = [
@@ -149,6 +158,27 @@ const routes = [
       validate: {
         ...calfParams,
         payload: geneticDamPayload
+      },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/surrogate-dam`,
+    ...surrogateDamController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/surrogate-dam`,
+    ...surrogateDamSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: surrogateDamPayload
       },
       pre: [{ method: demandRegisterAccess }]
     }
