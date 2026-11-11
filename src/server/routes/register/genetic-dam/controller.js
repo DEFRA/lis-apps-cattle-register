@@ -10,7 +10,6 @@ import { buildViewModel } from './view-model.js'
 
 const TEMPLATE = 'register/genetic-dam/index'
 const PAGE = 'genetic-dam'
-// Not built yet (LREG-897 continues with sire details).
 const NEXT_PAGE = 'sire-details'
 
 export const geneticDamController = {

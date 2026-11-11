@@ -30,6 +30,8 @@ import { config } from '#config/config.js'
  * @property {string} [damType]
  * @property {string} [geneticDamEarTagNumber]
  * @property {string} [surrogateDamEarTagNumber]
+ * @property {string} [sireEarTagNumber]
+ * @property {string} [sireName]
  */
 
 /**
