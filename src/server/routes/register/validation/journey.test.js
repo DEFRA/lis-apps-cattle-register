@@ -235,6 +235,53 @@ describe('journey', () => {
       expect(result).toBeUndefined()
     })
 
+    test('it gives the step the record goes through after a page, passing over one it does not', () => {
+      // Arrange
+      const journey = createJourney([nameStep, nicknameStep, ageStep])
+
+      // Act
+      const result = journey.nextPage('name', { name: 'Buttercup' })
+
+      // Assert
+      expect(result).toBe('age')
+    })
+
+    test('it gives no step after the last', () => {
+      // Arrange
+      const journey = createJourney([nameStep, ageStep])
+
+      // Act
+      const result = journey.nextPage('age', { name: 'Daisy', age: '3' })
+
+      // Assert
+      expect(result).toBeUndefined()
+    })
+
+    test('it finds the first step the record goes through with an answer yet to be saved', () => {
+      // Arrange
+      const journey = createJourney([nameStep, nicknameStep, ageStep])
+
+      // Act
+      const result = journey.firstUnansweredPage({ name: 'Buttercup' })
+
+      // Assert
+      expect(result).toBe('age')
+    })
+
+    test('it finds no unanswered step once every step is saved', () => {
+      // Arrange
+      const journey = createJourney([nameStep, nicknameStep, ageStep])
+
+      // Act
+      const result = journey.firstUnansweredPage({
+        name: 'Buttercup',
+        age: '3'
+      })
+
+      // Assert
+      expect(result).toBeUndefined()
+    })
+
     test('it refuses a page that is not one of its steps', () => {
       // Arrange
       const journey = createJourney([nameStep])

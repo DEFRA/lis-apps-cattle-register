@@ -1,6 +1,7 @@
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
 import { registrationClient } from '#server/services/registration-client.js'
+import { pathAfterSave } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
 import { trimAnswers } from '../validation/journey.js'
 import { registration } from '../validation/registration.js'
@@ -8,7 +9,6 @@ import { buildViewModel } from './view-model.js'
 
 const TEMPLATE = 'register/genetic-dam/index'
 const PAGE = 'genetic-dam'
-const NEXT_PAGE = 'sire-details'
 
 export const geneticDamController = {
   async handler(request, h) {
@@ -71,11 +71,9 @@ export const geneticDamSubmitController = {
         .code(statusCodes.badRequest)
     }
 
-    await registrationClient.saveAnimal({
-      ...calf,
-      values: registration.withAnswers(PAGE, animal, values)
-    })
+    const saved = registration.withAnswers(PAGE, animal, values)
+    await registrationClient.saveAnimal({ ...calf, values: saved })
 
-    return h.redirect(calfPagePath(cph, submissionId, animalId, NEXT_PAGE))
+    return h.redirect(pathAfterSave(request, PAGE, saved))
   }
 }
