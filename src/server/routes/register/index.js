@@ -13,6 +13,10 @@ import {
   damDetailsController,
   damDetailsSubmitController
 } from './dam-details/controller.js'
+import {
+  geneticDamController,
+  geneticDamSubmitController
+} from './genetic-dam/controller.js'
 
 /** @import { Server } from '@hapi/hapi' */
 
@@ -81,6 +85,10 @@ const damDetailsPayload = Joi.object({
   damType: formField
 }).options({ stripUnknown: true })
 
+const geneticDamPayload = Joi.object({
+  geneticDamEarTagNumber: formField
+}).options({ stripUnknown: true })
+
 // A calf has no id until its details, and so its ear tag number, are saved
 const newCalfRoutes = [
   {
@@ -106,6 +114,82 @@ const newCalfRoutes = [
   }
 ]
 
+const routes = [
+  {
+    method: 'GET',
+    path: REGISTER_ROUTE,
+    ...startRegistrationController,
+    options: {
+      validate: holdingParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  ...newCalfRoutes,
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/calf-details`,
+    ...calfDetailsController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/calf-details`,
+    ...calfDetailsSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: calfDetailsPayload
+      },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
+    ...damDetailsController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
+    ...damDetailsSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: damDetailsPayload
+      },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/genetic-dam`,
+    ...geneticDamController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/genetic-dam`,
+    ...geneticDamSubmitController,
+    options: {
+      validate: {
+        ...calfParams,
+        payload: geneticDamPayload
+      },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  }
+]
+
 export const register = {
   plugin: {
     name: 'register',
@@ -115,60 +199,7 @@ export const register = {
      * @param {Server} server - the Hapi server
      */
     register(server) {
-      server.route([
-        {
-          method: 'GET',
-          path: REGISTER_ROUTE,
-          ...startRegistrationController,
-          options: {
-            validate: holdingParams,
-            pre: [{ method: demandRegisterAccess }]
-          }
-        },
-        ...newCalfRoutes,
-        {
-          method: 'GET',
-          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/calf-details`,
-          ...calfDetailsController,
-          options: {
-            validate: calfParams,
-            pre: [{ method: demandRegisterAccess }]
-          }
-        },
-        {
-          method: 'POST',
-          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/calf-details`,
-          ...calfDetailsSubmitController,
-          options: {
-            validate: {
-              ...calfParams,
-              payload: calfDetailsPayload
-            },
-            pre: [{ method: demandRegisterAccess }]
-          }
-        },
-        {
-          method: 'GET',
-          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
-          ...damDetailsController,
-          options: {
-            validate: calfParams,
-            pre: [{ method: demandRegisterAccess }]
-          }
-        },
-        {
-          method: 'POST',
-          path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/dam-details`,
-          ...damDetailsSubmitController,
-          options: {
-            validate: {
-              ...calfParams,
-              payload: damDetailsPayload
-            },
-            pre: [{ method: demandRegisterAccess }]
-          }
-        }
-      ])
+      server.route(routes)
     }
   }
 }
