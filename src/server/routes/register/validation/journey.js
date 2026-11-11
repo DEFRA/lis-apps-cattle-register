@@ -33,6 +33,10 @@
  * @property {(options: Options, saved: JourneyRecord) => object} context
  *   what the schema's rules refer to, from the options and the record as it
  *   is saved
+ * @property {(record: JourneyRecord) => boolean} [appliesTo] - absent when
+ *   every record goes through the step
+ * @property {string[]} [clearsOnChange] - answers that no longer hold when
+ *   the step's own answers change
  */
 
 /**
@@ -83,6 +87,15 @@ function judge(step, record, options, saved) {
 }
 
 /**
+ * @param {Step} step
+ * @param {JourneyRecord} record
+ * @returns {boolean} whether the record goes through the step
+ */
+function applies(step, record) {
+  return step.appliesTo ? step.appliesTo(record) : true
+}
+
+/**
  * @param {Step[]} steps - the journey's steps, in order
  * @returns {object} the questions the journey's pages ask of a record
  */
@@ -104,12 +117,14 @@ export function createJourney(steps) {
   /**
    * @param {JourneyRecord} record
    * @param {Options} options
-   * @returns {Step | undefined} the first step whose answers are missing or
-   *   wrong; undefined when the record is complete
+   * @returns {Step | undefined} the first step the record goes through whose answers
+   *   are missing or wrong; undefined when the record is complete
    */
   function firstIncompleteStep(record, options) {
     return steps.find(
-      (step) => judge(step, record, options, record).errors.length
+      (step) =>
+        applies(step, record) &&
+        judge(step, record, options, record).errors.length
     )
   }
 
@@ -117,15 +132,21 @@ export function createJourney(steps) {
    * @param {string} page
    * @param {JourneyRecord} record - as saved
    * @param {Record<string, string>} answers - the page's answers, validated
-   * @returns {JourneyRecord} the record to save: the page's answers replaced, every
-   *   other answer kept
+   * @returns {JourneyRecord} the record to save: the page's answers replaced, and the
+   *   answers they invalidate removed
    */
   function withAnswers(page, record, answers) {
+    const step = stepFor(page)
+    const keys = keysOf(step)
+    const changed = keys.some((key) => record[key] !== answers[key])
+    const cleared = changed ? (step.clearsOnChange ?? []) : []
+    const kept = Object.entries(record).filter(
+      ([key]) => !cleared.includes(key)
+    )
+
     return {
-      ...record,
-      ...Object.fromEntries(
-        keysOf(stepFor(page)).map((key) => [key, answers[key]])
-      )
+      ...Object.fromEntries(kept),
+      ...Object.fromEntries(keys.map((key) => [key, answers[key]]))
     }
   }
 
@@ -152,13 +173,25 @@ export function createJourney(steps) {
    * steps have their answers: those were validated when they were saved.
    * @param {string} page
    * @param {JourneyRecord} record - as saved
-   * @returns {string | undefined} the page of the first earlier step with an
-   *   answer missing; undefined when the record belongs on the page
+   * @returns {string | undefined} the page to send the record to instead:
+   *   the earlier step with an answer missing or, for a step the record does
+   *   not go through, the last one it does. Undefined when it belongs on the
+   *   page.
    */
   function pageOwed(page, record) {
-    return steps
-      .slice(0, steps.indexOf(stepFor(page)))
-      .find((step) => keysOf(step).some((key) => !record[key]))?.page
+    const step = stepFor(page)
+    const earlier = steps
+      .slice(0, steps.indexOf(step))
+      .filter((candidate) => applies(candidate, record))
+    const unanswered = earlier.find((candidate) =>
+      keysOf(candidate).some((key) => !record[key])
+    )
+
+    if (unanswered) {
+      return unanswered.page
+    }
+
+    return applies(step, record) ? undefined : earlier.at(-1)?.page
   }
 
   return { steps, firstIncompleteStep, pageOwed, validateStep, withAnswers }

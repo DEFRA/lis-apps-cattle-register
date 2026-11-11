@@ -22,6 +22,15 @@ const ageStep = {
   }),
   context: () => ({})
 }
+const nicknameStep = {
+  page: 'nickname',
+  schema: Joi.object({
+    nickname: Joi.string().required().messages({ 'any.required': 'required' })
+  }),
+  appliesTo: (record) => record.name === 'Daisy',
+  context: () => ({})
+}
+const renamingStep = { ...nameStep, clearsOnChange: ['nickname'] }
 const OPTIONS = { allowedNames: ['Daisy'] }
 
 describe('journey', () => {
@@ -153,6 +162,55 @@ describe('journey', () => {
 
       // Assert
       expect(result).toBeUndefined()
+    })
+
+    test('it passes over a step the record does not go through', () => {
+      // Arrange
+      const journey = createJourney([nameStep, nicknameStep, ageStep])
+
+      // Act
+      const result = journey.firstIncompleteStep(
+        { name: 'Buttercup' },
+        { allowedNames: ['Buttercup'] }
+      )
+
+      // Assert
+      expect(result).toBe(ageStep)
+    })
+
+    test('it owes the last step the record goes through for a page it does not', () => {
+      // Arrange
+      const journey = createJourney([nameStep, nicknameStep, ageStep])
+
+      // Act
+      const result = journey.pageOwed('nickname', { name: 'Buttercup' })
+
+      // Assert
+      expect(result).toBe('name')
+    })
+
+    test('it removes the answers a changed answer invalidates', () => {
+      // Arrange
+      const journey = createJourney([renamingStep, nicknameStep])
+      const saved = { name: 'Daisy', nickname: 'Dee' }
+
+      // Act
+      const result = journey.withAnswers('name', saved, { name: 'Buttercup' })
+
+      // Assert
+      expect(result).toEqual({ name: 'Buttercup' })
+    })
+
+    test('it keeps those answers when the answer is the same', () => {
+      // Arrange
+      const journey = createJourney([renamingStep, nicknameStep])
+      const saved = { name: 'Daisy', nickname: 'Dee' }
+
+      // Act
+      const result = journey.withAnswers('name', saved, { name: 'Daisy' })
+
+      // Assert
+      expect(result).toEqual({ name: 'Daisy', nickname: 'Dee' })
     })
 
     test('it refuses a page that is not one of its steps', () => {

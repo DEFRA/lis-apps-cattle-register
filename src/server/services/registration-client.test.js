@@ -382,4 +382,39 @@ describe('CattleRegisterBe4FeClient', () => {
       expect(thrown.statusCode).toBe(404)
     })
   })
+
+  describe('getDamEarTags()', () => {
+    test("it lists the ear tags of the holding's possible dams", async () => {
+      // Arrange
+      const get = vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({
+          cph: '10/081/1234',
+          animals: [
+            { eartag: 'UK200000000007', breed: 'AA', sex: 'F' },
+            { eartag: 'UK200000000008', breed: 'HE', sex: 'F' }
+          ]
+        })
+      )
+
+      // Act
+      const result = await client.getDamEarTags({ cph: '10/081/1234' })
+
+      // Assert
+      expect(get).toHaveBeenCalledWith('data/eartags/dams?cph=10%2F081%2F1234')
+      expect(result).toEqual(['UK200000000007', 'UK200000000008'])
+    })
+
+    test('it returns no ear tags when the holding has no possible dams', async () => {
+      // Arrange
+      vi.spyOn(client, '_get').mockResolvedValueOnce(
+        response({ cph: '10/081/1234', animals: [] })
+      )
+
+      // Act
+      const result = await client.getDamEarTags({ cph: '10/081/1234' })
+
+      // Assert
+      expect(result).toEqual([])
+    })
+  })
 })
