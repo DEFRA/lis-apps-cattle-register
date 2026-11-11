@@ -29,6 +29,10 @@ import {
   checkCalfDetailsController,
   checkCalfDetailsSubmitController
 } from './check-calf-details/controller.js'
+import {
+  tagListController,
+  tagListSubmitController
+} from './tag-list/controller.js'
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -60,6 +64,11 @@ function failValidation(_request, _h, error) {
 
 const holdingParams = {
   params: Joi.object({ cph }),
+  failAction: failValidation
+}
+
+const submissionParams = {
+  params: Joi.object({ cph, submissionId }),
   failAction: failValidation
 }
 
@@ -95,6 +104,10 @@ const geneticDamPayload = Joi.object({
 const surrogateDamPayload = Joi.object({
   geneticDamEarTagNumber: formField,
   surrogateDamEarTagNumber: formField
+}).options({ stripUnknown: true })
+
+const tagListPayload = Joi.object({
+  addAnother: formField
 }).options({ stripUnknown: true })
 
 const sireDetailsPayload = Joi.object({
@@ -232,6 +245,27 @@ const routes = [
     ...checkCalfDetailsSubmitController,
     options: {
       validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/tag-list`,
+    ...tagListController,
+    options: {
+      validate: submissionParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/tag-list`,
+    ...tagListSubmitController,
+    options: {
+      validate: {
+        ...submissionParams,
+        payload: tagListPayload
+      },
       pre: [{ method: demandRegisterAccess }]
     }
   }

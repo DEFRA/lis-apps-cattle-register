@@ -4,13 +4,14 @@ import { format } from 'date-fns'
 
 import { DATE_FORMAT, toUkDate } from '#server/common/helpers/calendar-date.js'
 import { backLinkPath, keepReturn } from '../check-return.js'
-import { calfPagePath } from '../paths.js'
+import { calfPagePath, submissionPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { getMessage } from './messages.js'
 import { breedOptions } from '../validation/calf-details.js'
 
 const PAGE_TITLE = 'Calf details'
 const FIELDS = ['earTagNumber', 'dateOfBirth', 'sex', 'breed']
+const FIRST_ANIMAL_ID = '1'
 
 /**
  * @param {object} answers
@@ -52,9 +53,13 @@ export function buildViewModel({
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
+    // The first calf is where the registration starts; a later one is
+    // added from the list of calves.
     backLinkHref: backLinkPath(
       request,
-      getMountPath('cattle-home', 'holding', { cph })
+      animalId === FIRST_ANIMAL_ID
+        ? getMountPath('cattle-home', 'holding', { cph })
+        : submissionPagePath(cph, submissionId, 'tag-list')
     ),
     formAction: keepReturn(
       request,

@@ -5,8 +5,6 @@ import { registration } from '../validation/registration.js'
 import { buildViewModel } from './view-model.js'
 
 const TEMPLATE = 'register/check-calf-details/index'
-// Not built yet (LREG-887 continues with the list of calves in the
-// registration).
 const NEXT_PAGE = 'tag-list'
 
 export const checkCalfDetailsController = {
