@@ -1,4 +1,5 @@
 import * as registrationClient from '#server/services/registration-client.js'
+import { pathAfterSave } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
 import { trimAnswers } from '#server/journeys/register/journey.js'
 import { registration } from '#server/journeys/register/registration.js'
@@ -8,8 +9,6 @@ import { buildViewModel, formValuesFrom } from './view-model.js'
 
 const TEMPLATE = 'register/sire-details/index'
 const PAGE = 'sire-details'
-// Not built yet (LREG-883 continues with checking the calf's details).
-const NEXT_PAGE = 'check-calf-details'
 
 export const sireDetailsController = {
   /**
@@ -64,11 +63,9 @@ export const sireDetailsSubmitController = {
 
     // Both answers are optional and anything is taken for them, so there is
     // nothing to refuse.
-    await registrationClient.saveAnimal({
-      ...calf,
-      values: registration.withAnswers(PAGE, animal, values)
-    })
+    const saved = registration.withAnswers(PAGE, animal, values)
+    await registrationClient.saveAnimal({ ...calf, values: saved })
 
-    return h.redirect(calfPagePath(cph, submissionId, animalId, NEXT_PAGE))
+    return h.redirect(pathAfterSave(request, PAGE, saved))
   }
 }
