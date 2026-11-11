@@ -161,7 +161,7 @@ describe('registration', () => {
   describe('firstIncompleteStep()', () => {
     test('it is undefined for a calf with every step answered', () => {
       // Arrange
-      const animal = { ...calfDetails }
+      const animal = { ...calfDetails, damType: 'genetic' }
 
       // Act
       const result = firstIncompleteStep(animal, {
@@ -174,7 +174,7 @@ describe('registration', () => {
 
     test('it counts the ear tag number a saved calf has as its own', () => {
       // Arrange
-      const animal = { ...calfDetails }
+      const animal = { ...calfDetails, damType: 'genetic' }
 
       // Act
       const result = firstIncompleteStep(animal, {
@@ -183,6 +183,17 @@ describe('registration', () => {
 
       // Assert
       expect(result).toBeUndefined()
+    })
+
+    test('it is dam details for a calf with only its own details', () => {
+      // Arrange
+      const animal = { ...calfDetails }
+
+      // Act
+      const result = firstIncompleteStep(animal, { unallocatedEarTags: TAGS })
+
+      // Assert
+      expect(result.page).toBe('dam-details')
     })
 
     test('it is calf details for a calf with no answers', () => {
