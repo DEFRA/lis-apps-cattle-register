@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 
 import { DATE_FORMAT, toUkDate } from '#server/common/helpers/calendar-date.js'
 import { backLinkPath, keepReturn } from '../check-return.js'
-import { calfPagePath, newCalfPath } from '../paths.js'
+import { calfPagePath, submissionPath, newCalfPath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { getMessage } from './messages.js'
 import { breedOptions } from '#server/journeys/register/calf-details.js'
@@ -33,6 +33,8 @@ export function formValuesFrom(answers) {
  * @param {{ field: string, code: string }[]} [options.errors]
  * @param {{ field: string, code: string }[]} [options.warnings]
  * @param {string} [options.acknowledgedLateDateOfBirth]
+ * @param {boolean} [options.isFirstCalf] - whether the page is where the
+ *   registration starts: a new calf, in a registration with none
  * @returns {object} the calf details view model
  */
 export function buildViewModel({
@@ -41,7 +43,8 @@ export function buildViewModel({
   earTagItems,
   errors = [],
   warnings = [],
-  acknowledgedLateDateOfBirth = ''
+  acknowledgedLateDateOfBirth = '',
+  isFirstCalf = false
 }) {
   const { cph, submissionId, animalId } = request.params
   const errorList = errors.map((error) => ({
@@ -55,9 +58,13 @@ export function buildViewModel({
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
+    // The first calf is where the registration starts; any other is
+    // reached from the list of calves.
     backLinkHref: backLinkPath(
       request,
-      getMountPath('cattle-home', 'holding', { cph })
+      isFirstCalf
+        ? getMountPath('cattle-home', 'holding', { cph })
+        : submissionPath(cph, submissionId)
     ),
     formAction: animalId
       ? keepReturn(

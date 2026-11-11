@@ -5,6 +5,8 @@ import * as registrationClient from '#server/services/registration-client.js'
 import { trimAnswers } from '@defra/lis-infra-ui-services/journey'
 import { registration } from '#server/journeys/register/registration.js'
 import { pathAfterSave } from '../check-return.js'
+import { submissionPath } from '../paths.js'
+import { MAX_CALVES } from '../tag-list/messages.js'
 import { buildViewModel, formValuesFrom } from './view-model.js'
 
 /** @import { Request, ResponseObject, ResponseToolkit } from '@hapi/hapi' */
@@ -33,6 +35,31 @@ async function answersOf({ submissionId, animalId }) {
   return animal
 }
 
+/**
+ * @param {{ submissionId: string, animalId?: string }} calf
+ * @returns {Promise<number | undefined>} how many calves the registration
+ *   already has, for a new calf; undefined for one it has
+ */
+async function calvesBeforeNew({ submissionId, animalId }) {
+  if (animalId !== undefined) {
+    return undefined
+  }
+
+  const { animals } = await registrationClient.getSubmission({ submissionId })
+
+  return animals.length
+}
+
+/**
+ * @param {number | undefined} calvesBefore - as calvesBeforeNew gives it
+ * @returns {boolean} whether the calf is a new one that the registration has
+ *   no room for, as the list of calves allows no more; a calf it has is
+ *   never turned away
+ */
+function isFull(calvesBefore) {
+  return calvesBefore !== undefined && calvesBefore >= MAX_CALVES
+}
+
 export const calfDetailsController = {
   /**
    * Handles the request and returns the response.
@@ -43,17 +70,23 @@ export const calfDetailsController = {
    */
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
-    const [animal, earTagItems] = await Promise.all([
+    const [animal, earTagItems, calvesBefore] = await Promise.all([
       answersOf({ submissionId, animalId }),
-      registrationClient.getUnallocatedEarTags({ cph, submissionId })
+      registrationClient.getUnallocatedEarTags({ cph, submissionId }),
+      calvesBeforeNew({ submissionId, animalId })
     ])
+
+    if (isFull(calvesBefore)) {
+      return h.redirect(submissionPath(cph, submissionId))
+    }
 
     return h.view(
       TEMPLATE,
       buildViewModel({
         request,
         values: formValuesFrom(animal),
-        earTagItems
+        earTagItems,
+        isFirstCalf: calvesBefore === 0
       })
     )
   }
@@ -72,10 +105,16 @@ export const calfDetailsSubmitController = {
     const { acknowledgedLateDateOfBirth, ...submitted } = request.payload
     const calf = { submissionId, animalId }
     const values = trimAnswers(formValuesFrom(submitted))
-    const [animal, earTagItems] = await Promise.all([
+    const [animal, earTagItems, calvesBefore] = await Promise.all([
       answersOf(calf),
-      registrationClient.getUnallocatedEarTags({ cph, submissionId })
+      registrationClient.getUnallocatedEarTags({ cph, submissionId }),
+      calvesBeforeNew(calf)
     ])
+
+    if (isFull(calvesBefore)) {
+      return h.redirect(submissionPath(cph, submissionId))
+    }
+
     const { errors, warnings } = registration.validateStep(
       PAGE,
       animal,
@@ -101,6 +140,7 @@ export const calfDetailsSubmitController = {
             request,
             values,
             earTagItems,
+            isFirstCalf: calvesBefore === 0,
             errors,
             warnings: warningsToShow,
             acknowledgedLateDateOfBirth:
