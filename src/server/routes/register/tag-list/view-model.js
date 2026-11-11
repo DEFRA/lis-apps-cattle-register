@@ -4,6 +4,7 @@ import { calfPagePath, submissionPath } from '../paths.js'
 import { getMessage } from './messages.js'
 
 const PAGE_TITLE = 'Register new cattle births'
+export const FIRST_ANIMAL_ID = '1'
 
 /**
  * @typedef {object} ListedCalf
@@ -43,7 +44,10 @@ export function buildViewModel({
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
-    backLinkHref: items.at(-1).href,
+    // With no calves left, back to where the first is added.
+    backLinkHref:
+      items.at(-1)?.href ??
+      calfPagePath(cph, submissionId, FIRST_ANIMAL_ID, 'calf-details'),
     formAction: submissionPath(cph, submissionId),
     calves: items,
     values: { addAnother },
