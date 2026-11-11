@@ -30,6 +30,10 @@ import {
   checkCalfDetailsSubmitController
 } from './check-calf-details/controller.js'
 import {
+  cancelCalfController,
+  cancelCalfSubmitController
+} from './cancel/controller.js'
+import {
   tagListController,
   tagListSubmitController
 } from './tag-list/controller.js'
@@ -273,6 +277,24 @@ const routes = [
     method: 'POST',
     path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/check-calf-details`,
     ...checkCalfDetailsSubmitController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/cancel`,
+    ...cancelCalfController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/cancel`,
+    ...cancelCalfSubmitController,
     options: {
       validate: calfParams,
       pre: [{ method: demandRegisterAccess }]

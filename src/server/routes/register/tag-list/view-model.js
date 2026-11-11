@@ -1,6 +1,6 @@
 import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
-import { calfPagePath, submissionPath } from '../paths.js'
+import { calfPagePath, newCalfPath, submissionPath } from '../paths.js'
 import { getMessage } from './messages.js'
 
 const PAGE_TITLE = 'Register new cattle births'
@@ -43,7 +43,8 @@ export function buildViewModel({
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
-    backLinkHref: items.at(-1).href,
+    // With no calves left, back to where the first is added.
+    backLinkHref: items.at(-1)?.href ?? newCalfPath(cph, submissionId),
     formAction: submissionPath(cph, submissionId),
     calves: items,
     values: { addAnother },

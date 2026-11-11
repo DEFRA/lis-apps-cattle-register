@@ -65,6 +65,10 @@ function validate(addAnother, calves) {
       : [{ field: 'addAnother', code: 'tooMany' }]
   }
 
+  if (addAnother === 'no' && !calves.length) {
+    return [{ field: 'addAnother', code: 'noCalves' }]
+  }
+
   if (addAnother === 'no') {
     return calves.every((calf) => calf.isReady)
       ? []
@@ -72,18 +76,6 @@ function validate(addAnother, calves) {
   }
 
   return [{ field: 'addAnother', code: 'required' }]
-}
-
-/**
- * @param {object} request
- * @param {object} h
- * @returns {object} to the details of a new calf, for a registration with no
- *   calf saved yet
- */
-function startFirstCalf(request, h) {
-  const { cph, submissionId } = request.params
-
-  return h.redirect(newCalfPath(cph, submissionId))
 }
 
 export const tagListController = {
@@ -96,10 +88,6 @@ export const tagListController = {
    */
   async handler(request, h) {
     const calves = await listCalves(request.params)
-
-    if (!calves.length) {
-      return startFirstCalf(request, h)
-    }
 
     return h.view(TEMPLATE, buildViewModel({ request, calves }))
   }
@@ -117,11 +105,6 @@ export const tagListSubmitController = {
     const { cph, submissionId } = request.params
     const { addAnother } = request.payload
     const calves = await listCalves(request.params)
-
-    if (!calves.length) {
-      return startFirstCalf(request, h)
-    }
-
     const errors = validate(addAnother, calves)
 
     if (errors.length) {
