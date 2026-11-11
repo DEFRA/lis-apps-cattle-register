@@ -3,7 +3,7 @@ import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import * as registrationClient from '#server/services/registration-client.js'
 import { trimAnswers } from '#server/journeys/register/journey.js'
 import { registration } from '#server/journeys/register/registration.js'
-import { calfPagePath } from '../paths.js'
+import { pathAfterSave } from '../check-return.js'
 import { buildViewModel, formValuesFrom } from './view-model.js'
 
 const TEMPLATE = 'register/calf-details/index'
@@ -72,11 +72,9 @@ export const calfDetailsSubmitController = {
         .code(errors.length ? statusCodes.badRequest : statusCodes.ok)
     }
 
-    await registrationClient.saveAnimal({
-      ...calf,
-      values: registration.withAnswers(PAGE, animal, values)
-    })
+    const saved = registration.withAnswers(PAGE, animal, values)
+    await registrationClient.saveAnimal({ ...calf, values: saved })
 
-    return h.redirect(calfPagePath(cph, submissionId, animalId, 'dam-details'))
+    return h.redirect(pathAfterSave(request, PAGE, saved))
   }
 }
