@@ -31,6 +31,7 @@ import { config } from '#config/config.js'
  * @property {string} [dateOfBirth]
  * @property {string} [sex]
  * @property {string} [breed]
+ * @property {string} [damType]
  */
 
 /**
