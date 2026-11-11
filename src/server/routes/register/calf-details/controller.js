@@ -33,6 +33,21 @@ async function answersOf({ submissionId, animalId }) {
   return animal
 }
 
+/**
+ * @param {{ submissionId: string, animalId?: string }} calf
+ * @returns {Promise<boolean>} whether the page is where the registration
+ *   starts: a new calf, in a registration with none
+ */
+async function isFirstCalf({ submissionId, animalId }) {
+  if (animalId !== undefined) {
+    return false
+  }
+
+  const { animals } = await registrationClient.getSubmission({ submissionId })
+
+  return animals.length === 0
+}
+
 export const calfDetailsController = {
   /**
    * Handles the request and returns the response.
@@ -43,9 +58,10 @@ export const calfDetailsController = {
    */
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
-    const [animal, earTagItems] = await Promise.all([
+    const [animal, earTagItems, firstCalf] = await Promise.all([
       answersOf({ submissionId, animalId }),
-      registrationClient.getUnallocatedEarTags({ cph, submissionId })
+      registrationClient.getUnallocatedEarTags({ cph, submissionId }),
+      isFirstCalf({ submissionId, animalId })
     ])
 
     return h.view(
@@ -53,7 +69,8 @@ export const calfDetailsController = {
       buildViewModel({
         request,
         values: formValuesFrom(animal),
-        earTagItems
+        earTagItems,
+        isFirstCalf: firstCalf
       })
     )
   }
@@ -72,9 +89,10 @@ export const calfDetailsSubmitController = {
     const { acknowledgedLateDateOfBirth, ...submitted } = request.payload
     const calf = { submissionId, animalId }
     const values = trimAnswers(formValuesFrom(submitted))
-    const [animal, earTagItems] = await Promise.all([
+    const [animal, earTagItems, firstCalf] = await Promise.all([
       answersOf(calf),
-      registrationClient.getUnallocatedEarTags({ cph, submissionId })
+      registrationClient.getUnallocatedEarTags({ cph, submissionId }),
+      isFirstCalf(calf)
     ])
     const { errors, warnings } = registration.validateStep(
       PAGE,
@@ -101,6 +119,7 @@ export const calfDetailsSubmitController = {
             request,
             values,
             earTagItems,
+            isFirstCalf: firstCalf,
             errors,
             warnings: warningsToShow,
             acknowledgedLateDateOfBirth:

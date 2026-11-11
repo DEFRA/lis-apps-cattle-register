@@ -30,6 +30,7 @@ const validAnswers = {
 
 const mocks = {
   getAnimal: vi.mocked(registrationClient.getAnimal),
+  getSubmission: vi.mocked(registrationClient.getSubmission),
   saveAnimal: vi.mocked(registrationClient.saveAnimal),
   getUnallocatedEarTags: vi.mocked(registrationClient.getUnallocatedEarTags)
 }
@@ -51,6 +52,7 @@ function toolkit() {
 describe('calfDetailsController', () => {
   beforeAll(() => {
     mocks.getAnimal.mockResolvedValue({})
+    mocks.getSubmission.mockResolvedValue({ animals: [] })
     mocks.saveAnimal.mockResolvedValue({ animalId: ANIMAL_ID })
     mocks.getUnallocatedEarTags.mockResolvedValue([validAnswers.earTagNumber])
   })
@@ -106,6 +108,46 @@ describe('calfDetailsController', () => {
 
       // Assert
       expect(mocks.getAnimal).not.toHaveBeenCalled()
+    })
+
+    test('it goes back to the holding from the first calf of a registration', async () => {
+      // Arrange
+      const request = { params: { cph: CPH, ...NEW_CALF } }
+      const { h } = toolkit()
+
+      // Act
+      await calfDetailsController.handler(request, h)
+
+      // Assert
+      expect(mocks.getSubmission).toHaveBeenCalledWith({
+        submissionId: SUBMISSION_ID
+      })
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          backLinkHref: '/holdings/10/081/1234/cattle'
+        })
+      )
+    })
+
+    test('it goes back to the list of calves from a new calf when the registration has one', async () => {
+      // Arrange
+      const request = { params: { cph: CPH, ...NEW_CALF } }
+      const { h } = toolkit()
+      mocks.getSubmission.mockResolvedValueOnce({
+        animals: [{ animalId: ANIMAL_ID }]
+      })
+
+      // Act
+      await calfDetailsController.handler(request, h)
+
+      // Assert
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          backLinkHref: `/holdings/10/081/1234/cattle/register/${SUBMISSION_ID}`
+        })
+      )
     })
 
     test('it renders blank answers before the calf is saved', async () => {

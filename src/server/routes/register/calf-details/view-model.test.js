@@ -58,9 +58,26 @@ describe('buildViewModel()', () => {
     )
   })
 
+  test('it goes back to the list of calves from any calf but the first', () => {
+    // Arrange
+    const options = {
+      request: { params: { ...request.params, animalId: 'UK123456301551' } },
+      values,
+      earTagItems: []
+    }
+
+    // Act
+    const result = buildViewModel(options)
+
+    // Assert
+    expect(result.backLinkHref).toBe(
+      '/holdings/10/081/1234/cattle/register/7ZK-M3Q-A9D'
+    )
+  })
+
   test('it builds the page with the values and no errors', () => {
     // Arrange
-    const options = { request, values, earTagItems: [] }
+    const options = { request, values, earTagItems: [], isFirstCalf: true }
 
     // Act
     const result = buildViewModel(options)
