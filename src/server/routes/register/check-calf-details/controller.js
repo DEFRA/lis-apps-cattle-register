@@ -46,7 +46,6 @@ export const checkCalfDetailsSubmitController = {
       )
     }
 
-    // To the list of calves, which is not built yet (LREG-887).
     return h.redirect(submissionPath(cph, submissionId))
   }
 }
