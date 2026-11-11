@@ -22,6 +22,7 @@ import { DATE_FORMAT } from '#server/common/helpers/calendar-date.js'
  * @property {string} [sex]
  * @property {string} [breed]
  * @property {string} [damType]
+ * @property {string} [geneticDamEarTagNumber]
  */
 
 /**
@@ -334,6 +335,18 @@ async function removeAnimal({ submissionId, animalId }) {
       throw error
     }
   }
+}
+
+/**
+ * The ear tags of the holding's animals that can be a dam.
+ * @param {{ cph: string }} holding
+ * @returns {Promise<string[]>}
+ */
+export async function getDamEarTags({ cph }) {
+  const { payload } = await be4fe.get(
+    `data/eartags/dams?cph=${encodeURIComponent(cph)}`
+  )
+  return (payload.animals ?? []).map(({ eartag }) => eartag)
 }
 
 /**
