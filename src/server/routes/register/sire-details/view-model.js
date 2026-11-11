@@ -1,5 +1,6 @@
 import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
+import { backLinkPath, keepReturn } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
 
@@ -36,8 +37,14 @@ export function buildViewModel({
     pageTitle: PAGE_TITLE,
     heading: PAGE_TITLE,
     calfEarTagNumber: formatEarTag(calfEarTagNumber),
-    backLinkHref: calfPagePath(cph, submissionId, animalId, backPage),
-    formAction: calfPagePath(cph, submissionId, animalId, 'sire-details'),
+    backLinkHref: backLinkPath(
+      request,
+      calfPagePath(cph, submissionId, animalId, backPage)
+    ),
+    formAction: keepReturn(
+      request,
+      calfPagePath(cph, submissionId, animalId, 'sire-details')
+    ),
     values,
     maxFieldLength: MAX_FIELD_LENGTH
   }

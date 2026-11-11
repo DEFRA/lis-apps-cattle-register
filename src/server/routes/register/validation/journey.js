@@ -53,6 +53,8 @@
  * @typedef {object} Journey
  * @property {Step<TRecord, TOptions>[]} steps - in order
  * @property {(record: Partial<TRecord>, options: TOptions) => Step<TRecord, TOptions> | undefined} firstIncompleteStep
+ * @property {(record: Partial<TRecord>) => string | undefined} firstUnansweredPage
+ * @property {(page: string, record: Partial<TRecord>) => string | undefined} nextPage
  * @property {(page: string, record: Partial<TRecord>) => string | undefined} pageOwed
  * @property {(page: string, record: Partial<TRecord>) => string | undefined} previousPage
  * @property {(page: string, record: Partial<TRecord>, values: Partial<TRecord>, options?: TOptions) => StepResult} validateStep
@@ -116,25 +118,56 @@ function applies(step, record) {
 }
 
 /**
+ * @param {AnyStep} step
+ * @param {JourneyRecord} record
+ * @returns {boolean} whether any of the step's answers has yet to be saved
+ */
+function isUnanswered(step, record) {
+  return keysOf(step).some((key) => record[key] === undefined)
+}
+
+/**
+ * @param {AnyStep[]} steps
+ * @param {string} page
+ * @returns {AnyStep}
+ */
+function findStep(steps, page) {
+  const step = steps.find((candidate) => candidate.page === page)
+
+  if (!step) {
+    throw new Error(`No step for page "${page}"`)
+  }
+
+  return step
+}
+
+/**
+ * @param {AnyStep} step
+ * @param {JourneyRecord} record - as saved
+ * @param {Record<string, string>} answers - the step's answers
+ * @returns {JourneyRecord} the record with the step's answers replaced, and
+ *   the answers they invalidate removed
+ */
+function merged(step, record, answers) {
+  const keys = keysOf(step)
+  const changed = keys.some((key) => record[key] !== answers[key])
+  const cleared = changed ? (step.clearsOnChange ?? []) : []
+  const kept = Object.entries(record).filter(([key]) => !cleared.includes(key))
+
+  return {
+    ...Object.fromEntries(kept),
+    ...Object.fromEntries(keys.map((key) => [key, answers[key]]))
+  }
+}
+
+/**
  * @template TRecord - the record's answers
  * @template TOptions - what the journey's rules need beyond the record
  * @param {Step<TRecord, TOptions>[]} steps - the journey's steps, in order
  * @returns {Journey<TRecord, TOptions>}
  */
 export function createJourney(steps) {
-  /**
-   * @param {string} page
-   * @returns {Step<TRecord, TOptions>}
-   */
-  function stepFor(page) {
-    const step = steps.find((candidate) => candidate.page === page)
-
-    if (!step) {
-      throw new Error(`No step for page "${page}"`)
-    }
-
-    return step
-  }
+  const stepFor = (page) => findStep(steps, page)
 
   /**
    * @param {Partial<TRecord>} record
@@ -158,18 +191,7 @@ export function createJourney(steps) {
    *   answers they invalidate removed
    */
   function withAnswers(page, record, answers) {
-    const step = stepFor(page)
-    const keys = keysOf(step)
-    const changed = keys.some((key) => record[key] !== answers[key])
-    const cleared = changed ? (step.clearsOnChange ?? []) : []
-    const kept = Object.entries(record).filter(
-      ([key]) => !cleared.includes(key)
-    )
-
-    return {
-      ...Object.fromEntries(kept),
-      ...Object.fromEntries(keys.map((key) => [key, answers[key]]))
-    }
+    return merged(stepFor(page), record, answers)
   }
 
   /**
@@ -206,7 +228,7 @@ export function createJourney(steps) {
       .slice(0, steps.indexOf(step))
       .filter((candidate) => applies(candidate, record))
     const unanswered = earlier.find((candidate) =>
-      keysOf(candidate).some((key) => record[key] === undefined)
+      isUnanswered(candidate, record)
     )
 
     if (unanswered) {
@@ -228,9 +250,36 @@ export function createJourney(steps) {
       .findLast((candidate) => applies(candidate, record))?.page
   }
 
+  /**
+   * @param {string} page
+   * @param {Partial<TRecord>} record - as saved by the page
+   * @returns {string | undefined} the page of the step the record goes
+   *   through next; undefined after its last
+   */
+  function nextPage(page, record) {
+    return steps
+      .slice(steps.indexOf(stepFor(page)) + 1)
+      .find((candidate) => applies(candidate, record))?.page
+  }
+
+  /**
+   * @param {Partial<TRecord>} record - as saved
+   * @returns {string | undefined} the page of the first step the record goes
+   *   through with an answer yet to be saved; undefined when every step has
+   *   been
+   */
+  function firstUnansweredPage(record) {
+    return steps.find(
+      (candidate) =>
+        applies(candidate, record) && isUnanswered(candidate, record)
+    )?.page
+  }
+
   return {
     steps,
     firstIncompleteStep,
+    firstUnansweredPage,
+    nextPage,
     pageOwed,
     previousPage,
     validateStep,
