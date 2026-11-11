@@ -1,0 +1,6 @@
+// The autocomplete replaces the GOV.UK input with its own, which fills its
+// container. This keeps it to the same width as govuk-input--width-20, the
+// width the input has without JavaScript.
+.app-autocomplete--width-20 .autocomplete__wrapper {
+  max-width: 41ex;
+}
