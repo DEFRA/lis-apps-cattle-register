@@ -184,7 +184,7 @@ export function createJourney(steps) {
       .slice(0, steps.indexOf(step))
       .filter((candidate) => applies(candidate, record))
     const unanswered = earlier.find((candidate) =>
-      keysOf(candidate).some((key) => !record[key])
+      keysOf(candidate).some((key) => record[key] === undefined)
     )
 
     if (unanswered) {
@@ -194,5 +194,24 @@ export function createJourney(steps) {
     return applies(step, record) ? undefined : earlier.at(-1)?.page
   }
 
-  return { steps, firstIncompleteStep, pageOwed, validateStep, withAnswers }
+  /**
+   * @param {string} page
+   * @param {JourneyRecord} record - as saved
+   * @returns {string | undefined} the page of the step the record went
+   *   through before this one; undefined for the first
+   */
+  function previousPage(page, record) {
+    return steps
+      .slice(0, steps.indexOf(stepFor(page)))
+      .findLast((candidate) => applies(candidate, record))?.page
+  }
+
+  return {
+    steps,
+    firstIncompleteStep,
+    pageOwed,
+    previousPage,
+    validateStep,
+    withAnswers
+  }
 }
