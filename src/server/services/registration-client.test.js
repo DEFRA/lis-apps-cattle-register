@@ -543,6 +543,57 @@ describe('CattleRegisterBe4FeClient', () => {
     })
   })
 
+  describe('removeAnimal()', () => {
+    test('it takes the calf out of the submission', async () => {
+      // Arrange
+      service.delete.mockResolvedValueOnce(response(null))
+
+      // Act
+      await client.removeAnimal({
+        submissionId: '7ZK-M3Q-A9D',
+        animalId: 'UK123456301550'
+      })
+
+      // Assert
+      expect(service.delete).toHaveBeenCalledWith(
+        'submission/7ZK-M3Q-A9D/UK123456301550'
+      )
+    })
+
+    test('it leaves a calf that is already gone as gone', async () => {
+      // Arrange
+      service.delete.mockRejectedValueOnce(failure(NOT_FOUND))
+
+      // Act
+      const result = await client.removeAnimal({
+        submissionId: '7ZK-M3Q-A9D',
+        animalId: 'UK123456301550'
+      })
+
+      // Assert
+      expect(result).toBeUndefined()
+    })
+
+    test('it passes on any other failure', async () => {
+      // Arrange
+      service.delete.mockRejectedValueOnce(failure(CONFLICT))
+
+      // Act
+      let thrown
+      try {
+        await client.removeAnimal({
+          submissionId: '7ZK-M3Q-A9D',
+          animalId: 'UK123456301550'
+        })
+      } catch (error) {
+        thrown = error
+      }
+
+      // Assert
+      expect(thrown.statusCode).toBe(CONFLICT)
+    })
+  })
+
   describe('getUnallocatedEarTags()', () => {
     test("it lists the holding's unallocated ear tags that the submission does not use", async () => {
       // Arrange

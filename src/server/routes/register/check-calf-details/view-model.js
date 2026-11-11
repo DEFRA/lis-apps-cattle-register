@@ -142,6 +142,7 @@ export function buildViewModel({ request, animal }) {
     calfEarTagNumber: formatEarTag(animal.earTagNumber),
     backLinkHref: calfPagePath(cph, submissionId, animalId, 'sire-details'),
     formAction: calfPagePath(cph, submissionId, animalId, CHECK_PAGE),
+    cancelHref: calfPagePath(cph, submissionId, animalId, 'cancel'),
     rows: summaryRows(animal, changeHref)
   }
 }

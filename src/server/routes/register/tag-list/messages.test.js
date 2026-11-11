@@ -9,6 +9,10 @@ describe('getMessage()', () => {
       'Select yes to add additional animals or no to continue'
     ],
     [
+      { field: 'addAnother', code: 'noCalves' },
+      'Add at least one animal before continuing'
+    ],
+    [
       { field: 'addAnother', code: 'tooMany' },
       'You can add up to 50 animals to one registration. Select no to continue'
     ],

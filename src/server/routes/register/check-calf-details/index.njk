@@ -22,10 +22,18 @@
       }) }}
 
       {% call lisForm({ action: formAction }) %}
-        {{ govukButton({
-          text: "Continue",
-          preventDoubleClick: true
-        }) }}
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: "Continue",
+            preventDoubleClick: true
+          }) }}
+
+          {{ govukButton({
+            text: "Cancel birth registration",
+            href: cancelHref,
+            classes: "govuk-button--secondary"
+          }) }}
+        </div>
       {% endcall %}
     </div>
   </div>

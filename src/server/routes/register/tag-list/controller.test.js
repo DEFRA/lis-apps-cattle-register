@@ -147,21 +147,23 @@ describe('tagListController', () => {
       )
     })
 
-    test('it sends a registration with no calf saved to the details of a new calf', async () => {
+    test('it lists no calves for a registration left with none', async () => {
       // Arrange
       const request = { params: SUBMISSION }
       const { h } = toolkit()
       givenCalves([])
 
       // Act
-      const result = await tagListController.handler(request, h)
+      await tagListController.handler(request, h)
 
       // Assert
-      expect(h.redirect).toHaveBeenCalledWith(
-        `${SUBMISSION_PATH}/calves/calf-details`
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          calves: [],
+          backLinkHref: `${SUBMISSION_PATH}/calves/calf-details`
+        })
       )
-      expect(h.view).not.toHaveBeenCalled()
-      expect(result).toBe('redirected')
     })
 
     test('it rethrows a BE4FE failure, such as an unknown submission', async () => {
@@ -226,6 +228,15 @@ describe('tagListController', () => {
         }
       ],
       [
+        'no more animals with none in the registration',
+        'no',
+        [],
+        {
+          text: 'Add at least one animal before continuing',
+          href: '#addAnother'
+        }
+      ],
+      [
         'no more animals while a calf is unfinished',
         'no',
         [complete, unfinished],
@@ -269,9 +280,9 @@ describe('tagListController', () => {
       }
     )
 
-    test('it sends a registration with no calf saved to the details of a new calf', async () => {
+    test('it starts the first calf again for a registration left with none', async () => {
       // Arrange
-      const request = { params: SUBMISSION, payload: { addAnother: 'no' } }
+      const request = { params: SUBMISSION, payload: { addAnother: 'yes' } }
       const { h } = toolkit()
       givenCalves([])
 

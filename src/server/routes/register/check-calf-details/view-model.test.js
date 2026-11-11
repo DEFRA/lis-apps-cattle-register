@@ -49,6 +49,7 @@ describe('buildViewModel()', () => {
       calfEarTagNumber: 'UK 123456 301550',
       backLinkHref: `${CALF_PATH}/sire-details`,
       formAction: `${CALF_PATH}/check-calf-details`,
+      cancelHref: `${CALF_PATH}/cancel`,
       rows: expect.any(Array)
     })
   })

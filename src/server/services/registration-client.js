@@ -330,7 +330,7 @@ export async function saveAnimal({ submissionId, animalId, values }) {
  * @param {CalfKey} calf
  * @returns {Promise<void>}
  */
-async function removeAnimal({ submissionId, animalId }) {
+export async function removeAnimal({ submissionId, animalId }) {
   try {
     await be4fe.delete(animalPath({ submissionId, animalId }))
   } catch (error) {
