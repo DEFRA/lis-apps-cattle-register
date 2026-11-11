@@ -14,6 +14,15 @@ export function registerPath(cph) {
 /**
  * @param {string} cph
  * @param {string} submissionId
+ * @returns {string} the path of a submission: the list of its calves
+ */
+export function submissionPath(cph, submissionId) {
+  return `${registerPath(cph)}/${submissionId}`
+}
+
+/**
+ * @param {string} cph
+ * @param {string} submissionId
  * @param {string} animalId - the calf's id in the submission
  * @param {string} page
  * @returns {string} the path of a page about one calf in a submission
