@@ -3,6 +3,7 @@ import { getMountPath } from '@defra/lis-hubs-infra-registry'
 import { format } from 'date-fns'
 
 import { DATE_FORMAT, toUkDate } from '#server/common/helpers/calendar-date.js'
+import { backLinkPath, keepReturn } from '../check-return.js'
 import { calfPagePath, newCalfPath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { getMessage } from './messages.js'
@@ -54,9 +55,15 @@ export function buildViewModel({
   return {
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
-    backLinkHref: getMountPath('cattle-home', 'holding', { cph }),
+    backLinkHref: backLinkPath(
+      request,
+      getMountPath('cattle-home', 'holding', { cph })
+    ),
     formAction: animalId
-      ? calfPagePath(cph, submissionId, animalId, 'calf-details')
+      ? keepReturn(
+          request,
+          calfPagePath(cph, submissionId, animalId, 'calf-details')
+        )
       : newCalfPath(cph, submissionId),
     values,
     earTagItems,

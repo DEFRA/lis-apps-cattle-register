@@ -183,6 +183,63 @@ describe('damDetailsController', () => {
       expect(h.redirect).toHaveBeenCalledWith(`${CALF_PATH}/genetic-dam`)
     })
 
+    test('it asks for the other dam after a Change link changes the dam type, clearing the dams', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        query: { return: 'check' },
+        payload: { damType: 'surrogate' }
+      }
+      const { h } = toolkit()
+      mocks.getAnimal.mockResolvedValueOnce({
+        ...calfDetails,
+        damType: 'genetic',
+        geneticDamEarTagNumber: 'UK200000000007',
+        sireEarTagNumber: null,
+        sireName: null
+      })
+
+      // Act
+      await damDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.saveAnimal).toHaveBeenCalledWith({
+        ...CALF,
+        values: {
+          ...calfDetails,
+          damType: 'surrogate',
+          sireEarTagNumber: null,
+          sireName: null
+        }
+      })
+      expect(h.redirect).toHaveBeenCalledWith(
+        `${CALF_PATH}/surrogate-dam?return=check`
+      )
+    })
+
+    test('it returns to check calf details after a Change link leaves the dam type as it was', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        query: { return: 'check' },
+        payload: { damType: 'genetic' }
+      }
+      const { h } = toolkit()
+      mocks.getAnimal.mockResolvedValueOnce({
+        ...calfDetails,
+        damType: 'genetic',
+        geneticDamEarTagNumber: 'UK200000000007',
+        sireEarTagNumber: null,
+        sireName: null
+      })
+
+      // Act
+      await damDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(h.redirect).toHaveBeenCalledWith(`${CALF_PATH}/check-calf-details`)
+    })
+
     test('it re-renders with the error, as bad request, saving nothing', async () => {
       // Arrange
       const request = {

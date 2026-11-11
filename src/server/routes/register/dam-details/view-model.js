@@ -1,5 +1,6 @@
 import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
+import { backLinkPath, keepReturn } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
 import { getMessage } from './messages.js'
 
@@ -32,8 +33,14 @@ export function buildViewModel({
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
     calfEarTagNumber: formatEarTag(calfEarTagNumber),
-    backLinkHref: calfPagePath(cph, submissionId, animalId, 'calf-details'),
-    formAction: calfPagePath(cph, submissionId, animalId, 'dam-details'),
+    backLinkHref: backLinkPath(
+      request,
+      calfPagePath(cph, submissionId, animalId, 'calf-details')
+    ),
+    formAction: keepReturn(
+      request,
+      calfPagePath(cph, submissionId, animalId, 'dam-details')
+    ),
     values: { damType },
     errorList,
     fieldErrors

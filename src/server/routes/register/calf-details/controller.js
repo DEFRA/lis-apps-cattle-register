@@ -4,7 +4,7 @@ import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import * as registrationClient from '#server/services/registration-client.js'
 import { trimAnswers } from '@defra/lis-infra-ui-services/journey'
 import { registration } from '#server/journeys/register/registration.js'
-import { calfPagePath } from '../paths.js'
+import { pathAfterSave } from '../check-return.js'
 import { buildViewModel, formValuesFrom } from './view-model.js'
 
 /** @import { Request, ResponseObject, ResponseToolkit } from '@hapi/hapi' */
@@ -110,15 +110,18 @@ export const calfDetailsSubmitController = {
         .code(errors.length ? statusCodes.badRequest : statusCodes.ok)
     }
 
+    const saved = registration.withAnswers(PAGE, animal, values)
     // The calf's id follows its ear tag number, so it is the saved calf's id
     // that the next page is about
-    const saved = await registrationClient.saveAnimal({
+    const { animalId: savedId } = await registrationClient.saveAnimal({
       ...calf,
-      values: registration.withAnswers(PAGE, animal, values)
+      values: saved
     })
+    const savedCalf = {
+      ...request,
+      params: { ...request.params, animalId: savedId }
+    }
 
-    return h.redirect(
-      calfPagePath(cph, submissionId, saved.animalId, 'dam-details')
-    )
+    return h.redirect(pathAfterSave(savedCalf, PAGE, saved))
   }
 }

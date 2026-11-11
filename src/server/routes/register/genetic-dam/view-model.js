@@ -1,5 +1,6 @@
 import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
+import { backLinkPath, keepReturn } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
 import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { getMessage } from './messages.js'
@@ -35,8 +36,14 @@ export function buildViewModel({
     pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
     calfEarTagNumber: formatEarTag(calfEarTagNumber),
-    backLinkHref: calfPagePath(cph, submissionId, animalId, 'dam-details'),
-    formAction: calfPagePath(cph, submissionId, animalId, 'genetic-dam'),
+    backLinkHref: backLinkPath(
+      request,
+      calfPagePath(cph, submissionId, animalId, 'dam-details')
+    ),
+    formAction: keepReturn(
+      request,
+      calfPagePath(cph, submissionId, animalId, 'genetic-dam')
+    ),
     values: { geneticDamEarTagNumber },
     earTagItems,
     maxFieldLength: MAX_FIELD_LENGTH,

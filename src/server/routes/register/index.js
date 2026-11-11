@@ -29,6 +29,10 @@ import {
   sireDetailsController,
   sireDetailsSubmitController
 } from './sire-details/controller.js'
+import {
+  checkCalfDetailsController,
+  checkCalfDetailsSubmitController
+} from './check-calf-details/controller.js'
 
 /** @import { Server, ServerRoute } from '@hapi/hapi' */
 
@@ -249,6 +253,24 @@ const routes = [
         ...calfParams,
         payload: sireDetailsPayload
       },
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/check-calf-details`,
+    ...checkCalfDetailsController,
+    options: {
+      validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/calves/{animalId}/check-calf-details`,
+    ...checkCalfDetailsSubmitController,
+    options: {
+      validate: calfParams,
       pre: [{ method: demandRegisterAccess }]
     }
   }
