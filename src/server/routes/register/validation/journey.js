@@ -26,13 +26,31 @@
  */
 
 /**
+ * @template TRecord - the record's answers
+ * @template TOptions - what the journey's rules need beyond the record
  * @typedef {object} Step
  * @property {string} page - the step's page, as in its path
  * @property {ObjectSchema} schema - the step's rules, over
  *   the answers the step owns; each rule's message is the code of its error
- * @property {(options: Options, saved: JourneyRecord) => object} [context]
+ * @property {(options: TOptions, saved: Partial<TRecord>) => object} [context]
  *   what the schema's rules refer to, from the options and the record as it
  *   is saved; absent when they refer to nothing
+ */
+
+/**
+ * @typedef {Step<any, any>} AnyStep
+ */
+
+/**
+ * The questions a journey's pages ask of a record. A record is typed as
+ * partial throughout: it has only the answers of the pages saved so far.
+ * @template TRecord - the record's answers
+ * @template TOptions - what the journey's rules need beyond the record
+ * @typedef {object} Journey
+ * @property {Step<TRecord, TOptions>[]} steps - in order
+ * @property {(record: Partial<TRecord>, options: TOptions) => Step<TRecord, TOptions> | undefined} firstIncompleteStep
+ * @property {(page: string, record: Partial<TRecord>, values: Partial<TRecord>, options?: TOptions) => StepResult} validateStep
+ * @property {(page: string, record: Partial<TRecord>, answers: Partial<TRecord>) => Partial<TRecord>} withAnswers
  */
 
 /**
@@ -46,7 +64,7 @@ export function trimAnswers(answers) {
 }
 
 /**
- * @param {Step} step
+ * @param {AnyStep} step
  * @returns {string[]} the answers the step owns
  */
 function keysOf(step) {
@@ -66,7 +84,7 @@ function fieldResults(report) {
 }
 
 /**
- * @param {Step} step
+ * @param {AnyStep} step
  * @param {JourneyRecord} record - as it would be saved
  * @param {Options} options
  * @param {JourneyRecord} saved - the record as it is saved
@@ -83,13 +101,15 @@ function judge(step, record, options, saved) {
 }
 
 /**
- * @param {Step[]} steps - the journey's steps, in order
- * @returns {object} the questions the journey's pages ask of a record
+ * @template TRecord - the record's answers
+ * @template TOptions - what the journey's rules need beyond the record
+ * @param {Step<TRecord, TOptions>[]} steps - the journey's steps, in order
+ * @returns {Journey<TRecord, TOptions>}
  */
 export function createJourney(steps) {
   /**
    * @param {string} page
-   * @returns {Step}
+   * @returns {Step<TRecord, TOptions>}
    */
   function stepFor(page) {
     const step = steps.find((candidate) => candidate.page === page)
@@ -102,9 +122,9 @@ export function createJourney(steps) {
   }
 
   /**
-   * @param {JourneyRecord} record
-   * @param {Options} options
-   * @returns {Step | undefined} the first step whose answers are missing or
+   * @param {Partial<TRecord>} record
+   * @param {TOptions} options
+   * @returns {Step<TRecord, TOptions> | undefined} the first step whose answers are missing or
    *   wrong; undefined when the record is complete
    */
   function firstIncompleteStep(record, options) {
@@ -115,9 +135,9 @@ export function createJourney(steps) {
 
   /**
    * @param {string} page
-   * @param {JourneyRecord} record - as saved
-   * @param {Record<string, string>} answers - the page's answers, validated
-   * @returns {JourneyRecord} the record to save: the page's answers replaced, every
+   * @param {Partial<TRecord>} record - as saved
+   * @param {Partial<TRecord>} answers - the page's answers, validated
+   * @returns {Partial<TRecord>} the record to save: the page's answers replaced, every
    *   other answer kept
    */
   function withAnswers(page, record, answers) {
@@ -133,9 +153,9 @@ export function createJourney(steps) {
    * What a page's rules make of its answers, judged as part of the record they
    * would be saved on.
    * @param {string} page
-   * @param {JourneyRecord} record - as saved
-   * @param {Record<string, string>} values - the page's answers, trimmed
-   * @param {Options} options
+   * @param {Partial<TRecord>} record - as saved
+   * @param {Partial<TRecord>} values - the page's answers, trimmed
+   * @param {TOptions} options
    * @returns {StepResult}
    */
   function validateStep(page, record, values, options) {

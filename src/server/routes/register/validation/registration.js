@@ -6,12 +6,22 @@
 import { calfDetailsSchema } from './calf-details.js'
 import { createJourney } from './journey.js'
 
+/** @import { Journey } from './journey.js' */
+/** @import { CalfDetailsAnswers } from './calf-details.js' */
+
 /**
- * @typedef {object} Options - what the rules need beyond the animal
+ * A calf's answers so far.
+ * @typedef {CalfDetailsAnswers} Animal
+ */
+
+/**
+ * @typedef {object} RegistrationOptions - what the rules need beyond the
+ *   animal
  * @property {string[]} unallocatedEarTags - the ear tags issued to the
  *   holding that are not on an animal, nor on another calf of the submission
  */
 
+/** @type {Journey<Animal, RegistrationOptions>} */
 export const registration = createJourney([
   {
     page: 'calf-details',
