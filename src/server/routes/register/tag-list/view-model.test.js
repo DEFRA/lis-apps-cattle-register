@@ -49,6 +49,18 @@ describe('buildViewModel()', () => {
     })
   })
 
+  test('it goes back to where the first calf is added when no calves are left', () => {
+    // Arrange
+    const options = { request, calves: [] }
+
+    // Act
+    const result = buildViewModel(options)
+
+    // Assert
+    expect(result.calves).toEqual([])
+    expect(result.backLinkHref).toBe(`${SUBMISSION_PATH}/calves/1/calf-details`)
+  })
+
   test('it links a field error to its field, marking the title and keeping the answer', () => {
     // Arrange
     const options = {

@@ -12,6 +12,7 @@
  *   GET   /{submissionId}/{animalId}   getAnimal
  *   POST  /{submissionId}/{animalId}   saveAnimal
  *   PATCH /{submissionId}/{animalId}   updateAnimal
+ *   DELETE /{submissionId}/{animalId}  removeAnimal (not in the contract yet)
  *   POST  /{submissionId}              submitRegistration
  * The ear tag lists still go to the real BE4FE.
  */
@@ -205,6 +206,17 @@ class CattleRegisterBe4FeClient extends BaseClient {
     const { animals } = stubbedSubmission(submissionId)
 
     animals.set(animalId, { ...animals.get(animalId), ...values })
+  }
+
+  /**
+   * Stubbed: see the note at the top of the file, and not in the contract
+   * yet. Takes the calf out of the submission; the other calves keep their ids.
+   * A calf already gone is left gone.
+   * @param {{ submissionId: string, animalId: string }} calf
+   * @returns {Promise<void>}
+   */
+  async removeAnimal({ submissionId, animalId }) {
+    stubbedSubmission(submissionId).animals.delete(animalId)
   }
 
   /**
