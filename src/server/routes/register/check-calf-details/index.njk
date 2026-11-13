@@ -1,0 +1,40 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "form/macro.njk" import lisForm with context %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: backLinkHref
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Official animal ear tag number: {{ calfEarTagNumber }}</span>
+      <h1 class="govuk-heading-l">{{ heading }}</h1>
+
+      {{ govukSummaryList({
+        classes: "govuk-!-margin-bottom-9",
+        rows: rows
+      }) }}
+
+      {% call lisForm({ action: formAction }) %}
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: "Continue",
+            preventDoubleClick: true
+          }) }}
+
+          {{ govukButton({
+            text: "Cancel birth registration",
+            href: cancelHref,
+            classes: "govuk-button--secondary"
+          }) }}
+        </div>
+      {% endcall %}
+    </div>
+  </div>
+{% endblock %}
