@@ -1,11 +1,15 @@
 import Boom from '@hapi/boom'
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
+import * as submissionClient from '#server/services/be4fe/submission.js'
+import * as dataClient from '#server/services/be4fe/data.js'
 import {
   calfDetailsController,
   calfDetailsSubmitController
 } from './controller.js'
 
-vi.mock('#server/services/registration-client.js')
+vi.mock('#server/services/be4fe/animal.js')
+vi.mock('#server/services/be4fe/submission.js')
+vi.mock('#server/services/be4fe/data.js')
 
 const CPH = '10/081/1234'
 const SUBMISSION_ID = '7ZK-M3Q-A9D'
@@ -30,10 +34,10 @@ const validAnswers = {
 }
 
 const mocks = {
-  getAnimal: vi.mocked(registrationClient.getAnimal),
-  getSubmission: vi.mocked(registrationClient.getSubmission),
-  saveAnimal: vi.mocked(registrationClient.saveAnimal),
-  getUnallocatedEarTags: vi.mocked(registrationClient.getUnallocatedEarTags)
+  getAnimal: vi.mocked(animalClient.getAnimal),
+  getSubmission: vi.mocked(submissionClient.getSubmission),
+  saveAnimal: vi.mocked(animalClient.saveAnimal),
+  getUnallocatedEarTags: vi.mocked(dataClient.getUnallocatedEarTags)
 }
 
 /**

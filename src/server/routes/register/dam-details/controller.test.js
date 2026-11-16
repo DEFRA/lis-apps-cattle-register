@@ -1,10 +1,10 @@
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
 import {
   damDetailsController,
   damDetailsSubmitController
 } from './controller.js'
 
-vi.mock('#server/services/registration-client.js')
+vi.mock('#server/services/be4fe/animal.js')
 
 const CPH = '10/081/1234'
 const SUBMISSION_ID = '7ZK-M3Q-A9D'
@@ -20,8 +20,8 @@ const calfDetails = {
 }
 
 const mocks = {
-  getAnimal: vi.mocked(registrationClient.getAnimal),
-  saveAnimal: vi.mocked(registrationClient.saveAnimal)
+  getAnimal: vi.mocked(animalClient.getAnimal),
+  saveAnimal: vi.mocked(animalClient.saveAnimal)
 }
 
 /**

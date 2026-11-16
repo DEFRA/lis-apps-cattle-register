@@ -1,4 +1,4 @@
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
 import { submissionPath } from '../paths.js'
 import { buildViewModel } from './view-model.js'
 
@@ -16,7 +16,7 @@ export const cancelCalfController = {
    */
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
-    const animal = await registrationClient.getAnimal({
+    const animal = await animalClient.getAnimal({
       cph,
       submissionId,
       animalId
@@ -37,7 +37,7 @@ export const cancelCalfSubmitController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
 
-    await registrationClient.removeAnimal({ cph, submissionId, animalId })
+    await animalClient.removeAnimal({ cph, submissionId, animalId })
 
     return h.redirect(submissionPath(cph, submissionId))
   }

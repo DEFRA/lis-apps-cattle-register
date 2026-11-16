@@ -1,10 +1,10 @@
-import * as registrationClient from '#server/services/registration-client.js'
+import * as submissionClient from '#server/services/be4fe/submission.js'
 import { startRegistrationController } from './controller.js'
 
-vi.mock('#server/services/registration-client.js')
+vi.mock('#server/services/be4fe/submission.js')
 
 const mocks = {
-  startRegistration: vi.mocked(registrationClient.startRegistration)
+  startRegistration: vi.mocked(submissionClient.startRegistration)
 }
 
 describe('startRegistrationController', () => {

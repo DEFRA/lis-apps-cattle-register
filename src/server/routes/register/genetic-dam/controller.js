@@ -1,6 +1,7 @@
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
+import * as dataClient from '#server/services/be4fe/data.js'
 import { pathAfterSave } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
 import { trimAnswers } from '@defra/lis-infra-ui-services/journey'
@@ -23,8 +24,8 @@ export const geneticDamController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
     const [animal, earTagItems] = await Promise.all([
-      registrationClient.getAnimal({ cph, submissionId, animalId }),
-      registrationClient.getDamEarTags({ cph })
+      animalClient.getAnimal({ cph, submissionId, animalId }),
+      dataClient.getDamEarTags({ cph })
     ])
     const owed = registration.pageOwed(PAGE, animal)
 
@@ -59,8 +60,8 @@ export const geneticDamSubmitController = {
       geneticDamEarTagNumber: request.payload.geneticDamEarTagNumber
     })
     const [animal, earTagItems] = await Promise.all([
-      registrationClient.getAnimal(calf),
-      registrationClient.getDamEarTags({ cph })
+      animalClient.getAnimal(calf),
+      dataClient.getDamEarTags({ cph })
     ])
     const owed = registration.pageOwed(PAGE, animal)
 
@@ -88,7 +89,7 @@ export const geneticDamSubmitController = {
     }
 
     const saved = registration.withAnswers(PAGE, animal, values)
-    await registrationClient.saveAnimal({ ...calf, values: saved })
+    await animalClient.saveAnimal({ ...calf, values: saved })
 
     return h.redirect(pathAfterSave(request, PAGE, saved))
   }

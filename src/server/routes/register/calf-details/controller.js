@@ -1,6 +1,8 @@
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
+import * as submissionClient from '#server/services/be4fe/submission.js'
+import * as dataClient from '#server/services/be4fe/data.js'
 import { trimAnswers } from '@defra/lis-infra-ui-services/journey'
 import { registration } from '#server/journeys/register/registration.js'
 import { pathAfterSave } from '../check-return.js'
@@ -9,7 +11,7 @@ import { MAX_CALVES } from '../tag-list/messages.js'
 import { buildViewModel, formValuesFrom } from './view-model.js'
 
 /** @import { Request, ResponseObject, ResponseToolkit } from '@hapi/hapi' */
-/** @import { DraftAnimal } from '#server/services/registration-client.js' */
+/** @import { DraftAnimal } from '#server/services/be4fe/animal.js' */
 
 const TEMPLATE = 'register/calf-details/index'
 const PAGE = 'calf-details'
@@ -24,7 +26,7 @@ async function answersOf({ cph, submissionId, animalId }) {
     return {}
   }
 
-  return registrationClient.getAnimal({ cph, submissionId, animalId })
+  return animalClient.getAnimal({ cph, submissionId, animalId })
 }
 
 /**
@@ -37,7 +39,7 @@ async function calvesBeforeNew({ cph, submissionId, animalId }) {
     return undefined
   }
 
-  const { animals } = await registrationClient.getSubmission({
+  const { animals } = await submissionClient.getSubmission({
     cph,
     submissionId
   })
@@ -67,7 +69,7 @@ export const calfDetailsController = {
     const { cph, submissionId, animalId } = request.params
     const [animal, earTagItems, calvesBefore] = await Promise.all([
       answersOf({ cph, submissionId, animalId }),
-      registrationClient.getUnallocatedEarTags({ cph, submissionId }),
+      dataClient.getUnallocatedEarTags({ cph, submissionId }),
       calvesBeforeNew({ cph, submissionId, animalId })
     ])
 
@@ -102,7 +104,7 @@ export const calfDetailsSubmitController = {
     const values = trimAnswers(formValuesFrom(submitted))
     const [animal, earTagItems, calvesBefore] = await Promise.all([
       answersOf(calf),
-      registrationClient.getUnallocatedEarTags({ cph, submissionId }),
+      dataClient.getUnallocatedEarTags({ cph, submissionId }),
       calvesBeforeNew(calf)
     ])
 
@@ -148,7 +150,7 @@ export const calfDetailsSubmitController = {
     const saved = registration.withAnswers(PAGE, animal, values)
     // The calf's id follows its ear tag number, so it is the saved calf's id
     // that the next page is about
-    const { animalId: savedId } = await registrationClient.saveAnimal({
+    const { animalId: savedId } = await animalClient.saveAnimal({
       ...calf,
       values: saved
     })

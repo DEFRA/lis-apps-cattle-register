@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-import * as client from './registration-client.js'
+import * as client from './data.js'
 
 const service = vi.hoisted(() => ({
   get: vi.fn(),
@@ -25,7 +25,7 @@ function failure(statusCode) {
   })
 }
 
-describe('CattleRegisterBe4FeClient ear tags', () => {
+describe('CattleRegisterBe4FeDataClient', () => {
   afterEach(() => {
     vi.resetAllMocks()
   })

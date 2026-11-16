@@ -1,6 +1,6 @@
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
 import { trimAnswers } from '@defra/lis-infra-ui-services/journey'
 import { pathAfterSave } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
@@ -21,7 +21,7 @@ export const damDetailsController = {
    */
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
-    const animal = await registrationClient.getAnimal({
+    const animal = await animalClient.getAnimal({
       cph,
       submissionId,
       animalId
@@ -55,7 +55,7 @@ export const damDetailsSubmitController = {
     const { cph, submissionId, animalId } = request.params
     const calf = { cph, submissionId, animalId }
     const { damType } = trimAnswers({ damType: request.payload.damType })
-    const animal = await registrationClient.getAnimal(calf)
+    const animal = await animalClient.getAnimal(calf)
     const owed = registration.pageOwed(PAGE, animal)
 
     if (owed) {
@@ -79,7 +79,7 @@ export const damDetailsSubmitController = {
     }
 
     const saved = registration.withAnswers(PAGE, animal, { damType })
-    await registrationClient.saveAnimal({ ...calf, values: saved })
+    await animalClient.saveAnimal({ ...calf, values: saved })
 
     return h.redirect(pathAfterSave(request, PAGE, saved))
   }

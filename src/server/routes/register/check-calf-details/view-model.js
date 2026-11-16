@@ -6,7 +6,7 @@ import { CHECK_PAGE, withReturnToCheck } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
 import { breedOptions } from '#server/journeys/register/calf-details.js'
 
-/** @import { DraftAnimal } from '#server/services/registration-client.js' */
+/** @import { DraftAnimal } from '#server/services/be4fe/animal.js' */
 
 const PAGE_TITLE = 'Check calf details'
 const NOT_PROVIDED = 'Not provided'

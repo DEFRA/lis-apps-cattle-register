@@ -1,4 +1,4 @@
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
 import { pathAfterSave } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
 import { blankAsNull, trimAnswers } from '@defra/lis-infra-ui-services/journey'
@@ -20,7 +20,7 @@ export const sireDetailsController = {
    */
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
-    const animal = await registrationClient.getAnimal({
+    const animal = await animalClient.getAnimal({
       cph,
       submissionId,
       animalId
@@ -55,7 +55,7 @@ export const sireDetailsSubmitController = {
     const { cph, submissionId, animalId } = request.params
     const calf = { cph, submissionId, animalId }
     const values = blankAsNull(trimAnswers(formValuesFrom(request.payload)))
-    const animal = await registrationClient.getAnimal(calf)
+    const animal = await animalClient.getAnimal(calf)
     const owed = registration.pageOwed(PAGE, animal)
 
     if (owed) {
@@ -65,7 +65,7 @@ export const sireDetailsSubmitController = {
     // Both answers are optional and anything is taken for them, so there is
     // nothing to refuse.
     const saved = registration.withAnswers(PAGE, animal, values)
-    await registrationClient.saveAnimal({ ...calf, values: saved })
+    await animalClient.saveAnimal({ ...calf, values: saved })
 
     return h.redirect(pathAfterSave(request, PAGE, saved))
   }

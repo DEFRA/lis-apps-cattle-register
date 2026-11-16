@@ -10,7 +10,7 @@ import { sireDetailsSchema } from './sire-details.js'
 import { surrogateDamSchema } from './surrogate-dam.js'
 import { createJourney } from '@defra/lis-infra-ui-services/journey'
 /** @import { Step } from '@defra/lis-infra-ui-services/journey' */
-/** @import { DraftAnimal } from '#server/services/registration-client.js' */
+/** @import { DraftAnimal } from '#server/services/be4fe/animal.js' */
 
 /**
  * @typedef {object} Options - what the rules need beyond the animal

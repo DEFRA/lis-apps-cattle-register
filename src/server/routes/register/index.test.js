@@ -3,7 +3,9 @@ import { demandRegisterAccess } from './holding-access.js'
 import { redirectOnSaveConflict } from './save-conflict.js'
 import { MAX_FIELD_LENGTH } from './form-limits.js'
 
-vi.mock('#server/services/registration-client.js')
+vi.mock('#server/services/be4fe/animal.js')
+vi.mock('#server/services/be4fe/submission.js')
+vi.mock('#server/services/be4fe/data.js')
 
 /** @import { ServerRoute } from '@hapi/hapi' */
 

@@ -1,6 +1,8 @@
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
+import * as submissionClient from '#server/services/be4fe/submission.js'
+import * as dataClient from '#server/services/be4fe/data.js'
 import { CHECK_PAGE } from '../check-return.js'
 import { newCalfPath, submissionPagePath } from '../paths.js'
 import { registration } from '#server/journeys/register/registration.js'
@@ -28,13 +30,13 @@ const SUBMIT_PAGE = 'submit'
  */
 async function listCalves({ cph, submissionId }) {
   const [submission, unallocatedEarTags, damEarTags] = await Promise.all([
-    registrationClient.getSubmission({ cph, submissionId }),
-    registrationClient.getUnallocatedEarTags({ cph, submissionId }),
-    registrationClient.getDamEarTags({ cph })
+    submissionClient.getSubmission({ cph, submissionId }),
+    dataClient.getUnallocatedEarTags({ cph, submissionId }),
+    dataClient.getDamEarTags({ cph })
   ])
   const animals = await Promise.all(
     submission.animals.map(({ animalId }) =>
-      registrationClient.getAnimal({ cph, submissionId, animalId })
+      animalClient.getAnimal({ cph, submissionId, animalId })
     )
   )
 

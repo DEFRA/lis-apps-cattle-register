@@ -1,10 +1,12 @@
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
+import * as dataClient from '#server/services/be4fe/data.js'
 import {
   geneticDamController,
   geneticDamSubmitController
 } from './controller.js'
 
-vi.mock('#server/services/registration-client.js')
+vi.mock('#server/services/be4fe/animal.js')
+vi.mock('#server/services/be4fe/data.js')
 
 const CPH = '10/081/1234'
 const SUBMISSION_ID = '7ZK-M3Q-A9D'
@@ -23,9 +25,9 @@ const animal = {
 const ERROR_TEXT = 'Enter the ear tag number of the genetic dam'
 
 const mocks = {
-  getAnimal: vi.mocked(registrationClient.getAnimal),
-  getDamEarTags: vi.mocked(registrationClient.getDamEarTags),
-  saveAnimal: vi.mocked(registrationClient.saveAnimal)
+  getAnimal: vi.mocked(animalClient.getAnimal),
+  getDamEarTags: vi.mocked(dataClient.getDamEarTags),
+  saveAnimal: vi.mocked(animalClient.saveAnimal)
 }
 
 /**

@@ -1,7 +1,11 @@
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
+import * as submissionClient from '#server/services/be4fe/submission.js'
+import * as dataClient from '#server/services/be4fe/data.js'
 import { tagListController, tagListSubmitController } from './controller.js'
 
-vi.mock('#server/services/registration-client.js')
+vi.mock('#server/services/be4fe/animal.js')
+vi.mock('#server/services/be4fe/submission.js')
+vi.mock('#server/services/be4fe/data.js')
 
 const CPH = '10/081/1234'
 const SUBMISSION_ID = '7ZK-M3Q-A9D'
@@ -26,10 +30,10 @@ const unfinished = {
 }
 
 const mocks = {
-  getSubmission: vi.mocked(registrationClient.getSubmission),
-  getAnimal: vi.mocked(registrationClient.getAnimal),
-  getUnallocatedEarTags: vi.mocked(registrationClient.getUnallocatedEarTags),
-  getDamEarTags: vi.mocked(registrationClient.getDamEarTags)
+  getSubmission: vi.mocked(submissionClient.getSubmission),
+  getAnimal: vi.mocked(animalClient.getAnimal),
+  getUnallocatedEarTags: vi.mocked(dataClient.getUnallocatedEarTags),
+  getDamEarTags: vi.mocked(dataClient.getDamEarTags)
 }
 
 /**

@@ -1,11 +1,11 @@
 import Boom from '@hapi/boom'
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
 import {
   cancelCalfController,
   cancelCalfSubmitController
 } from './controller.js'
 
-vi.mock('#server/services/registration-client.js')
+vi.mock('#server/services/be4fe/animal.js')
 
 const CPH = '10/081/1234'
 const CALF = {
@@ -16,8 +16,8 @@ const CALF = {
 const SUBMISSION_PATH = '/holdings/10/081/1234/cattle/register/7ZK-M3Q-A9D'
 
 const mocks = {
-  getAnimal: vi.mocked(registrationClient.getAnimal),
-  removeAnimal: vi.mocked(registrationClient.removeAnimal)
+  getAnimal: vi.mocked(animalClient.getAnimal),
+  removeAnimal: vi.mocked(animalClient.removeAnimal)
 }
 
 /**
