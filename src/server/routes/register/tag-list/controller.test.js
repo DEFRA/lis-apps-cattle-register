@@ -91,13 +91,11 @@ describe('tagListController', () => {
       const result = await tagListController.handler(request, h)
 
       // Assert
-      expect(mocks.getSubmission).toHaveBeenCalledWith({
-        submissionId: SUBMISSION_ID
-      })
+      expect(mocks.getSubmission).toHaveBeenCalledWith(SUBMISSION)
       expect(mocks.getUnallocatedEarTags).toHaveBeenCalledWith(SUBMISSION)
       expect(mocks.getDamEarTags).toHaveBeenCalledWith({ cph: CPH })
       expect(mocks.getAnimal).toHaveBeenCalledWith({
-        submissionId: SUBMISSION_ID,
+        ...SUBMISSION,
         animalId: 'UK123456301551'
       })
       expect(h.view).toHaveBeenCalledWith(

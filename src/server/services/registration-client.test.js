@@ -152,70 +152,6 @@ describe('CattleRegisterBe4FeClient', () => {
     })
   })
 
-  describe('hasSubmission()', () => {
-    const oneAndZero = { ...submission([]), 'submission-id': 'B0B-111-000' }
-
-    test("it lists the holding's submissions, with the CPH as path segments", async () => {
-      // Arrange
-      const get = service.get.mockResolvedValueOnce(
-        response({ submissions: [submission([])] })
-      )
-
-      // Act
-      const result = await client.hasSubmission({
-        cph: '10/081/1234',
-        submissionId: '7ZK-M3Q-A9D'
-      })
-
-      // Assert
-      expect(get).toHaveBeenCalledWith('submission/10/081/1234')
-      expect(result).toBe(true)
-    })
-
-    // Ids compared as the BE4FE reads them: case aside, O as 0, I and L as 1
-    test.each([
-      ["another holding's id", [submission([])], 'B0B-B0B-B0B', false],
-      ['an id, when the holding has none', [], '7ZK-M3Q-A9D', false],
-      ['an id, when none are listed', undefined, '7ZK-M3Q-A9D', false],
-      ["the holding's id in lower case", [submission([])], '7zk-m3q-a9d', true],
-      ["the holding's id with look-alikes", [oneAndZero], 'b0b-1L1-OoO', true]
-    ])(
-      'it tells whether the holding has the submission, given %s',
-      async (_, submissions, submissionId, expected) => {
-        // Arrange
-        service.get.mockResolvedValueOnce(response({ submissions }))
-
-        // Act
-        const result = await client.hasSubmission({
-          cph: '10/081/1234',
-          submissionId
-        })
-
-        // Assert
-        expect(result).toBe(expected)
-      }
-    )
-
-    test('it passes on a BE4FE failure', async () => {
-      // Arrange
-      service.get.mockRejectedValueOnce(failure(CONFLICT))
-
-      // Act
-      let thrown
-      try {
-        await client.hasSubmission({
-          cph: '10/081/1234',
-          submissionId: '7ZK-M3Q-A9D'
-        })
-      } catch (error) {
-        thrown = error
-      }
-
-      // Assert
-      expect(thrown.statusCode).toBe(CONFLICT)
-    })
-  })
-
   describe('getSubmission()', () => {
     test('it gives the submission with the id and ear tag of each calf, in its order', async () => {
       // Arrange
@@ -229,10 +165,13 @@ describe('CattleRegisterBe4FeClient', () => {
       )
 
       // Act
-      const result = await client.getSubmission({ submissionId: '7ZK-M3Q-A9D' })
+      const result = await client.getSubmission({
+        cph: '10/081/1234',
+        submissionId: '7ZK-M3Q-A9D'
+      })
 
       // Assert
-      expect(get).toHaveBeenCalledWith('submission/7ZK-M3Q-A9D')
+      expect(get).toHaveBeenCalledWith('submission/10/081/1234/7ZK-M3Q-A9D')
       expect(result).toEqual({
         submissionId: '7ZK-M3Q-A9D',
         status: 'DRAFT',
@@ -243,6 +182,20 @@ describe('CattleRegisterBe4FeClient', () => {
       })
     })
 
+    test('it reaches the submission through the encoded holding', async () => {
+      // Arrange
+      const get = service.get.mockResolvedValueOnce(response(submission([])))
+
+      // Act
+      await client.getSubmission({
+        cph: '10/08 1/1234',
+        submissionId: '7ZK-M3Q-A9D'
+      })
+
+      // Assert
+      expect(get).toHaveBeenCalledWith('submission/10/08%201/1234/7ZK-M3Q-A9D')
+    })
+
     test('it answers not found for a submission the BE4FE does not hold', async () => {
       // Arrange
       service.get.mockRejectedValueOnce(failure(NOT_FOUND))
@@ -250,7 +203,10 @@ describe('CattleRegisterBe4FeClient', () => {
       // Act
       let thrown
       try {
-        await client.getSubmission({ submissionId: 'AAA-AAA-AAA' })
+        await client.getSubmission({
+          cph: '10/081/1234',
+          submissionId: 'AAA-AAA-AAA'
+        })
       } catch (error) {
         thrown = error
       }
@@ -273,12 +229,15 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Act
       const result = await client.getAnimal({
+        cph: '10/081/1234',
         submissionId: '7ZK-M3Q-A9D',
         animalId: 'UK123456301550'
       })
 
       // Assert
-      expect(get).toHaveBeenCalledWith('submission/7ZK-M3Q-A9D/UK123456301550')
+      expect(get).toHaveBeenCalledWith(
+        'submission/10/081/1234/7ZK-M3Q-A9D/UK123456301550'
+      )
       expect(result).toEqual(validAnswers)
     })
 
@@ -294,6 +253,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Act
       const result = await client.getAnimal({
+        cph: '10/081/1234',
         submissionId: '7ZK-M3Q-A9D',
         animalId: 'UK123456301550'
       })
@@ -317,6 +277,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Act
       const result = await client.getAnimal({
+        cph: '10/081/1234',
         submissionId: '7ZK-M3Q-A9D',
         animalId: 'UK123456301550'
       })
@@ -325,27 +286,24 @@ describe('CattleRegisterBe4FeClient', () => {
       expect(result).toEqual({ ...validAnswers, sireEarTagNumber: null })
     })
 
-    test('it returns an empty calf, without asking the BE4FE, for a calf with no id yet', async () => {
-      // Act
-      const result = await client.getAnimal({ submissionId: '7ZK-M3Q-A9D' })
-
-      // Assert
-      expect(result).toEqual({})
-      expect(service.get).not.toHaveBeenCalled()
-    })
-
-    test('it returns an empty calf for one the BE4FE does not hold', async () => {
+    test('it rejects with not found for a calf the BE4FE does not hold', async () => {
       // Arrange
       service.get.mockRejectedValueOnce(failure(NOT_FOUND))
 
       // Act
-      const result = await client.getAnimal({
-        submissionId: '7ZK-M3Q-A9D',
-        animalId: 'UK123456301550'
-      })
+      let thrown
+      try {
+        await client.getAnimal({
+          cph: '10/081/1234',
+          submissionId: '7ZK-M3Q-A9D',
+          animalId: 'UK123456301550'
+        })
+      } catch (error) {
+        thrown = error
+      }
 
       // Assert
-      expect(result).toEqual({})
+      expect(thrown.output.statusCode).toBe(NOT_FOUND)
     })
 
     test('it passes on any other failure', async () => {
@@ -356,6 +314,7 @@ describe('CattleRegisterBe4FeClient', () => {
       let thrown
       try {
         await client.getAnimal({
+          cph: '10/081/1234',
           submissionId: '7ZK-M3Q-A9D',
           animalId: 'UK123456301550'
         })
@@ -375,13 +334,14 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Act
       const result = await client.saveAnimal({
+        cph: '10/081/1234',
         submissionId: '7ZK-M3Q-A9D',
         values: validAnswers
       })
 
       // Assert
       expect(service.post).toHaveBeenCalledWith(
-        'submission/7ZK-M3Q-A9D/UK123456301550',
+        'submission/10/081/1234/7ZK-M3Q-A9D/UK123456301550',
         { payload: { status: 'draft', data: validItems } }
       )
       expect(service.delete).not.toHaveBeenCalled()
@@ -394,6 +354,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Act
       const result = await client.saveAnimal({
+        cph: '10/081/1234',
         submissionId: '7ZK-M3Q-A9D',
         animalId: 'UK123456301550',
         values: { ...validAnswers, damType: 'genetic' }
@@ -401,7 +362,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Assert
       expect(service.post).toHaveBeenCalledWith(
-        'submission/7ZK-M3Q-A9D/UK123456301550',
+        'submission/10/081/1234/7ZK-M3Q-A9D/UK123456301550',
         {
           payload: {
             status: 'draft',
@@ -430,6 +391,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Act
       const result = await client.saveAnimal({
+        cph: '10/081/1234',
         submissionId: '7ZK-M3Q-A9D',
         animalId: 'UK123456301551',
         values: validAnswers
@@ -437,8 +399,8 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Assert
       expect(calls).toEqual([
-        'POST submission/7ZK-M3Q-A9D/UK123456301550',
-        'DELETE submission/7ZK-M3Q-A9D/UK123456301551'
+        'POST submission/10/081/1234/7ZK-M3Q-A9D/UK123456301550',
+        'DELETE submission/10/081/1234/7ZK-M3Q-A9D/UK123456301551'
       ])
       expect(result).toEqual({ animalId: 'UK123456301550' })
     })
@@ -451,6 +413,7 @@ describe('CattleRegisterBe4FeClient', () => {
       let thrown
       try {
         await client.saveAnimal({
+          cph: '10/081/1234',
           submissionId: '7ZK-M3Q-A9D',
           animalId: 'UK123456301551',
           values: validAnswers
@@ -470,6 +433,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Act
       await client.saveAnimal({
+        cph: '10/081/1234',
         submissionId: '7ZK-M3Q-A9D',
         animalId: 'UK123456301550',
         values: { earTagNumber: 'UK123456301550', dateOfBirth: '29/2/2028' }
@@ -477,7 +441,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Assert
       expect(service.post).toHaveBeenCalledWith(
-        'submission/7ZK-M3Q-A9D/UK123456301550',
+        'submission/10/081/1234/7ZK-M3Q-A9D/UK123456301550',
         {
           payload: {
             status: 'draft',
@@ -496,6 +460,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Act
       await client.saveAnimal({
+        cph: '10/081/1234',
         submissionId: '7ZK-M3Q-A9D',
         animalId: 'UK123456301550',
         values: { earTagNumber: 'UK123456301550', damType: undefined }
@@ -503,7 +468,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Assert
       expect(service.post).toHaveBeenCalledWith(
-        'submission/7ZK-M3Q-A9D/UK123456301550',
+        'submission/10/081/1234/7ZK-M3Q-A9D/UK123456301550',
         {
           payload: {
             status: 'draft',
@@ -521,6 +486,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Act
       await client.saveAnimal({
+        cph: '10/081/1234',
         submissionId: '7ZK-M3Q-A9D',
         animalId: 'UK123456301550',
         values: { ...validAnswers, sireEarTagNumber: null, sireName: null }
@@ -528,7 +494,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Assert
       expect(service.post).toHaveBeenCalledWith(
-        'submission/7ZK-M3Q-A9D/UK123456301550',
+        'submission/10/081/1234/7ZK-M3Q-A9D/UK123456301550',
         {
           payload: {
             status: 'draft',
@@ -550,13 +516,14 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Act
       await client.removeAnimal({
+        cph: '10/081/1234',
         submissionId: '7ZK-M3Q-A9D',
         animalId: 'UK123456301550'
       })
 
       // Assert
       expect(service.delete).toHaveBeenCalledWith(
-        'submission/7ZK-M3Q-A9D/UK123456301550'
+        'submission/10/081/1234/7ZK-M3Q-A9D/UK123456301550'
       )
     })
 
@@ -566,6 +533,7 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Act
       const result = await client.removeAnimal({
+        cph: '10/081/1234',
         submissionId: '7ZK-M3Q-A9D',
         animalId: 'UK123456301550'
       })
@@ -582,6 +550,7 @@ describe('CattleRegisterBe4FeClient', () => {
       let thrown
       try {
         await client.removeAnimal({
+          cph: '10/081/1234',
           submissionId: '7ZK-M3Q-A9D',
           animalId: 'UK123456301550'
         })
@@ -591,116 +560,6 @@ describe('CattleRegisterBe4FeClient', () => {
 
       // Assert
       expect(thrown.statusCode).toBe(CONFLICT)
-    })
-  })
-
-  describe('getUnallocatedEarTags()', () => {
-    test("it lists the holding's unallocated ear tags that the submission does not use", async () => {
-      // Arrange
-      const get = service.get.mockResolvedValueOnce(
-        response({
-          cph: '10/081/0015',
-          eartags: [{ eartag: 'UK324537100001' }, { eartag: 'UK324537100002' }]
-        })
-      )
-
-      // Act
-      const result = await client.getUnallocatedEarTags({
-        cph: '10/081/0015',
-        submissionId: '7ZK-M3Q-A9D'
-      })
-
-      // Assert
-      expect(get).toHaveBeenCalledWith(
-        'data/eartags/unallocated?cph=10%2F081%2F0015&submission-id=7ZK-M3Q-A9D'
-      )
-      expect(result).toEqual(['UK324537100001', 'UK324537100002'])
-    })
-
-    test('it returns no ear tags when the holding has none', async () => {
-      // Arrange
-      service.get.mockResolvedValueOnce(
-        response({ cph: '10/081/0016', eartags: [] })
-      )
-
-      // Act
-      const result = await client.getUnallocatedEarTags({
-        cph: '10/081/0016',
-        submissionId: '7ZK-M3Q-A9D'
-      })
-
-      // Assert
-      expect(result).toEqual([])
-    })
-
-    test('it answers not found for a submission the BE4FE does not hold', async () => {
-      // Arrange
-      service.get.mockRejectedValueOnce(failure(NOT_FOUND))
-
-      // Act
-      let thrown
-      try {
-        await client.getUnallocatedEarTags({
-          cph: '10/081/0017',
-          submissionId: 'AAA-AAA-AAA'
-        })
-      } catch (error) {
-        thrown = error
-      }
-
-      // Assert
-      expect(thrown.output.statusCode).toBe(NOT_FOUND)
-    })
-  })
-
-  describe('getDamEarTags()', () => {
-    test("it lists the ear tags of the holding's possible dams", async () => {
-      // Arrange
-      const get = service.get.mockResolvedValueOnce(
-        response({
-          cph: '10/081/1234',
-          animals: [
-            { eartag: 'UK200000000007', breed: 'AA', sex: 'F' },
-            { eartag: 'UK200000000008', breed: 'HE', sex: 'F' }
-          ]
-        })
-      )
-
-      // Act
-      const result = await client.getDamEarTags({ cph: '10/081/1234' })
-
-      // Assert
-      expect(get).toHaveBeenCalledWith('data/eartags/dams?cph=10%2F081%2F1234')
-      expect(result).toEqual(['UK200000000007', 'UK200000000008'])
-    })
-
-    test('it returns no ear tags when the holding has no possible dams', async () => {
-      // Arrange
-      service.get.mockResolvedValueOnce(
-        response({ cph: '10/081/1234', animals: [] })
-      )
-
-      // Act
-      const result = await client.getDamEarTags({ cph: '10/081/1234' })
-
-      // Assert
-      expect(result).toEqual([])
-    })
-
-    test('it answers not found for a holding the BE4FE does not know', async () => {
-      // Arrange
-      service.get.mockRejectedValueOnce(failure(NOT_FOUND))
-
-      // Act
-      let thrown
-      try {
-        await client.getDamEarTags({ cph: '10/081/9999' })
-      } catch (error) {
-        thrown = error
-      }
-
-      // Assert
-      expect(thrown.output.statusCode).toBe(NOT_FOUND)
     })
   })
 })

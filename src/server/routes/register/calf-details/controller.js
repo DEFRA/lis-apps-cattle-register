@@ -1,4 +1,3 @@
-import Boom from '@hapi/boom'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
 import * as registrationClient from '#server/services/registration-client.js'
@@ -16,36 +15,32 @@ const TEMPLATE = 'register/calf-details/index'
 const PAGE = 'calf-details'
 
 /**
- * @param {{ submissionId: string, animalId?: string }} calf
- * @returns {Promise<DraftAnimal>} the calf's answers: none for a
- *   calf the submission does not have yet
+ * @param {{ cph: string, submissionId: string, animalId?: string }} calf
+ * @returns {Promise<DraftAnimal>} the calf's answers: none for a new calf
  * @throws {Error} not found, for an id the submission has no calf under
  */
-async function answersOf({ submissionId, animalId }) {
+async function answersOf({ cph, submissionId, animalId }) {
   if (animalId === undefined) {
     return {}
   }
 
-  const animal = await registrationClient.getAnimal({ submissionId, animalId })
-
-  if (!Object.keys(animal).length) {
-    throw Boom.notFound()
-  }
-
-  return animal
+  return registrationClient.getAnimal({ cph, submissionId, animalId })
 }
 
 /**
- * @param {{ submissionId: string, animalId?: string }} calf
+ * @param {{ cph: string, submissionId: string, animalId?: string }} calf
  * @returns {Promise<number | undefined>} how many calves the registration
  *   already has, for a new calf; undefined for one it has
  */
-async function calvesBeforeNew({ submissionId, animalId }) {
+async function calvesBeforeNew({ cph, submissionId, animalId }) {
   if (animalId !== undefined) {
     return undefined
   }
 
-  const { animals } = await registrationClient.getSubmission({ submissionId })
+  const { animals } = await registrationClient.getSubmission({
+    cph,
+    submissionId
+  })
 
   return animals.length
 }
@@ -71,9 +66,9 @@ export const calfDetailsController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
     const [animal, earTagItems, calvesBefore] = await Promise.all([
-      answersOf({ submissionId, animalId }),
+      answersOf({ cph, submissionId, animalId }),
       registrationClient.getUnallocatedEarTags({ cph, submissionId }),
-      calvesBeforeNew({ submissionId, animalId })
+      calvesBeforeNew({ cph, submissionId, animalId })
     ])
 
     if (isFull(calvesBefore)) {
@@ -103,7 +98,7 @@ export const calfDetailsSubmitController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
     const { acknowledgedLateDateOfBirth, ...submitted } = request.payload
-    const calf = { submissionId, animalId }
+    const calf = { cph, submissionId, animalId }
     const values = trimAnswers(formValuesFrom(submitted))
     const [animal, earTagItems, calvesBefore] = await Promise.all([
       answersOf(calf),

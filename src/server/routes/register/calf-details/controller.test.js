@@ -1,3 +1,4 @@
+import Boom from '@hapi/boom'
 import * as registrationClient from '#server/services/registration-client.js'
 import {
   calfDetailsController,
@@ -9,9 +10,9 @@ vi.mock('#server/services/registration-client.js')
 const CPH = '10/081/1234'
 const SUBMISSION_ID = '7ZK-M3Q-A9D'
 const ANIMAL_ID = 'UK123456301550'
-const CALF = { submissionId: SUBMISSION_ID, animalId: ANIMAL_ID }
+const CALF = { cph: CPH, submissionId: SUBMISSION_ID, animalId: ANIMAL_ID }
 // A calf has no id until its details are saved
-const NEW_CALF = { submissionId: SUBMISSION_ID }
+const NEW_CALF = { cph: CPH, submissionId: SUBMISSION_ID }
 const TEMPLATE = 'register/calf-details/index'
 const CALF_PATH = `/holdings/10/081/1234/cattle/register/${SUBMISSION_ID}/calves/${ANIMAL_ID}`
 const today = new Date()
@@ -79,11 +80,11 @@ describe('calfDetailsController', () => {
       )
     })
 
-    test('it answers not found for a calf the submission does not have', async () => {
+    test('it propagates not found from the client for a calf the submission does not have', async () => {
       // Arrange
       const request = { params: { cph: CPH, ...CALF } }
       const { h } = toolkit()
-      mocks.getAnimal.mockResolvedValueOnce({})
+      mocks.getAnimal.mockRejectedValueOnce(Boom.notFound())
 
       // Act
       let error
@@ -120,6 +121,7 @@ describe('calfDetailsController', () => {
 
       // Assert
       expect(mocks.getSubmission).toHaveBeenCalledWith({
+        cph: CPH,
         submissionId: SUBMISSION_ID
       })
       expect(h.view).toHaveBeenCalledWith(
@@ -523,14 +525,14 @@ describe('calfDetailsController', () => {
       )
     })
 
-    test('it answers not found for a calf the submission does not have, saving nothing', async () => {
+    test('it propagates not found from the client for a calf the submission does not have, saving nothing', async () => {
       // Arrange
       const request = {
         params: { cph: CPH, ...CALF },
         payload: { ...validAnswers, acknowledgedLateDateOfBirth: '' }
       }
       const { h } = toolkit()
-      mocks.getAnimal.mockResolvedValueOnce({})
+      mocks.getAnimal.mockRejectedValueOnce(Boom.notFound())
 
       // Act
       let error

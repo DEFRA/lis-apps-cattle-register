@@ -23,7 +23,7 @@ export const surrogateDamController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
     const [animal, earTagItems] = await Promise.all([
-      registrationClient.getAnimal({ submissionId, animalId }),
+      registrationClient.getAnimal({ cph, submissionId, animalId }),
       registrationClient.getDamEarTags({ cph })
     ])
     const owed = registration.pageOwed(PAGE, animal)
@@ -57,7 +57,7 @@ export const surrogateDamSubmitController = {
    */
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
-    const calf = { submissionId, animalId }
+    const calf = { cph, submissionId, animalId }
     const values = trimAnswers({
       geneticDamEarTagNumber: request.payload.geneticDamEarTagNumber,
       surrogateDamEarTagNumber: request.payload.surrogateDamEarTagNumber

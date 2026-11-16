@@ -9,7 +9,7 @@ vi.mock('#server/services/registration-client.js')
 const CPH = '10/081/1234'
 const SUBMISSION_ID = '7ZK-M3Q-A9D'
 const ANIMAL_ID = 'UK123456301550'
-const CALF = { submissionId: SUBMISSION_ID, animalId: ANIMAL_ID }
+const CALF = { cph: CPH, submissionId: SUBMISSION_ID, animalId: ANIMAL_ID }
 const TEMPLATE = 'register/check-calf-details/index'
 const SUBMISSION_PATH = `/holdings/10/081/1234/cattle/register/${SUBMISSION_ID}`
 const CALF_PATH = `${SUBMISSION_PATH}/calves/${ANIMAL_ID}`

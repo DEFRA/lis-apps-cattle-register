@@ -21,6 +21,7 @@ export const sireDetailsController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
     const animal = await registrationClient.getAnimal({
+      cph,
       submissionId,
       animalId
     })
@@ -52,7 +53,7 @@ export const sireDetailsSubmitController = {
    */
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
-    const calf = { submissionId, animalId }
+    const calf = { cph, submissionId, animalId }
     const values = blankAsNull(trimAnswers(formValuesFrom(request.payload)))
     const animal = await registrationClient.getAnimal(calf)
     const owed = registration.pageOwed(PAGE, animal)

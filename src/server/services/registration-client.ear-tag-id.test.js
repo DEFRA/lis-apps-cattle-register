@@ -30,13 +30,14 @@ describe('CattleRegisterBe4FeClient calf id', () => {
 
     // Act
     const result = await client.saveAnimal({
+      cph: '10/081/1234',
       submissionId: '7ZK-M3Q-A9D',
       values: spacedAnswers
     })
 
     // Assert
     expect(service.post).toHaveBeenCalledWith(
-      'submission/7ZK-M3Q-A9D/UK123456301550',
+      'submission/10/081/1234/7ZK-M3Q-A9D/UK123456301550',
       {
         payload: expect.objectContaining({
           data: expect.arrayContaining([
@@ -54,6 +55,7 @@ describe('CattleRegisterBe4FeClient calf id', () => {
 
     // Act
     const result = await client.saveAnimal({
+      cph: '10/081/1234',
       submissionId: '7ZK-M3Q-A9D',
       animalId: 'UK123456301550',
       values: spacedAnswers
@@ -61,7 +63,7 @@ describe('CattleRegisterBe4FeClient calf id', () => {
 
     // Assert
     expect(service.post).toHaveBeenCalledWith(
-      'submission/7ZK-M3Q-A9D/UK123456301550',
+      'submission/10/081/1234/7ZK-M3Q-A9D/UK123456301550',
       expect.anything()
     )
     expect(service.delete).not.toHaveBeenCalled()

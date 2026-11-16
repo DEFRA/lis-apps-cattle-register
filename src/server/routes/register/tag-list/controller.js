@@ -28,13 +28,13 @@ const SUBMIT_PAGE = 'submit'
  */
 async function listCalves({ cph, submissionId }) {
   const [submission, unallocatedEarTags, damEarTags] = await Promise.all([
-    registrationClient.getSubmission({ submissionId }),
+    registrationClient.getSubmission({ cph, submissionId }),
     registrationClient.getUnallocatedEarTags({ cph, submissionId }),
     registrationClient.getDamEarTags({ cph })
   ])
   const animals = await Promise.all(
     submission.animals.map(({ animalId }) =>
-      registrationClient.getAnimal({ submissionId, animalId })
+      registrationClient.getAnimal({ cph, submissionId, animalId })
     )
   )
 

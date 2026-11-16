@@ -3,11 +3,7 @@ import {
   hasPermission
 } from '@defra/lis-hubs-infra-access/authorization'
 
-import * as registrationClient from '#server/services/registration-client.js'
-import {
-  demandRegisterAccess,
-  demandSubmissionOfHolding
-} from './holding-access.js'
+import { demandRegisterAccess } from './holding-access.js'
 
 vi.mock(
   '@defra/lis-hubs-infra-access/authorization',
@@ -16,21 +12,19 @@ vi.mock(
     hasPermission: vi.fn()
   })
 )
-vi.mock('#server/services/registration-client.js')
 
 const NOT_FOUND = 404
 
 const mocks = {
-  hasPermission: vi.mocked(hasPermission),
-  hasSubmission: vi.mocked(registrationClient.hasSubmission)
+  hasPermission: vi.mocked(hasPermission)
 }
 
 const user = { id: 'keeper' }
 const h = { continue: Symbol('continue') }
 
 /**
- * @param {{ cph: string, submissionId?: string }} params
- * @returns {{ params: { cph: string, submissionId?: string }, auth: { credentials: { user: { id: string } } } }}
+ * @param {{ cph: string }} params
+ * @returns {{ params: { cph: string }, auth: { credentials: { user: { id: string } } } }}
  *   a request for a register page of the holding
  */
 function requestFor(params) {
@@ -82,57 +76,5 @@ describe('holding access', () => {
       permission: PERMISSIONS.cattleRegisterAdmin,
       cph: '10/081/1234'
     })
-  })
-
-  test("demandSubmissionOfHolding lets a request for one of the holding's submissions continue", async () => {
-    // Arrange
-    mocks.hasSubmission.mockResolvedValueOnce(true)
-
-    // Act
-    const result = await demandSubmissionOfHolding(
-      requestFor({ cph: '10/081/1234', submissionId: '7ZK-M3Q-A9D' }),
-      h
-    )
-
-    // Assert
-    expect(result).toBe(h.continue)
-    expect(mocks.hasSubmission).toHaveBeenCalledWith({
-      cph: '10/081/1234',
-      submissionId: '7ZK-M3Q-A9D'
-    })
-  })
-
-  test("demandSubmissionOfHolding answers not found for another holding's, or an unknown, submission", async () => {
-    // Arrange
-    mocks.hasSubmission.mockResolvedValueOnce(false)
-
-    // Act
-    const result = await demandSubmissionOfHolding(
-      requestFor({ cph: '10/081/1234', submissionId: 'B0B-B0B-B0B' }),
-      h
-    )
-
-    // Assert
-    expect(result.output.statusCode).toBe(NOT_FOUND)
-  })
-
-  test('demandSubmissionOfHolding rethrows a BE4FE failure', async () => {
-    // Arrange
-    const failure = new Error('503 - Service unavailable')
-    mocks.hasSubmission.mockRejectedValueOnce(failure)
-
-    // Act
-    let error
-    try {
-      await demandSubmissionOfHolding(
-        requestFor({ cph: '10/081/1234', submissionId: '7ZK-M3Q-A9D' }),
-        h
-      )
-    } catch (e) {
-      error = e
-    }
-
-    // Assert
-    expect(error).toBe(failure)
   })
 })

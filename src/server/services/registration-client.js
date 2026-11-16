@@ -30,6 +30,7 @@ import { DATE_FORMAT } from '#server/common/helpers/calendar-date.js'
 
 /**
  * @typedef {object} CalfKey
+ * @property {string} cph - the holding, as 12/345/6789
  * @property {string} submissionId - the BE4FE's submission id
  * @property {string} animalId - the calf's id in the submission: its ear tag
  *   number
@@ -68,6 +69,7 @@ import { DATE_FORMAT } from '#server/common/helpers/calendar-date.js'
 const localPort = 8089
 
 const NOT_FOUND = 404
+const BAD_REQUEST = 400
 // Completing a calf is not built yet: every save leaves it a draft
 const DRAFT_STATUS = 'draft'
 const STRING_TYPE = 'STRING'
@@ -166,26 +168,50 @@ function fromDataItems(data) {
 
 /**
  * @param {string} cph - as 12/345/6789
+ * @returns {string} the holding's CPH, each part encoded for a path
+ */
+function encodeCph(cph) {
+  return cph.split('/').map(encodeURIComponent).join('/')
+}
+
+/**
+ * @param {string} cph - as 12/345/6789
  * @returns {string} the path of the holding's submissions
  */
 function holdingPath(cph) {
-  return `submission/${cph.split('/').map(encodeURIComponent).join('/')}`
+  return `submission/${encodeCph(cph)}`
 }
 
 /**
- * @param {string} submissionId
- * @returns {string} the path of the submission
+ * @param {{ cph: string, submissionId: string }} submission
+ * @returns {string} the path of the submission, under its holding
  */
-function submissionPath(submissionId) {
-  return `submission/${encodeURIComponent(submissionId)}`
+function submissionPath({ cph, submissionId }) {
+  return `${holdingPath(cph)}/${encodeURIComponent(submissionId)}`
 }
 
 /**
- * @param {CalfKey} calf
+ * @param {{ cph: string, submissionId: string, animalId: string }} calf
  * @returns {string} the path of the calf in its submission
  */
-function animalPath({ submissionId, animalId }) {
-  return `${submissionPath(submissionId)}/${encodeURIComponent(animalId)}`
+function animalPath({ cph, submissionId, animalId }) {
+  return `${submissionPath({ cph, submissionId })}/${encodeURIComponent(animalId)}`
+}
+
+/**
+ * @param {string} cph - as 12/345/6789
+ * @returns {string} the path of what the BE4FE knows of the holding
+ */
+function holdingDataPath(cph) {
+  return `data/${encodeCph(cph)}`
+}
+
+/**
+ * @param {string} cph - as 12/345/6789
+ * @returns {string} the path of the holding's ear tags
+ */
+function earTagsPath(cph) {
+  return `${holdingDataPath(cph)}/ear-tags`
 }
 
 /**
@@ -216,47 +242,16 @@ export async function startRegistration({ cph }) {
 }
 
 /**
- * A submission id as the BE4FE reads one it is given (SubmissionHashId
- * .Normalise): in upper case, with O read as 0 and I and L as 1.
- * @param {string} submissionId
- * @returns {string} the id as the BE4FE stores it
- */
-function normaliseSubmissionId(submissionId) {
-  return submissionId
-    .trim()
-    .toUpperCase()
-    .replaceAll('O', '0')
-    .replaceAll(/[IL]/g, '1')
-}
-
-/**
- * The BE4FE finds a submission by its id alone, whatever holding asks, so
- * this is what ties a submission to the holding it is reached through.
  * @param {{ cph: string, submissionId: string }} submission
- * @returns {Promise<boolean>} whether the submission, a draft or submitted,
- *   is one of the holding's; ids are compared as the BE4FE reads them
- */
-export async function hasSubmission({ cph, submissionId }) {
-  /** @type {{ payload: { submissions?: SubmissionResponse[] } }} */
-  const { payload } = await be4fe.get(holdingPath(cph))
-  const wanted = normaliseSubmissionId(submissionId)
-
-  return (payload.submissions ?? []).some(
-    (submission) =>
-      normaliseSubmissionId(submission['submission-id']) === wanted
-  )
-}
-
-/**
- * @param {{ submissionId: string }} submission
  * @returns {Promise<{ submissionId: string, status: string, animals: { animalId: string, earTagNumber: string }[] }>}
  *   the submission and its calves, in the order they were last saved; a
  *   calf's ear tag number is its id
  * @throws {Boom.Boom} not found, for a submission the BE4FE does not hold
+ *   under the holding
  */
-export async function getSubmission({ submissionId }) {
+export async function getSubmission({ cph, submissionId }) {
   /** @type {{ payload: SubmissionResponse }} */
-  const { payload } = await be4fe.get(submissionPath(submissionId))
+  const { payload } = await be4fe.get(submissionPath({ cph, submissionId }))
 
   return {
     submissionId: payload['submission-id'],
@@ -269,29 +264,18 @@ export async function getSubmission({ submissionId }) {
 }
 
 /**
- * A calf with no id yet has nothing saved, so the BE4FE is not asked.
- * @param {{ submissionId: string, animalId?: string }} calf
- * @returns {Promise<DraftAnimal>} the calf's answers so far: none for a calf
- *   with no id, or one the BE4FE does not hold (as it answers for a
- *   submission it does not hold, too)
+ * @param {CalfKey} calf
+ * @returns {Promise<DraftAnimal>} the calf's answers so far
+ * @throws {Boom.Boom} not found, for a calf the BE4FE does not hold, as it
+ *   answers for a submission it does not hold under the holding, too
  */
-export async function getAnimal({ submissionId, animalId }) {
-  if (animalId === undefined) {
-    return {}
-  }
+export async function getAnimal({ cph, submissionId, animalId }) {
+  /** @type {{ payload: AnimalResponse }} */
+  const { payload } = await be4fe.get(
+    animalPath({ cph, submissionId, animalId })
+  )
 
-  try {
-    /** @type {{ payload: AnimalResponse }} */
-    const { payload } = await be4fe.get(animalPath({ submissionId, animalId }))
-
-    return fromDataItems(payload.data ?? [])
-  } catch (error) {
-    if (isNotFound(error)) {
-      return {}
-    }
-
-    throw error
-  }
+  return fromDataItems(payload.data ?? [])
 }
 
 /**
@@ -301,23 +285,23 @@ export async function getAnimal({ submissionId, animalId }) {
  * another is saved under that one, then taken out from under its old id.
  * The id is the ear tag number without its spaces, which a URL cannot hold;
  * the answer itself is saved as it is given.
- * @param {{ submissionId: string, animalId?: string, values: DraftAnimal }} calf
+ * @param {{ cph: string, submissionId: string, animalId?: string, values: DraftAnimal }} calf
  *   animalId is the calf's id as it is now; absent for a new calf
  * @returns {Promise<{ animalId: string }>} the calf's id once saved
  */
-export async function saveAnimal({ submissionId, animalId, values }) {
+export async function saveAnimal({ cph, submissionId, animalId, values }) {
   const savedId = values.earTagNumber?.replaceAll(/\s/g, '') ?? animalId
   /** @type {AnimalRequest} */
   const body = { status: DRAFT_STATUS, data: toDataItems(values) }
 
-  await be4fe.post(animalPath({ submissionId, animalId: savedId }), {
+  await be4fe.post(animalPath({ cph, submissionId, animalId: savedId }), {
     payload: body
   })
 
   // One after the other: the BE4FE turns away a second write to a
   // submission that overlaps the first
   if (animalId !== undefined && animalId !== savedId) {
-    await removeAnimal({ submissionId, animalId })
+    await removeAnimal({ cph, submissionId, animalId })
   }
 
   return { animalId: savedId }
@@ -326,13 +310,13 @@ export async function saveAnimal({ submissionId, animalId, values }) {
 /**
  * Takes the calf out of the submission; the other calves keep their ids.
  * A calf already gone is left gone. The BE4FE answers not found for a
- * submission it does not hold just as for a calf, so that is not told apart.
+ * submission it does not hold under the holding just as for a calf, so that is not told apart.
  * @param {CalfKey} calf
  * @returns {Promise<void>}
  */
-export async function removeAnimal({ submissionId, animalId }) {
+export async function removeAnimal({ cph, submissionId, animalId }) {
   try {
-    await be4fe.delete(animalPath({ submissionId, animalId }))
+    await be4fe.delete(animalPath({ cph, submissionId, animalId }))
   } catch (error) {
     if (!isNotFound(error)) {
       throw error
@@ -346,9 +330,7 @@ export async function removeAnimal({ submissionId, animalId }) {
  * @returns {Promise<string[]>}
  */
 export async function getDamEarTags({ cph }) {
-  const { payload } = await be4fe.get(
-    `data/eartags/dams?cph=${encodeURIComponent(cph)}`
-  )
+  const { payload } = await be4fe.get(`${earTagsPath(cph)}/dams`)
   return (payload.animals ?? []).map(({ eartag }) => eartag)
 }
 
@@ -357,11 +339,23 @@ export async function getDamEarTags({ cph }) {
  * used by another calf of the submission.
  * @param {{ cph: string, submissionId: string }} submission
  * @returns {Promise<string[]>}
+ * @throws {Boom.Boom} not found, for a submission the BE4FE does not hold
+ *   under the holding
  */
 export async function getUnallocatedEarTags({ cph, submissionId }) {
-  const { payload } = await be4fe.get(
-    `data/eartags/unallocated?cph=${encodeURIComponent(cph)}&submission-id=${encodeURIComponent(submissionId)}`
-  )
+  try {
+    const { payload } = await be4fe.get(
+      `${earTagsPath(cph)}/unallocated?submission-id=${encodeURIComponent(submissionId)}`
+    )
 
-  return (payload.eartags ?? []).map(({ eartag }) => eartag)
+    return (payload.eartags ?? []).map(({ eartag }) => eartag)
+  } catch (error) {
+    // Here the BE4FE answers bad request, not not found, for a submission
+    // that is another holding's. Either way the page asked for is not one.
+    if (error.statusCode === BAD_REQUEST) {
+      throw Boom.notFound()
+    }
+
+    throw error
+  }
 }

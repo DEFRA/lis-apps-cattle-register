@@ -19,6 +19,7 @@ export const checkCalfDetailsController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
     const animal = await registrationClient.getAnimal({
+      cph,
       submissionId,
       animalId
     })
@@ -43,7 +44,7 @@ export const checkCalfDetailsSubmitController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
     const [animal, unallocatedEarTags, damEarTags] = await Promise.all([
-      registrationClient.getAnimal({ submissionId, animalId }),
+      registrationClient.getAnimal({ cph, submissionId, animalId }),
       registrationClient.getUnallocatedEarTags({ cph, submissionId }),
       registrationClient.getDamEarTags({ cph })
     ])

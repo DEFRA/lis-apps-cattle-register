@@ -1,8 +1,5 @@
 import { register } from './index.js'
-import {
-  demandRegisterAccess,
-  demandSubmissionOfHolding
-} from './holding-access.js'
+import { demandRegisterAccess } from './holding-access.js'
 import { redirectOnSaveConflict } from './save-conflict.js'
 import { MAX_FIELD_LENGTH } from './form-limits.js'
 
@@ -51,7 +48,7 @@ const validParams = {
 }
 
 describe('register routes', () => {
-  test("every route about a submission demands register access, then that the submission is the holding's", () => {
+  test('every route about a submission demands register access and nothing else', () => {
     // Arrange
     const routes = registeredRoutes().filter(({ path }) =>
       path.includes('{submissionId}')
@@ -68,7 +65,7 @@ describe('register routes', () => {
     expect(pres).toEqual(
       routes.map(({ method, path }) => [
         `${method} ${path}`,
-        [demandRegisterAccess, demandSubmissionOfHolding]
+        [demandRegisterAccess]
       ])
     )
   })

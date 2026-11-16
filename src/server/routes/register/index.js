@@ -3,10 +3,7 @@ import Joi from 'joi'
 
 import { REGISTER_ROUTE } from './paths.js'
 import { MAX_FIELD_LENGTH } from './form-limits.js'
-import {
-  demandRegisterAccess,
-  demandSubmissionOfHolding
-} from './holding-access.js'
+import { demandRegisterAccess } from './holding-access.js'
 import { redirectOnSaveConflict } from './save-conflict.js'
 import { startRegistrationController } from './start/controller.js'
 import {
@@ -42,7 +39,7 @@ import {
   tagListSubmitController
 } from './tag-list/controller.js'
 
-/** @import { Server, ServerRoute } from '@hapi/hapi' */
+/** @import { Server } from '@hapi/hapi' */
 
 const cph = Joi.string()
   .pattern(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -327,28 +324,6 @@ const routes = [
   }
 ]
 
-/**
- * The BE4FE finds a submission by its id alone, so every route about a
- * submission also proves, after the user's access to the holding, that the
- * submission is the holding's. Added here so that no such route goes without.
- * @param {ServerRoute} route
- * @returns {ServerRoute} the route, its pres ending with that proof if its
- *   path has a submission id
- */
-function withSubmissionOfHolding(route) {
-  if (!route.path.includes('{submissionId}')) {
-    return route
-  }
-
-  return {
-    ...route,
-    options: {
-      ...route.options,
-      pre: [...route.options.pre, { method: demandSubmissionOfHolding }]
-    }
-  }
-}
-
 export const register = {
   plugin: {
     name: 'register',
@@ -358,7 +333,7 @@ export const register = {
      * @param {Server} server - the Hapi server
      */
     register(server) {
-      server.route(routes.map(withSubmissionOfHolding))
+      server.route(routes)
       // Its own routes only, and before the server's error pages
       server.ext('onPreResponse', redirectOnSaveConflict, {
         sandbox: 'plugin'
