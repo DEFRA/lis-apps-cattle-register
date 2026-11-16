@@ -456,5 +456,44 @@ describe('CattleRegisterBe4FeAnimalClient', () => {
       expect(service.delete).not.toHaveBeenCalled()
       expect(result).toEqual({ animalId: 'UK123456301550' })
     })
+
+    test.each([[null], [undefined], ['']])(
+      'it saves a calf whose answers have ear tag number %j under the id it has',
+      async (earTagNumber) => {
+        // Arrange
+        service.post.mockResolvedValueOnce({ res: { statusCode: 200 } })
+
+        // Act
+        const result = await client.saveAnimal({
+          cph: '10/081/1234',
+          submissionId: '7ZK-M3Q-A9D',
+          animalId: 'UK123456301550',
+          values: { ...spacedAnswers, earTagNumber }
+        })
+
+        // Assert
+        expect(service.post).toHaveBeenCalledWith(
+          'submission/10/081/1234/7ZK-M3Q-A9D/UK123456301550',
+          expect.anything()
+        )
+        expect(service.delete).not.toHaveBeenCalled()
+        expect(result).toEqual({ animalId: 'UK123456301550' })
+      }
+    )
+
+    test('it saves a calf whose ear tag number is in lower case under the number in capitals', async () => {
+      // Arrange
+      service.post.mockResolvedValueOnce({ res: { statusCode: 200 } })
+
+      // Act
+      const result = await client.saveAnimal({
+        cph: '10/081/1234',
+        submissionId: '7ZK-M3Q-A9D',
+        values: { ...spacedAnswers, earTagNumber: 'uk 123456 301550' }
+      })
+
+      // Assert
+      expect(result).toEqual({ animalId: 'UK123456301550' })
+    })
   })
 })

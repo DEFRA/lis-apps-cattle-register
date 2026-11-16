@@ -9,6 +9,7 @@ import {
   DATE_FORMAT,
   ISO_DATE_FORMAT
 } from '#server/common/helpers/calendar-date.js'
+import { plainEarTag } from '#server/common/helpers/ear-tag.js'
 import { animalPath, be4fe, isNotFound } from '#server/services/be4fe/client.js'
 
 /** @import Boom from '@hapi/boom' */
@@ -135,7 +136,9 @@ export async function getAnimal({ cph, submissionId, animalId }) {
  * @returns {Promise<{ animalId: string }>} the calf's id once saved
  */
 export async function saveAnimal({ cph, submissionId, animalId, values }) {
-  const savedId = values.earTagNumber?.replaceAll(/\s/g, '') ?? animalId
+  const savedId = values.earTagNumber
+    ? plainEarTag(values.earTagNumber)
+    : animalId
   /** @type {AnimalRequest} */
   const body = { status: DRAFT_STATUS, data: toDataItems(values) }
 
