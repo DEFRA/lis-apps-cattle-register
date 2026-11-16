@@ -58,7 +58,7 @@ function damRows(animal, changeHref) {
     return [
       row(
         'Genetic dam ear tag number',
-        formatEarTag(animal.geneticDamEarTagNumber),
+        formatEarTag(animal.geneticDamEarTagNumber) || NOT_PROVIDED,
         { href, visuallyHiddenText: 'genetic dam ear tag number' }
       ),
       row(

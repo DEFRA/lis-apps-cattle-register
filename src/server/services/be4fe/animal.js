@@ -21,7 +21,7 @@ import { animalPath, be4fe, isNotFound } from '#server/services/be4fe/client.js'
  * @property {string} [sex]
  * @property {string} [breed]
  * @property {string} [damType]
- * @property {string} [geneticDamEarTagNumber]
+ * @property {string | null} [geneticDamEarTagNumber]
  * @property {string} [surrogateDamEarTagNumber]
  * @property {string | null} [sireEarTagNumber]
  * @property {string | null} [sireName]

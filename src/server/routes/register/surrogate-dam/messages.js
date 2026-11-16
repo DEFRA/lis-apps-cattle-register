@@ -2,12 +2,11 @@
 // one of the holding's dams shows the field's error too, until design words
 // that case.
 const MESSAGES = {
-  geneticDamEarTagNumber: {
-    required: 'Enter the ear tag number of the genetic dam'
-  },
   surrogateDamEarTagNumber: {
     required: 'Enter the ear tag number of the surrogate dam',
-    notOnHolding: 'Enter the ear tag number of the surrogate dam'
+    notOnHolding: 'Enter the ear tag number of the surrogate dam',
+    sameAsGeneticDam:
+      'The genetic dam and surrogate dam ear tag numbers cannot be the same'
   }
 }
 

@@ -21,11 +21,27 @@ describe('the genetic and surrogate dam rules', () => {
     expect(result).toEqual({ errors: [], warnings: [] })
   })
 
-  test('it requires both ear tag numbers, in the order of the page', () => {
+  test('it requires the surrogate dam alone when both are left out', () => {
     // Arrange
     const answers = {
-      geneticDamEarTagNumber: '',
+      geneticDamEarTagNumber: null,
       surrogateDamEarTagNumber: '  '
+    }
+
+    // Act
+    const result = registration.validateStep('surrogate-dam', {}, answers, {})
+
+    // Assert
+    expect(result.errors).toEqual([
+      { field: 'surrogateDamEarTagNumber', code: 'required' }
+    ])
+  })
+
+  test('it accepts a surrogate with the genetic dam left out', () => {
+    // Arrange
+    const answers = {
+      geneticDamEarTagNumber: null,
+      surrogateDamEarTagNumber: 'UK200000000007'
     }
 
     // Act
@@ -34,25 +50,7 @@ describe('the genetic and surrogate dam rules', () => {
     })
 
     // Assert
-    expect(result.errors).toEqual([
-      { field: 'geneticDamEarTagNumber', code: 'required' },
-      { field: 'surrogateDamEarTagNumber', code: 'required' }
-    ])
-  })
-
-  test('it requires the genetic dam alone when the surrogate is given', () => {
-    // Arrange
-    const answers = { surrogateDamEarTagNumber: 'UK200000000007' }
-
-    // Act
-    const result = registration.validateStep('surrogate-dam', {}, answers, {
-      damEarTags: DAMS
-    })
-
-    // Assert
-    expect(result.errors).toEqual([
-      { field: 'geneticDamEarTagNumber', code: 'required' }
-    ])
+    expect(result.errors).toEqual([])
   })
 
   test("it rejects a surrogate that is not one of the holding's dams", () => {
@@ -71,5 +69,42 @@ describe('the genetic and surrogate dam rules', () => {
     expect(result.errors).toEqual([
       { field: 'surrogateDamEarTagNumber', code: 'notOnHolding' }
     ])
+  })
+
+  test.each([
+    ['the same number', 'UK200000000007'],
+    ['the same number spaced and in lower case', 'uk 200000 000007']
+  ])('it rejects %s in both fields', (_description, surrogate) => {
+    // Arrange
+    const answers = {
+      geneticDamEarTagNumber: 'UK200000000007',
+      surrogateDamEarTagNumber: surrogate
+    }
+
+    // Act
+    const result = registration.validateStep('surrogate-dam', {}, answers, {
+      damEarTags: DAMS
+    })
+
+    // Assert
+    expect(result.errors).toEqual([
+      { field: 'surrogateDamEarTagNumber', code: 'sameAsGeneticDam' }
+    ])
+  })
+
+  test('it accepts a different valid pair', () => {
+    // Arrange
+    const answers = {
+      geneticDamEarTagNumber: 'UK200000000007',
+      surrogateDamEarTagNumber: 'UK200000000008'
+    }
+
+    // Act
+    const result = registration.validateStep('surrogate-dam', {}, answers, {
+      damEarTags: DAMS
+    })
+
+    // Assert
+    expect(result).toEqual({ errors: [], warnings: [] })
   })
 })

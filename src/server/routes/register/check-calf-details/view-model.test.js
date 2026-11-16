@@ -135,6 +135,30 @@ describe('buildViewModel()', () => {
     ])
   })
 
+  test('it shows a genetic dam left out of a surrogate birth as not provided', () => {
+    // Arrange
+    const options = {
+      request,
+      animal: {
+        ...animal,
+        damType: 'surrogate',
+        geneticDamEarTagNumber: null,
+        surrogateDamEarTagNumber: 'UK200000000007'
+      }
+    }
+
+    // Act
+    const result = buildViewModel(options)
+
+    // Assert
+    expect(summaryOf(result.rows)[5]).toEqual([
+      'Genetic dam ear tag number',
+      'Not provided',
+      `${CALF_PATH}/surrogate-dam?return=check`,
+      'genetic dam ear tag number'
+    ])
+  })
+
   test('it shows sire answers left empty as not provided', () => {
     // Arrange
     const options = {

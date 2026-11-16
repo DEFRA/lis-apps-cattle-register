@@ -2,17 +2,30 @@
  * The rules for the genetic and surrogate dam step. A calf born via a
  * surrogate dam was born on the holding to the surrogate, so the surrogate is
  * one of the holding's animals that can be a dam. The genetic dam may be
- * anywhere, so any ear tag number is taken for her.
+ * anywhere, so anything is taken for her ear tag number, and it may be left
+ * out. One cow is not both dams.
  */
 import Joi from 'joi'
 
-import { answer, REQUIRED } from './answer.js'
+import { plainEarTag } from '#server/common/helpers/ear-tag.js'
+
+import { answer, optionalAnswer, REQUIRED } from './answer.js'
 
 /**
  * @typedef {object} SurrogateDamAnswers
- * @property {string} [geneticDamEarTagNumber]
+ * @property {string | null} [geneticDamEarTagNumber]
  * @property {string} [surrogateDamEarTagNumber]
  */
+
+/**
+ * @param {string} one - an ear tag number as typed
+ * @param {string} other - another
+ * @returns {boolean} true when they are the same number, however each was
+ *   spaced and cased
+ */
+function isSameEarTag(one, other) {
+  return plainEarTag(one) === plainEarTag(other)
+}
 
 /**
  * The genetic and surrogate dams, in the order of the fields on the page.
@@ -21,8 +34,17 @@ import { answer, REQUIRED } from './answer.js'
  * the holding's possible dams).
  */
 export const surrogateDamSchema = Joi.object({
-  geneticDamEarTagNumber: answer(),
+  geneticDamEarTagNumber: optionalAnswer(),
+  // The genetic dam is not her own surrogate, whatever else she is
   surrogateDamEarTagNumber: answer()
-    .valid(Joi.in('$damEarTags'))
-    .messages({ 'any.only': 'notOnHolding' })
+    .custom((value, helpers) => {
+      const [answers] = helpers.state.ancestors
+      if (isSameEarTag(value, answers.geneticDamEarTagNumber ?? '')) {
+        return helpers.error('any.invalid')
+      }
+      return helpers.prefs.context.damEarTags.includes(value)
+        ? value
+        : helpers.error('any.only')
+    })
+    .messages({ 'any.only': 'notOnHolding', 'any.invalid': 'sameAsGeneticDam' })
 }).messages({ 'any.required': REQUIRED })

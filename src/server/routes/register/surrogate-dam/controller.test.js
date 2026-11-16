@@ -15,10 +15,6 @@ const CALF = { cph: CPH, submissionId: SUBMISSION_ID, animalId: ANIMAL_ID }
 const TEMPLATE = 'register/surrogate-dam/index'
 const CALF_PATH = `/holdings/10/081/1234/cattle/register/${SUBMISSION_ID}/calves/${ANIMAL_ID}`
 const DAMS = ['UK200000000007', 'UK200000000008']
-const GENETIC_ERROR = {
-  text: 'Enter the ear tag number of the genetic dam',
-  href: '#geneticDamEarTagNumber'
-}
 const SURROGATE_ERROR = {
   text: 'Enter the ear tag number of the surrogate dam',
   href: '#surrogateDamEarTagNumber'
@@ -179,12 +175,39 @@ describe('surrogateDamController', () => {
       expect(result).toBe('redirected')
     })
 
+    test('it saves a genetic dam left out as null', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: {
+          geneticDamEarTagNumber: '  ',
+          surrogateDamEarTagNumber: 'UK200000000007'
+        }
+      }
+      const { h } = toolkit()
+
+      // Act
+      const result = await surrogateDamSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.saveAnimal).toHaveBeenCalledWith({
+        ...CALF,
+        values: {
+          ...animal,
+          geneticDamEarTagNumber: null,
+          surrogateDamEarTagNumber: 'UK200000000007'
+        }
+      })
+      expect(h.redirect).toHaveBeenCalledWith(`${CALF_PATH}/sire-details`)
+      expect(result).toBe('redirected')
+    })
+
     test.each([
       [
         'both ear tag numbers blank',
         { geneticDamEarTagNumber: '', surrogateDamEarTagNumber: '  ' },
         { geneticDamEarTagNumber: '', surrogateDamEarTagNumber: '' },
-        [GENETIC_ERROR, SURROGATE_ERROR]
+        [SURROGATE_ERROR]
       ],
       [
         "a surrogate dam that is not one of the holding's dams",

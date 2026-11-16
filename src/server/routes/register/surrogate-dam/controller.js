@@ -4,7 +4,7 @@ import * as animalClient from '#server/services/be4fe/animal.js'
 import * as dataClient from '#server/services/be4fe/data.js'
 import { pathAfterSave } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
-import { trimAnswers } from '@defra/lis-infra-ui-services/journey'
+import { blankAsNull, trimAnswers } from '@defra/lis-infra-ui-services/journey'
 import { registration } from '#server/journeys/register/registration.js'
 import { buildViewModel } from './view-model.js'
 
@@ -59,10 +59,17 @@ export const surrogateDamSubmitController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
     const calf = { cph, submissionId, animalId }
-    const values = trimAnswers({
-      geneticDamEarTagNumber: request.payload.geneticDamEarTagNumber,
-      surrogateDamEarTagNumber: request.payload.surrogateDamEarTagNumber
-    })
+    // The genetic dam may be left out, and is then held as null
+    const values = {
+      ...blankAsNull(
+        trimAnswers({
+          geneticDamEarTagNumber: request.payload.geneticDamEarTagNumber
+        })
+      ),
+      ...trimAnswers({
+        surrogateDamEarTagNumber: request.payload.surrogateDamEarTagNumber
+      })
+    }
     const [animal, earTagItems] = await Promise.all([
       animalClient.getAnimal(calf),
       dataClient.getDamEarTags({ cph })
@@ -84,7 +91,10 @@ export const surrogateDamSubmitController = {
           buildViewModel({
             request,
             calfEarTagNumber: animal.earTagNumber,
-            values,
+            values: {
+              ...values,
+              geneticDamEarTagNumber: values.geneticDamEarTagNumber ?? ''
+            },
             earTagItems,
             errors
           })
