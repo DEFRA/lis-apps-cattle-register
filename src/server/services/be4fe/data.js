@@ -1,8 +1,27 @@
 import Boom from '@hapi/boom'
 
-import { be4fe, earTagsPath } from '#server/services/be4fe/client.js'
+import { plainEarTag } from '#server/common/helpers/ear-tag.js'
+import {
+  be4fe,
+  earTagsPath,
+  holdingDataPath,
+  isNotFound
+} from '#server/services/be4fe/client.js'
 
+/**
+ * @typedef {object} Dam - one of the holding's animals, as a dam
+ * @property {string} earTagNumber
+ */
+
+/**
+ * @typedef {{ eartag: string, sex?: string | null }} DamResponse
+ *   an animal of the holding as the BE4FE answers it
+ */
+
+const MALE = 'male'
 const BAD_REQUEST = 400
+// An animal's id: its ear tag number in capitals with no spaces
+const EAR_TAG_ID = /^[0-9A-Z]{1,20}$/
 
 /**
  * The ear tags of the holding's animals that can be a dam.
@@ -12,6 +31,41 @@ const BAD_REQUEST = 400
 export async function getDamEarTags({ cph }) {
   const { payload } = await be4fe.get(`${earTagsPath(cph)}/dams`)
   return (payload.animals ?? []).map(({ eartag }) => eartag)
+}
+
+/**
+ * One of the holding's animals, as a dam. The BE4FE knows an animal by its
+ * ear tag number without spaces, whatever its case.
+ * @param {{ cph: string, earTagNumber: string }} animal
+ * @returns {Promise<Dam | undefined>} undefined for an ear tag number that
+ *   is not one of the holding's animals, or is a male's
+ */
+export async function getDam({ cph, earTagNumber }) {
+  const id = plainEarTag(earTagNumber)
+
+  // Nothing else is an animal's id, nor is put in the path of a request
+  if (!EAR_TAG_ID.test(id)) {
+    return undefined
+  }
+
+  try {
+    /** @type {{ payload: DamResponse }} */
+    const { payload } = await be4fe.get(
+      `${holdingDataPath(cph)}/animals/${encodeURIComponent(id)}`
+    )
+
+    if (payload.sex?.toLowerCase() === MALE) {
+      return undefined
+    }
+
+    return { earTagNumber: plainEarTag(payload.eartag) }
+  } catch (error) {
+    if (isNotFound(error)) {
+      return undefined
+    }
+
+    throw error
+  }
 }
 
 /**

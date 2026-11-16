@@ -26,10 +26,13 @@ const animal = {
   sireName: null
 }
 
+const DAM = { earTagNumber: 'UK200000000007' }
+
 const mocks = {
   getAnimal: vi.mocked(animalClient.getAnimal),
   getUnallocatedEarTags: vi.mocked(dataClient.getUnallocatedEarTags),
-  getDamEarTags: vi.mocked(dataClient.getDamEarTags)
+  getDamEarTags: vi.mocked(dataClient.getDamEarTags),
+  getDam: vi.mocked(dataClient.getDam)
 }
 
 /**
@@ -47,7 +50,7 @@ describe('checkCalfDetailsController', () => {
     vi.setSystemTime(new Date('2026-11-05T10:00:00Z'))
     mocks.getAnimal.mockResolvedValue(animal)
     mocks.getUnallocatedEarTags.mockResolvedValue([])
-    mocks.getDamEarTags.mockResolvedValue(['UK200000000007'])
+    mocks.getDam.mockResolvedValue(DAM)
   })
 
   afterEach(() => {
@@ -141,7 +144,7 @@ describe('checkCalfDetailsController', () => {
         cph: CPH,
         submissionId: SUBMISSION_ID
       })
-      expect(mocks.getDamEarTags).toHaveBeenCalledWith({ cph: CPH })
+      expect(mocks.getDamEarTags).not.toHaveBeenCalled()
       expect(h.redirect).toHaveBeenCalledWith(SUBMISSION_PATH)
       expect(result).toBe('redirected')
     })
@@ -150,7 +153,7 @@ describe('checkCalfDetailsController', () => {
       // Arrange
       const request = { params: { cph: CPH, ...CALF } }
       const h = toolkit()
-      mocks.getDamEarTags.mockResolvedValueOnce([])
+      mocks.getDam.mockResolvedValueOnce(undefined)
 
       // Act
       await checkCalfDetailsSubmitController.handler(request, h)
@@ -185,7 +188,7 @@ describe('checkCalfDetailsController', () => {
       const request = { params: { cph: CPH, ...CALF } }
       const h = toolkit()
       const failure = new Error('503 - Service unavailable')
-      mocks.getDamEarTags.mockRejectedValueOnce(failure)
+      mocks.getDam.mockRejectedValueOnce(failure)
 
       // Act
       let error

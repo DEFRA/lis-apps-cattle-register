@@ -70,9 +70,14 @@ export const surrogateDamSubmitController = {
         surrogateDamEarTagNumber: request.payload.surrogateDamEarTagNumber
       })
     }
-    const [animal, earTagItems] = await Promise.all([
+    const [animal, dam] = await Promise.all([
       animalClient.getAnimal(calf),
-      dataClient.getDamEarTags({ cph })
+      values.surrogateDamEarTagNumber
+        ? dataClient.getDam({
+            cph,
+            earTagNumber: values.surrogateDamEarTagNumber
+          })
+        : undefined
     ])
     const owed = registration.pageOwed(PAGE, animal)
 
@@ -81,10 +86,12 @@ export const surrogateDamSubmitController = {
     }
 
     const { errors } = registration.validateStep(PAGE, animal, values, {
-      damEarTags: earTagItems
+      dam
     })
 
     if (errors.length) {
+      const earTagItems = await dataClient.getDamEarTags({ cph })
+
       return h
         .view(
           TEMPLATE,

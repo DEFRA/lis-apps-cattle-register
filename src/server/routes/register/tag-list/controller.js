@@ -5,6 +5,7 @@ import * as submissionClient from '#server/services/be4fe/submission.js'
 import * as dataClient from '#server/services/be4fe/data.js'
 import { CHECK_PAGE } from '../check-return.js'
 import { newCalfPath, submissionPagePath } from '../paths.js'
+import { findDamsThatCalved } from '../dam-that-calved.js'
 import { registration } from '#server/journeys/register/registration.js'
 import { MAX_CALVES } from './messages.js'
 import { buildViewModel } from './view-model.js'
@@ -29,21 +30,21 @@ const SUBMIT_PAGE = 'submit'
  *   otherwise to the first page to finish
  */
 async function listCalves({ cph, submissionId }) {
-  const [submission, unallocatedEarTags, damEarTags] = await Promise.all([
+  const [submission, unallocatedEarTags] = await Promise.all([
     submissionClient.getSubmission({ cph, submissionId }),
-    dataClient.getUnallocatedEarTags({ cph, submissionId }),
-    dataClient.getDamEarTags({ cph })
+    dataClient.getUnallocatedEarTags({ cph, submissionId })
   ])
   const animals = await Promise.all(
     submission.animals.map(({ animalId }) =>
       animalClient.getAnimal({ cph, submissionId, animalId })
     )
   )
+  const dams = await findDamsThatCalved({ cph, animals })
 
   return submission.animals.map(({ animalId }, index) => {
     const incomplete = registration.firstIncompleteStep(animals[index], {
       unallocatedEarTags,
-      damEarTags
+      dam: dams[index]
     })
 
     return {

@@ -31,6 +31,7 @@ const animal = {
 const mocks = {
   getAnimal: vi.mocked(animalClient.getAnimal),
   getDamEarTags: vi.mocked(dataClient.getDamEarTags),
+  getDam: vi.mocked(dataClient.getDam),
   saveAnimal: vi.mocked(animalClient.saveAnimal)
 }
 
@@ -52,6 +53,9 @@ describe('surrogateDamController', () => {
   beforeAll(() => {
     mocks.getAnimal.mockResolvedValue(animal)
     mocks.getDamEarTags.mockResolvedValue(DAMS)
+    mocks.getDam.mockImplementation(async ({ earTagNumber }) => ({
+      earTagNumber
+    }))
     mocks.saveAnimal.mockResolvedValue(undefined)
   })
 
@@ -162,7 +166,7 @@ describe('surrogateDamController', () => {
       const result = await surrogateDamSubmitController.handler(request, h)
 
       // Assert
-      expect(mocks.getDamEarTags).toHaveBeenCalledWith({ cph: CPH })
+      expect(mocks.getDamEarTags).not.toHaveBeenCalled()
       expect(mocks.saveAnimal).toHaveBeenCalledWith({
         ...CALF,
         values: {
@@ -208,18 +212,6 @@ describe('surrogateDamController', () => {
         { geneticDamEarTagNumber: '', surrogateDamEarTagNumber: '  ' },
         { geneticDamEarTagNumber: '', surrogateDamEarTagNumber: '' },
         [SURROGATE_ERROR]
-      ],
-      [
-        "a surrogate dam that is not one of the holding's dams",
-        {
-          geneticDamEarTagNumber: 'UK123456501100',
-          surrogateDamEarTagNumber: 'UK123456601200'
-        },
-        {
-          geneticDamEarTagNumber: 'UK123456501100',
-          surrogateDamEarTagNumber: 'UK123456601200'
-        },
-        [SURROGATE_ERROR]
       ]
     ])(
       'it re-renders %s with the errors, as bad request, saving nothing',
@@ -232,6 +224,7 @@ describe('surrogateDamController', () => {
         const result = await surrogateDamSubmitController.handler(request, h)
 
         // Assert
+        expect(mocks.getDamEarTags).toHaveBeenCalledTimes(1)
         expect(mocks.saveAnimal).not.toHaveBeenCalled()
         expect(h.view).toHaveBeenCalledWith(
           TEMPLATE,
@@ -247,6 +240,35 @@ describe('surrogateDamController', () => {
         expect(result).toBe(response)
       }
     )
+
+    test("it re-renders with the error for a surrogate dam the BE4FE finds none for, as bad request, saving nothing, offering the holding's dams", async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: {
+          geneticDamEarTagNumber: 'UK123456501100',
+          surrogateDamEarTagNumber: 'UK123456601200'
+        }
+      }
+      const { h, response } = toolkit()
+      mocks.getDam.mockResolvedValueOnce(undefined)
+
+      // Act
+      const result = await surrogateDamSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getDamEarTags).toHaveBeenCalledTimes(1)
+      expect(mocks.saveAnimal).not.toHaveBeenCalled()
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          earTagItems: DAMS,
+          errorList: [SURROGATE_ERROR]
+        })
+      )
+      expect(response.code).toHaveBeenCalledWith(400)
+      expect(result).toBe(response)
+    })
 
     test('it rethrows a BE4FE failure when saving', async () => {
       // Arrange

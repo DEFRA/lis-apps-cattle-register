@@ -2,6 +2,7 @@ import * as animalClient from '#server/services/be4fe/animal.js'
 import * as dataClient from '#server/services/be4fe/data.js'
 import { withReturnToCheck } from '../check-return.js'
 import { calfPagePath, submissionPath } from '../paths.js'
+import { findDamThatCalved } from '../dam-that-calved.js'
 import { registration } from '#server/journeys/register/registration.js'
 import { buildViewModel } from './view-model.js'
 
@@ -44,16 +45,16 @@ export const checkCalfDetailsSubmitController = {
    */
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
-    const [animal, unallocatedEarTags, damEarTags] = await Promise.all([
+    const [animal, unallocatedEarTags] = await Promise.all([
       animalClient.getAnimal({ cph, submissionId, animalId }),
-      dataClient.getUnallocatedEarTags({ cph, submissionId }),
-      dataClient.getDamEarTags({ cph })
+      dataClient.getUnallocatedEarTags({ cph, submissionId })
     ])
+    const dam = await findDamThatCalved({ cph, animal })
     // Every answer was valid when it was saved, but the holding's ear tags
     // and dams may have changed since, so the calf is judged whole here.
     const incomplete = registration.firstIncompleteStep(animal, {
       unallocatedEarTags,
-      damEarTags
+      dam
     })
 
     if (incomplete) {

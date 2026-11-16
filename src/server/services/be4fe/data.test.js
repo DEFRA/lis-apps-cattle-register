@@ -160,4 +160,125 @@ describe('CattleRegisterBe4FeDataClient', () => {
       expect(thrown.output.statusCode).toBe(NOT_FOUND)
     })
   })
+
+  describe('getDam()', () => {
+    test('it reads the animal, asking by the ear tag number without spaces', async () => {
+      // Arrange
+      const get = service.get.mockResolvedValueOnce(
+        response({ eartag: 'UK200000000007', sex: 'Female' })
+      )
+
+      // Act
+      const result = await client.getDam({
+        cph: '10/081/1234',
+        earTagNumber: 'uk 200000 000007'
+      })
+
+      // Assert
+      expect(get).toHaveBeenCalledWith(
+        'data/10/081/1234/animals/UK200000000007'
+      )
+      expect(result).toEqual({ earTagNumber: 'UK200000000007' })
+    })
+
+    test.each(['Male', 'male'])(
+      'it returns undefined for a male of sex %s',
+      async (sex) => {
+        // Arrange
+        service.get.mockResolvedValueOnce(
+          response({ eartag: 'UK200000000009', sex })
+        )
+
+        // Act
+        const result = await client.getDam({
+          cph: '10/081/1234',
+          earTagNumber: 'UK200000000009'
+        })
+
+        // Assert
+        expect(result).toBeUndefined()
+      }
+    )
+
+    test('it returns an animal with no sex recorded', async () => {
+      // Arrange
+      service.get.mockResolvedValueOnce(
+        response({ eartag: 'UK200000000008', sex: null })
+      )
+
+      // Act
+      const result = await client.getDam({
+        cph: '10/081/1234',
+        earTagNumber: 'UK200000000008'
+      })
+
+      // Assert
+      expect(result).toEqual({ earTagNumber: 'UK200000000008' })
+    })
+
+    test("it returns undefined for an ear tag number that is not one of the holding's animals", async () => {
+      // Arrange
+      service.get.mockRejectedValueOnce(failure(NOT_FOUND))
+
+      // Act
+      const result = await client.getDam({
+        cph: '10/081/1234',
+        earTagNumber: 'UK999999999999'
+      })
+
+      // Assert
+      expect(result).toBeUndefined()
+    })
+
+    test('it passes on any other failure', async () => {
+      // Arrange
+      const unavailable = failure(503)
+      service.get.mockRejectedValueOnce(unavailable)
+
+      // Act
+      let thrown
+      try {
+        await client.getDam({
+          cph: '10/081/1234',
+          earTagNumber: 'UK200000000007'
+        })
+      } catch (error) {
+        thrown = error
+      }
+
+      // Assert
+      expect(thrown).toBe(unavailable)
+    })
+
+    test.each([['..'], ['UK123/456'], ['UK-123'], ['']])(
+      'it looks nothing up for %j, which is no ear tag number',
+      async (earTagNumber) => {
+        // Arrange
+        const cph = '10/081/1234'
+
+        // Act
+        const result = await client.getDam({ cph, earTagNumber })
+
+        // Assert
+        expect(result).toBeUndefined()
+        expect(service.get).not.toHaveBeenCalled()
+      }
+    )
+
+    test('it gives her ear tag number in capitals with no spaces, however the BE4FE holds it', async () => {
+      // Arrange
+      service.get.mockResolvedValueOnce(
+        response({ eartag: 'uk 200000 000007', sex: 'Female' })
+      )
+
+      // Act
+      const result = await client.getDam({
+        cph: '10/081/1234',
+        earTagNumber: 'UK200000000007'
+      })
+
+      // Assert
+      expect(result.earTagNumber).toBe('UK200000000007')
+    })
+  })
 })

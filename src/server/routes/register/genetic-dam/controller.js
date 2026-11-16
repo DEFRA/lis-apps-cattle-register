@@ -59,9 +59,14 @@ export const geneticDamSubmitController = {
     const values = trimAnswers({
       geneticDamEarTagNumber: request.payload.geneticDamEarTagNumber
     })
-    const [animal, earTagItems] = await Promise.all([
+    const [animal, dam] = await Promise.all([
       animalClient.getAnimal(calf),
-      dataClient.getDamEarTags({ cph })
+      values.geneticDamEarTagNumber
+        ? dataClient.getDam({
+            cph,
+            earTagNumber: values.geneticDamEarTagNumber
+          })
+        : undefined
     ])
     const owed = registration.pageOwed(PAGE, animal)
 
@@ -70,10 +75,12 @@ export const geneticDamSubmitController = {
     }
 
     const { errors } = registration.validateStep(PAGE, animal, values, {
-      damEarTags: earTagItems
+      dam
     })
 
     if (errors.length) {
+      const earTagItems = await dataClient.getDamEarTags({ cph })
+
       return h
         .view(
           TEMPLATE,

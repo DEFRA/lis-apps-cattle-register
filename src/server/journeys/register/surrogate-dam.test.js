@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import { registration } from './registration.js'
 
-const DAMS = ['UK200000000007', 'UK200000000008']
+const dam = (earTagNumber) => ({ earTagNumber })
 
 describe('the genetic and surrogate dam rules', () => {
   test("it accepts a surrogate that is one of the holding's dams, with any genetic dam", () => {
@@ -14,7 +14,7 @@ describe('the genetic and surrogate dam rules', () => {
 
     // Act
     const result = registration.validateStep('surrogate-dam', {}, answers, {
-      damEarTags: DAMS
+      dam: dam('UK200000000007')
     })
 
     // Assert
@@ -46,7 +46,7 @@ describe('the genetic and surrogate dam rules', () => {
 
     // Act
     const result = registration.validateStep('surrogate-dam', {}, answers, {
-      damEarTags: DAMS
+      dam: dam('UK200000000007')
     })
 
     // Assert
@@ -61,9 +61,7 @@ describe('the genetic and surrogate dam rules', () => {
     }
 
     // Act
-    const result = registration.validateStep('surrogate-dam', {}, answers, {
-      damEarTags: DAMS
-    })
+    const result = registration.validateStep('surrogate-dam', {}, answers, {})
 
     // Assert
     expect(result.errors).toEqual([
@@ -83,7 +81,7 @@ describe('the genetic and surrogate dam rules', () => {
 
     // Act
     const result = registration.validateStep('surrogate-dam', {}, answers, {
-      damEarTags: DAMS
+      dam: dam('UK200000000007')
     })
 
     // Assert
@@ -101,10 +99,42 @@ describe('the genetic and surrogate dam rules', () => {
 
     // Act
     const result = registration.validateStep('surrogate-dam', {}, answers, {
-      damEarTags: DAMS
+      dam: dam('UK200000000008')
     })
 
     // Assert
     expect(result).toEqual({ errors: [], warnings: [] })
+  })
+
+  test('it accepts a value that differs from the dam found only by spaces and case', () => {
+    // Arrange
+    const answers = {
+      geneticDamEarTagNumber: null,
+      surrogateDamEarTagNumber: ' uk2000 00000007 '
+    }
+
+    // Act
+    const result = registration.validateStep('surrogate-dam', {}, answers, {
+      dam: dam('UK200000000007')
+    })
+
+    // Assert
+    expect(result.errors).toEqual([])
+  })
+
+  test('it rejects a surrogate when no dam is found', () => {
+    // Arrange
+    const answers = {
+      geneticDamEarTagNumber: null,
+      surrogateDamEarTagNumber: 'UK200000000007'
+    }
+
+    // Act
+    const result = registration.validateStep('surrogate-dam', {}, answers, {})
+
+    // Assert
+    expect(result.errors).toEqual([
+      { field: 'surrogateDamEarTagNumber', code: 'notOnHolding' }
+    ])
   })
 })

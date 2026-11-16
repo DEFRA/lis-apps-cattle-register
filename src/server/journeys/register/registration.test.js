@@ -172,7 +172,7 @@ describe('registration', () => {
       // Act
       const result = firstIncompleteStep(animal, {
         unallocatedEarTags: TAGS,
-        damEarTags: ['UK200000000007']
+        dam: { earTagNumber: 'UK200000000007' }
       })
 
       // Assert
@@ -192,7 +192,7 @@ describe('registration', () => {
       // Act
       const result = firstIncompleteStep(animal, {
         unallocatedEarTags: [],
-        damEarTags: ['UK200000000007']
+        dam: { earTagNumber: 'UK200000000007' }
       })
 
       // Assert
@@ -210,7 +210,7 @@ describe('registration', () => {
       // Act
       const result = firstIncompleteStep(animal, {
         unallocatedEarTags: TAGS,
-        damEarTags: ['UK200000000007']
+        dam: { earTagNumber: 'UK200000000007' }
       })
 
       // Assert
@@ -224,7 +224,7 @@ describe('registration', () => {
       // Act
       const result = firstIncompleteStep(animal, {
         unallocatedEarTags: TAGS,
-        damEarTags: ['UK200000000007']
+        dam: { earTagNumber: 'UK200000000007' }
       })
 
       // Assert
@@ -245,7 +245,7 @@ describe('registration', () => {
       // Act
       const result = firstIncompleteStep(animal, {
         unallocatedEarTags: TAGS,
-        damEarTags: ['UK200000000007']
+        dam: { earTagNumber: 'UK200000000007' }
       })
 
       // Assert
@@ -259,7 +259,7 @@ describe('registration', () => {
       // Act
       const result = firstIncompleteStep(animal, {
         unallocatedEarTags: TAGS,
-        damEarTags: ['UK200000000007']
+        dam: { earTagNumber: 'UK200000000007' }
       })
 
       // Assert

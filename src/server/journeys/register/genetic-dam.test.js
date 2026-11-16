@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import { registration } from './registration.js'
 
-const DAMS = ['UK200000000007', 'UK200000000008']
+const dam = (earTagNumber) => ({ earTagNumber })
 
 describe('the genetic dam rules', () => {
   test("it accepts one of the holding's possible dams", () => {
@@ -11,7 +11,7 @@ describe('the genetic dam rules', () => {
 
     // Act
     const result = registration.validateStep('genetic-dam', {}, answers, {
-      damEarTags: DAMS
+      dam: dam('UK200000000008')
     })
 
     // Assert
@@ -24,7 +24,7 @@ describe('the genetic dam rules', () => {
     ['is missing', {}]
   ])('it requires the ear tag number when it %s', (_description, answers) => {
     // Arrange
-    const options = { damEarTags: DAMS }
+    const options = { dam: dam('UK200000000008') }
 
     // Act
     const result = registration.validateStep(
@@ -41,20 +41,38 @@ describe('the genetic dam rules', () => {
   })
 
   test.each([
-    ["is not one of the holding's dams", DAMS],
-    ['is given and the holding has no dams', []]
-  ])('it rejects an ear tag number that %s', (_description, damEarTags) => {
+    ['no dam is found', undefined],
+    ['the dam found is of another ear tag number', dam('UK200000000007')]
+  ])('it rejects an ear tag number when %s', (_description, found) => {
     // Arrange
     const answers = { geneticDamEarTagNumber: 'UK999999999999' }
 
     // Act
     const result = registration.validateStep('genetic-dam', {}, answers, {
-      damEarTags
+      dam: found
     })
 
     // Assert
     expect(result.errors).toEqual([
       { field: 'geneticDamEarTagNumber', code: 'notOnHolding' }
     ])
+  })
+
+  test('it accepts a value that differs from the dam found only by spaces and case', () => {
+    // Arrange
+    const saved = { dateOfBirth: '1/4/2026' }
+    const answers = { geneticDamEarTagNumber: ' uk2000 00000007 ' }
+    const options = { dam: dam('UK200000000007') }
+
+    // Act
+    const result = registration.validateStep(
+      'genetic-dam',
+      saved,
+      answers,
+      options
+    )
+
+    // Assert
+    expect(result.errors).toEqual([])
   })
 })

@@ -27,6 +27,7 @@ const ERROR_TEXT = 'Enter the ear tag number of the genetic dam'
 const mocks = {
   getAnimal: vi.mocked(animalClient.getAnimal),
   getDamEarTags: vi.mocked(dataClient.getDamEarTags),
+  getDam: vi.mocked(dataClient.getDam),
   saveAnimal: vi.mocked(animalClient.saveAnimal)
 }
 
@@ -48,6 +49,9 @@ describe('geneticDamController', () => {
   beforeAll(() => {
     mocks.getAnimal.mockResolvedValue(animal)
     mocks.getDamEarTags.mockResolvedValue(DAMS)
+    mocks.getDam.mockImplementation(async ({ earTagNumber }) => ({
+      earTagNumber
+    }))
     mocks.saveAnimal.mockResolvedValue(undefined)
   })
 
@@ -161,7 +165,7 @@ describe('geneticDamController', () => {
       const result = await geneticDamSubmitController.handler(request, h)
 
       // Assert
-      expect(mocks.getDamEarTags).toHaveBeenCalledWith({ cph: CPH })
+      expect(mocks.getDamEarTags).not.toHaveBeenCalled()
       expect(mocks.saveAnimal).toHaveBeenCalledWith({
         ...CALF,
         values: { ...animal, geneticDamEarTagNumber: 'UK200000000007' }
@@ -190,12 +194,7 @@ describe('geneticDamController', () => {
 
     test.each([
       ['nothing', '', ''],
-      ['only spaces', '   ', ''],
-      [
-        "a tag that is not one of the holding's dams",
-        'UK999999999999',
-        'UK999999999999'
-      ]
+      ['only spaces', '   ', '']
     ])(
       'it re-renders with the error for %s, as bad request, saving nothing',
       async (_description, posted, shown) => {
@@ -210,6 +209,7 @@ describe('geneticDamController', () => {
         const result = await geneticDamSubmitController.handler(request, h)
 
         // Assert
+        expect(mocks.getDamEarTags).toHaveBeenCalledTimes(1)
         expect(mocks.saveAnimal).not.toHaveBeenCalled()
         expect(h.view).toHaveBeenCalledWith(
           TEMPLATE,
@@ -225,6 +225,53 @@ describe('geneticDamController', () => {
         expect(result).toBe(response)
       }
     )
+
+    test("it re-renders with the error for a tag the BE4FE finds no dam for, as bad request, saving nothing, offering the holding's dams", async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: { geneticDamEarTagNumber: 'UK999999999999' }
+      }
+      const { h, response } = toolkit()
+      mocks.getDam.mockResolvedValueOnce(undefined)
+
+      // Act
+      const result = await geneticDamSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getDamEarTags).toHaveBeenCalledTimes(1)
+      expect(mocks.saveAnimal).not.toHaveBeenCalled()
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          values: { geneticDamEarTagNumber: 'UK999999999999' },
+          earTagItems: DAMS,
+          errorList: [
+            {
+              text: ERROR_TEXT,
+              href: '#geneticDamEarTagNumber'
+            }
+          ]
+        })
+      )
+      expect(response.code).toHaveBeenCalledWith(400)
+      expect(result).toBe(response)
+    })
+
+    test('it looks no dam up when no ear tag number is entered', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: { geneticDamEarTagNumber: '  ' }
+      }
+      const { h } = toolkit()
+
+      // Act
+      await geneticDamSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getDam).not.toHaveBeenCalled()
+    })
 
     test('it sends the user to dam details for a calf born via a surrogate dam, saving nothing', async () => {
       // Arrange

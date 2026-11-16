@@ -10,6 +10,7 @@ import Joi from 'joi'
 import { plainEarTag } from '#server/common/helpers/ear-tag.js'
 
 import { answer, optionalAnswer, REQUIRED } from './answer.js'
+import { DAM_MESSAGES, damThatCalved } from './dam-checks.js'
 
 /**
  * @typedef {object} SurrogateDamAnswers
@@ -30,8 +31,7 @@ function isSameEarTag(one, other) {
 /**
  * The genetic and surrogate dams, in the order of the fields on the page.
  * Each rule's message is the code of its error, which the page words in its
- * messages.js. Validate it with, as context, `damEarTags` (the ear tags of
- * the holding's possible dams).
+ * messages.js. Validate it with the context dam-checks.js asks for.
  */
 export const surrogateDamSchema = Joi.object({
   geneticDamEarTagNumber: optionalAnswer(),
@@ -42,9 +42,7 @@ export const surrogateDamSchema = Joi.object({
       if (isSameEarTag(value, answers.geneticDamEarTagNumber ?? '')) {
         return helpers.error('any.invalid')
       }
-      return helpers.prefs.context.damEarTags.includes(value)
-        ? value
-        : helpers.error('any.only')
+      return damThatCalved(value, helpers)
     })
-    .messages({ 'any.only': 'notOnHolding', 'any.invalid': 'sameAsGeneticDam' })
+    .messages({ ...DAM_MESSAGES, 'any.invalid': 'sameAsGeneticDam' })
 }).messages({ 'any.required': REQUIRED })

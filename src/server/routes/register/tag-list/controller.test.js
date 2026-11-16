@@ -29,11 +29,14 @@ const unfinished = {
   breed: 'AA'
 }
 
+const DAM = { earTagNumber: 'UK200000000007' }
+
 const mocks = {
   getSubmission: vi.mocked(submissionClient.getSubmission),
   getAnimal: vi.mocked(animalClient.getAnimal),
   getUnallocatedEarTags: vi.mocked(dataClient.getUnallocatedEarTags),
-  getDamEarTags: vi.mocked(dataClient.getDamEarTags)
+  getDamEarTags: vi.mocked(dataClient.getDamEarTags),
+  getDam: vi.mocked(dataClient.getDam)
 }
 
 /**
@@ -71,13 +74,13 @@ describe('tagListController', () => {
   beforeAll(() => {
     vi.setSystemTime(new Date('2026-11-05T10:00:00Z'))
     mocks.getUnallocatedEarTags.mockResolvedValue([])
-    mocks.getDamEarTags.mockResolvedValue(['UK200000000007'])
+    mocks.getDam.mockResolvedValue(DAM)
   })
 
   afterEach(() => {
     vi.resetAllMocks()
     mocks.getUnallocatedEarTags.mockResolvedValue([])
-    mocks.getDamEarTags.mockResolvedValue(['UK200000000007'])
+    mocks.getDam.mockResolvedValue(DAM)
   })
 
   afterAll(() => {
@@ -97,7 +100,7 @@ describe('tagListController', () => {
       // Assert
       expect(mocks.getSubmission).toHaveBeenCalledWith(SUBMISSION)
       expect(mocks.getUnallocatedEarTags).toHaveBeenCalledWith(SUBMISSION)
-      expect(mocks.getDamEarTags).toHaveBeenCalledWith({ cph: CPH })
+      expect(mocks.getDamEarTags).not.toHaveBeenCalled()
       expect(mocks.getAnimal).toHaveBeenCalledWith({
         ...SUBMISSION,
         animalId: 'UK123456301551'
@@ -130,7 +133,7 @@ describe('tagListController', () => {
       const request = { params: SUBMISSION }
       const { h } = toolkit()
       givenCalves([complete])
-      mocks.getDamEarTags.mockResolvedValue([])
+      mocks.getDam.mockResolvedValueOnce(undefined)
 
       // Act
       await tagListController.handler(request, h)
