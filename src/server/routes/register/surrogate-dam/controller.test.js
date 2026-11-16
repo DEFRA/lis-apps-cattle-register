@@ -54,7 +54,9 @@ describe('surrogateDamController', () => {
     mocks.getAnimal.mockResolvedValue(animal)
     mocks.getDamEarTags.mockResolvedValue(DAMS)
     mocks.getDam.mockImplementation(async ({ earTagNumber }) => ({
-      earTagNumber
+      earTagNumber,
+      dateOfBirth: null,
+      calfDatesOfBirth: []
     }))
     mocks.saveAnimal.mockResolvedValue(undefined)
   })
@@ -264,6 +266,47 @@ describe('surrogateDamController', () => {
         expect.objectContaining({
           earTagItems: DAMS,
           errorList: [SURROGATE_ERROR]
+        })
+      )
+      expect(response.code).toHaveBeenCalledWith(400)
+      expect(result).toBe(response)
+    })
+
+    test('it looks up the surrogate dam alone, and re-renders with what rules her out, saving nothing', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: {
+          geneticDamEarTagNumber: 'UK200000000008',
+          surrogateDamEarTagNumber: 'UK200000000007'
+        }
+      }
+      const { h, response } = toolkit()
+      mocks.getDam.mockResolvedValueOnce({
+        earTagNumber: 'UK200000000007',
+        dateOfBirth: '2026-01-01',
+        calfDatesOfBirth: []
+      })
+
+      // Act
+      const result = await surrogateDamSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getDam).toHaveBeenCalledTimes(1)
+      expect(mocks.getDam).toHaveBeenCalledWith({
+        cph: CPH,
+        earTagNumber: 'UK200000000007'
+      })
+      expect(mocks.saveAnimal).not.toHaveBeenCalled()
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          errorList: [
+            {
+              text: 'The dam appears to be under 15-months old',
+              href: '#surrogateDamEarTagNumber'
+            }
+          ]
         })
       )
       expect(response.code).toHaveBeenCalledWith(400)

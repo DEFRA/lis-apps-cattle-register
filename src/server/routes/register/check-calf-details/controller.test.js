@@ -26,7 +26,11 @@ const animal = {
   sireName: null
 }
 
-const DAM = { earTagNumber: 'UK200000000007' }
+const DAM = {
+  earTagNumber: 'UK200000000007',
+  dateOfBirth: null,
+  calfDatesOfBirth: []
+}
 
 const mocks = {
   getAnimal: vi.mocked(animalClient.getAnimal),
@@ -159,6 +163,29 @@ describe('checkCalfDetailsController', () => {
       await checkCalfDetailsSubmitController.handler(request, h)
 
       // Assert
+      expect(h.redirect).toHaveBeenCalledWith(
+        `${CALF_PATH}/genetic-dam?return=check`
+      )
+    })
+
+    test('it sends the user to the dam page for a dam now ruled out by her age or calves, to return here', async () => {
+      // Arrange
+      const request = { params: { cph: CPH, ...CALF } }
+      const h = toolkit()
+      mocks.getDam.mockResolvedValueOnce({
+        earTagNumber: 'UK200000000007',
+        dateOfBirth: '2026-01-01',
+        calfDatesOfBirth: []
+      })
+
+      // Act
+      await checkCalfDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getDam).toHaveBeenCalledWith({
+        cph: CPH,
+        earTagNumber: 'UK200000000007'
+      })
       expect(h.redirect).toHaveBeenCalledWith(
         `${CALF_PATH}/genetic-dam?return=check`
       )

@@ -11,11 +11,15 @@ import {
 /**
  * @typedef {object} Dam - one of the holding's animals, as a dam
  * @property {string} earTagNumber
+ * @property {string | null} dateOfBirth - an ISO date; null when not known
+ * @property {string[]} calfDatesOfBirth - the ISO dates of birth of the
+ *   calves she has given birth to, those not known left out
  */
 
 /**
- * @typedef {{ eartag: string, sex?: string | null }} DamResponse
- *   an animal of the holding as the BE4FE answers it
+ * @typedef {{ eartag: string, sex?: string | null, 'date-of-birth'?: string | null, children?: { 'date-of-birth'?: string | null }[] }} DamResponse
+ *   an animal of the holding as the BE4FE answers it; children are taken to be the
+ *   calves she gave birth to, which the BE4FE does not fill in yet
  */
 
 const MALE = 'male'
@@ -58,7 +62,13 @@ export async function getDam({ cph, earTagNumber }) {
       return undefined
     }
 
-    return { earTagNumber: plainEarTag(payload.eartag) }
+    return {
+      earTagNumber: plainEarTag(payload.eartag),
+      dateOfBirth: payload['date-of-birth'] ?? null,
+      calfDatesOfBirth: (payload.children ?? [])
+        .map((calf) => calf['date-of-birth'])
+        .filter(Boolean)
+    }
   } catch (error) {
     if (isNotFound(error)) {
       return undefined

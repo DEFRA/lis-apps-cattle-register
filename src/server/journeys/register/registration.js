@@ -23,11 +23,12 @@ import { createJourney } from '@defra/lis-infra-ui-services/journey'
 
 /**
  * @param {Options} options
- * @returns {{ dam?: Dam }} what the rules for the cow that calved are
- *   judged against
+ * @param {DraftAnimal} saved - the calf as it is saved
+ * @returns {{ dam?: Dam, calfDateOfBirth?: string }}
+ *   what the rules for the cow that calved are judged against
  */
-function damContext({ dam }) {
-  return { dam }
+function damContext({ dam }, saved) {
+  return { dam, calfDateOfBirth: saved.dateOfBirth }
 }
 
 /** @type {Step<DraftAnimal, Options>[]} */

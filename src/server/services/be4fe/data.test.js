@@ -162,10 +162,18 @@ describe('CattleRegisterBe4FeDataClient', () => {
   })
 
   describe('getDam()', () => {
-    test('it reads the animal, asking by the ear tag number without spaces', async () => {
+    test("it reads the animal's date of birth and her calves', asking by the ear tag number without spaces", async () => {
       // Arrange
       const get = service.get.mockResolvedValueOnce(
-        response({ eartag: 'UK200000000007', sex: 'Female' })
+        response({
+          eartag: 'UK200000000007',
+          'date-of-birth': '2023-03-15',
+          sex: 'Female',
+          children: [
+            { eartag: 'UK200000000101', 'date-of-birth': '2026-01-10' },
+            { eartag: 'UK200000000102', 'date-of-birth': null }
+          ]
+        })
       )
 
       // Act
@@ -178,7 +186,29 @@ describe('CattleRegisterBe4FeDataClient', () => {
       expect(get).toHaveBeenCalledWith(
         'data/10/081/1234/animals/UK200000000007'
       )
-      expect(result).toEqual({ earTagNumber: 'UK200000000007' })
+      expect(result).toEqual({
+        earTagNumber: 'UK200000000007',
+        dateOfBirth: '2023-03-15',
+        calfDatesOfBirth: ['2026-01-10']
+      })
+    })
+
+    test('it reads an animal with no date of birth or calves', async () => {
+      // Arrange
+      service.get.mockResolvedValueOnce(response({ eartag: 'UK200000000008' }))
+
+      // Act
+      const result = await client.getDam({
+        cph: '10/081/1234',
+        earTagNumber: 'UK200000000008'
+      })
+
+      // Assert
+      expect(result).toEqual({
+        earTagNumber: 'UK200000000008',
+        dateOfBirth: null,
+        calfDatesOfBirth: []
+      })
     })
 
     test.each(['Male', 'male'])(
@@ -213,7 +243,11 @@ describe('CattleRegisterBe4FeDataClient', () => {
       })
 
       // Assert
-      expect(result).toEqual({ earTagNumber: 'UK200000000008' })
+      expect(result).toEqual({
+        earTagNumber: 'UK200000000008',
+        dateOfBirth: null,
+        calfDatesOfBirth: []
+      })
     })
 
     test("it returns undefined for an ear tag number that is not one of the holding's animals", async () => {

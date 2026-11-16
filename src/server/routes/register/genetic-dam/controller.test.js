@@ -50,7 +50,9 @@ describe('geneticDamController', () => {
     mocks.getAnimal.mockResolvedValue(animal)
     mocks.getDamEarTags.mockResolvedValue(DAMS)
     mocks.getDam.mockImplementation(async ({ earTagNumber }) => ({
-      earTagNumber
+      earTagNumber,
+      dateOfBirth: null,
+      calfDatesOfBirth: []
     }))
     mocks.saveAnimal.mockResolvedValue(undefined)
   })
@@ -249,6 +251,43 @@ describe('geneticDamController', () => {
           errorList: [
             {
               text: ERROR_TEXT,
+              href: '#geneticDamEarTagNumber'
+            }
+          ]
+        })
+      )
+      expect(response.code).toHaveBeenCalledWith(400)
+      expect(result).toBe(response)
+    })
+
+    test("it looks up one of the holding's dams, and re-renders with what rules her out, saving nothing", async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: { geneticDamEarTagNumber: 'UK200000000007' }
+      }
+      const { h, response } = toolkit()
+      mocks.getDam.mockResolvedValueOnce({
+        earTagNumber: 'UK200000000007',
+        dateOfBirth: '2026-01-01',
+        calfDatesOfBirth: []
+      })
+
+      // Act
+      const result = await geneticDamSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getDam).toHaveBeenCalledWith({
+        cph: CPH,
+        earTagNumber: 'UK200000000007'
+      })
+      expect(mocks.saveAnimal).not.toHaveBeenCalled()
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          errorList: [
+            {
+              text: 'The genetic dam appears to be under 15-months old',
               href: '#geneticDamEarTagNumber'
             }
           ]

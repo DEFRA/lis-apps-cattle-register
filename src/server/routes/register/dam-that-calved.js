@@ -19,9 +19,9 @@ export function damThatCalvedEarTag(animal) {
 
 /**
  * @param {{ cph: string, animal: DraftAnimal }} calf
- * @returns {Promise<Dam | undefined>} the cow that calved, looked up on the
- *   holding; undefined while the calf has none, or the holding has no such
- *   dam
+ * @returns {Promise<Dam | undefined>} the cow that calved, looked up for her
+ *   age and calves; undefined while the calf has none, or the holding has
+ *   no such dam
  */
 export async function findDamThatCalved({ cph, animal }) {
   const earTagNumber = damThatCalvedEarTag(animal)

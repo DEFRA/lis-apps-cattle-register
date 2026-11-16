@@ -29,7 +29,11 @@ const unfinished = {
   breed: 'AA'
 }
 
-const DAM = { earTagNumber: 'UK200000000007' }
+const DAM = {
+  earTagNumber: 'UK200000000007',
+  dateOfBirth: null,
+  calfDatesOfBirth: []
+}
 
 const mocks = {
   getSubmission: vi.mocked(submissionClient.getSubmission),
@@ -139,6 +143,38 @@ describe('tagListController', () => {
       await tagListController.handler(request, h)
 
       // Assert
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          calves: [
+            expect.objectContaining({
+              href: `${SUBMISSION_PATH}/calves/UK123456301550/genetic-dam`,
+              isReady: false
+            })
+          ]
+        })
+      )
+    })
+
+    test('it lists a calf whose dam is ruled out by her age or calves as not ready, linking to that page', async () => {
+      // Arrange
+      const request = { params: SUBMISSION }
+      const { h } = toolkit()
+      givenCalves([complete])
+      mocks.getDam.mockResolvedValueOnce({
+        earTagNumber: complete.geneticDamEarTagNumber,
+        dateOfBirth: '2026-10-01',
+        calfDatesOfBirth: []
+      })
+
+      // Act
+      await tagListController.handler(request, h)
+
+      // Assert
+      expect(mocks.getDam).toHaveBeenCalledWith({
+        cph: CPH,
+        earTagNumber: complete.geneticDamEarTagNumber
+      })
       expect(h.view).toHaveBeenCalledWith(
         TEMPLATE,
         expect.objectContaining({

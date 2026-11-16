@@ -10,7 +10,11 @@ const mocks = {
 }
 
 const CPH = '10/081/1234'
-const DAM = { earTagNumber: 'UK200000000007' }
+const DAM = {
+  earTagNumber: 'UK200000000007',
+  dateOfBirth: '2023-03-15',
+  calfDatesOfBirth: []
+}
 
 describe('the cow that calved', () => {
   describe('findDamThatCalved()', () => {
