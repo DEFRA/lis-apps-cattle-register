@@ -161,6 +161,58 @@ describe('CattleRegisterBe4FeDataClient', () => {
     })
   })
 
+  describe('getDams()', () => {
+    test("it lists the holding's possible dams, each with her date of birth and her calves'", async () => {
+      // Arrange
+      const get = service.get.mockResolvedValueOnce(
+        response({
+          cph: '10/081/1234',
+          animals: [
+            {
+              eartag: 'uk 200000 000007',
+              sex: 'Female',
+              'date-of-birth': '2023-03-15',
+              children: [
+                { eartag: 'UK200000000101', 'date-of-birth': '2026-01-10' },
+                { eartag: 'UK200000000102', 'date-of-birth': null }
+              ]
+            },
+            { eartag: 'UK200000000008' }
+          ]
+        })
+      )
+
+      // Act
+      const result = await client.getDams({ cph: '10/081/1234' })
+
+      // Assert
+      expect(get).toHaveBeenCalledWith('data/10/081/1234/ear-tags/dams')
+      expect(result).toEqual([
+        {
+          earTagNumber: 'UK200000000007',
+          dateOfBirth: '2023-03-15',
+          calfDatesOfBirth: ['2026-01-10']
+        },
+        {
+          earTagNumber: 'UK200000000008',
+          dateOfBirth: null,
+          calfDatesOfBirth: []
+        }
+      ])
+    })
+
+    test('it gives none for a holding with no possible dams', async () => {
+      // Arrange
+      service.get.mockResolvedValueOnce(response({ cph: '10/081/1234' }))
+
+      // Act
+      const result = await client.getDams({ cph: '10/081/1234' })
+
+      // Assert
+      expect(result).toEqual([])
+    })
+  })
+
   describe('getDam()', () => {
     test("it reads the animal's date of birth and her calves', asking by the ear tag number without spaces", async () => {
       // Arrange

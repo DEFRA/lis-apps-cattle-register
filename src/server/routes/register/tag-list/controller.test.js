@@ -40,7 +40,7 @@ const mocks = {
   getAnimal: vi.mocked(animalClient.getAnimal),
   getUnallocatedEarTags: vi.mocked(dataClient.getUnallocatedEarTags),
   getDamEarTags: vi.mocked(dataClient.getDamEarTags),
-  getDam: vi.mocked(dataClient.getDam)
+  getDams: vi.mocked(dataClient.getDams)
 }
 
 /**
@@ -78,13 +78,13 @@ describe('tagListController', () => {
   beforeAll(() => {
     vi.setSystemTime(new Date('2026-11-05T10:00:00Z'))
     mocks.getUnallocatedEarTags.mockResolvedValue([])
-    mocks.getDam.mockResolvedValue(DAM)
+    mocks.getDams.mockResolvedValue([DAM])
   })
 
   afterEach(() => {
     vi.resetAllMocks()
     mocks.getUnallocatedEarTags.mockResolvedValue([])
-    mocks.getDam.mockResolvedValue(DAM)
+    mocks.getDams.mockResolvedValue([DAM])
   })
 
   afterAll(() => {
@@ -137,7 +137,7 @@ describe('tagListController', () => {
       const request = { params: SUBMISSION }
       const { h } = toolkit()
       givenCalves([complete])
-      mocks.getDam.mockResolvedValueOnce(undefined)
+      mocks.getDams.mockResolvedValueOnce([])
 
       // Act
       await tagListController.handler(request, h)
@@ -161,20 +161,20 @@ describe('tagListController', () => {
       const request = { params: SUBMISSION }
       const { h } = toolkit()
       givenCalves([complete])
-      mocks.getDam.mockResolvedValueOnce({
-        earTagNumber: complete.geneticDamEarTagNumber,
-        dateOfBirth: '2026-10-01',
-        calfDatesOfBirth: []
-      })
+      mocks.getDams.mockResolvedValueOnce([
+        {
+          earTagNumber: complete.geneticDamEarTagNumber,
+          dateOfBirth: '2026-10-01',
+          calfDatesOfBirth: []
+        }
+      ])
 
       // Act
       await tagListController.handler(request, h)
 
       // Assert
-      expect(mocks.getDam).toHaveBeenCalledWith({
-        cph: CPH,
-        earTagNumber: complete.geneticDamEarTagNumber
-      })
+      expect(mocks.getDams).toHaveBeenCalledTimes(1)
+      expect(mocks.getDams).toHaveBeenCalledWith({ cph: CPH })
       expect(h.view).toHaveBeenCalledWith(
         TEMPLATE,
         expect.objectContaining({

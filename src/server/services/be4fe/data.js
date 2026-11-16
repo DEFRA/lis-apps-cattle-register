@@ -38,6 +38,33 @@ export async function getDamEarTags({ cph }) {
 }
 
 /**
+ * @param {DamResponse} animal
+ * @returns {Dam} the animal as a dam, her ear tag number in its plain form
+ */
+function toDam(animal) {
+  return {
+    earTagNumber: plainEarTag(animal.eartag),
+    dateOfBirth: animal['date-of-birth'] ?? null,
+    calfDatesOfBirth: (animal.children ?? [])
+      .map((calf) => calf['date-of-birth'])
+      .filter(Boolean)
+  }
+}
+
+/**
+ * The holding's animals that can be a dam: one call for them all, where
+ * getDam asks for one.
+ * @param {{ cph: string }} holding
+ * @returns {Promise<Dam[]>}
+ */
+export async function getDams({ cph }) {
+  /** @type {{ payload: { animals?: DamResponse[] } }} */
+  const { payload } = await be4fe.get(`${earTagsPath(cph)}/dams`)
+
+  return (payload.animals ?? []).map(toDam)
+}
+
+/**
  * One of the holding's animals, as a dam. The BE4FE knows an animal by its
  * ear tag number without spaces, whatever its case.
  * @param {{ cph: string, earTagNumber: string }} animal
@@ -58,17 +85,7 @@ export async function getDam({ cph, earTagNumber }) {
       `${holdingDataPath(cph)}/animals/${encodeURIComponent(id)}`
     )
 
-    if (payload.sex?.toLowerCase() === MALE) {
-      return undefined
-    }
-
-    return {
-      earTagNumber: plainEarTag(payload.eartag),
-      dateOfBirth: payload['date-of-birth'] ?? null,
-      calfDatesOfBirth: (payload.children ?? [])
-        .map((calf) => calf['date-of-birth'])
-        .filter(Boolean)
-    }
+    return payload.sex?.toLowerCase() === MALE ? undefined : toDam(payload)
   } catch (error) {
     if (isNotFound(error)) {
       return undefined

@@ -28,25 +28,3 @@ export async function findDamThatCalved({ cph, animal }) {
 
   return earTagNumber ? dataClient.getDam({ cph, earTagNumber }) : undefined
 }
-
-/**
- * @param {{ cph: string, animals: DraftAnimal[] }} calves
- * @returns {Promise<(Dam | undefined)[]>} the cow that calved each, in the
- *   calves' order; a cow that calved more than one is looked up once
- */
-export async function findDamsThatCalved({ cph, animals }) {
-  /** @type {Map<string | null | undefined, Promise<Dam | undefined>>} */
-  const lookups = new Map()
-
-  for (const animal of animals) {
-    const earTagNumber = damThatCalvedEarTag(animal)
-
-    if (!lookups.has(earTagNumber)) {
-      lookups.set(earTagNumber, findDamThatCalved({ cph, animal }))
-    }
-  }
-
-  return Promise.all(
-    animals.map((animal) => lookups.get(damThatCalvedEarTag(animal)))
-  )
-}

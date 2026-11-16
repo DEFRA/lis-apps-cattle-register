@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import * as dataClient from '#server/services/be4fe/data.js'
-import { findDamThatCalved, findDamsThatCalved } from './dam-that-calved.js'
+import { findDamThatCalved } from './dam-that-calved.js'
 
 vi.mock('#server/services/be4fe/data.js')
 
@@ -73,49 +73,5 @@ describe('the cow that calved', () => {
         expect(mocks.getDam).not.toHaveBeenCalled()
       }
     )
-  })
-
-  describe('findDamsThatCalved()', () => {
-    afterEach(() => {
-      vi.clearAllMocks()
-    })
-
-    test('it looks up a cow that calved more than one calf once, and gives her for each', async () => {
-      // Arrange
-      const twin = {
-        damType: 'genetic',
-        geneticDamEarTagNumber: 'UK200000000007'
-      }
-      const other = {
-        damType: 'surrogate',
-        geneticDamEarTagNumber: 'UK200000000007',
-        surrogateDamEarTagNumber: 'UK200000000008'
-      }
-      const unanswered = { damType: 'genetic' }
-      const second = { ...DAM, earTagNumber: 'UK200000000008' }
-      mocks.getDam.mockResolvedValueOnce(DAM).mockResolvedValueOnce(second)
-
-      // Act
-      const result = await findDamsThatCalved({
-        cph: CPH,
-        animals: [twin, other, twin, unanswered]
-      })
-
-      // Assert
-      expect(mocks.getDam).toHaveBeenCalledTimes(2)
-      expect(result).toEqual([DAM, second, DAM, undefined])
-    })
-
-    test('it gives none for no calves', async () => {
-      // Arrange
-      const animals = []
-
-      // Act
-      const result = await findDamsThatCalved({ cph: CPH, animals })
-
-      // Assert
-      expect(result).toEqual([])
-      expect(mocks.getDam).not.toHaveBeenCalled()
-    })
   })
 })
