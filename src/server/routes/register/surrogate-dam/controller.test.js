@@ -181,6 +181,36 @@ describe('surrogateDamController', () => {
       expect(result).toBe('redirected')
     })
 
+    test("it saves the surrogate dam's ear tag number as the holding's animal has it, and the genetic dam's as typed", async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: {
+          geneticDamEarTagNumber: 'uk 123456 501100',
+          surrogateDamEarTagNumber: 'uk 200000 000007'
+        }
+      }
+      const { h } = toolkit()
+      mocks.getDam.mockResolvedValueOnce({
+        earTagNumber: 'UK200000000007',
+        dateOfBirth: null,
+        calfDatesOfBirth: []
+      })
+
+      // Act
+      await surrogateDamSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.saveAnimal).toHaveBeenCalledWith({
+        ...CALF,
+        values: {
+          ...animal,
+          geneticDamEarTagNumber: 'uk 123456 501100',
+          surrogateDamEarTagNumber: 'UK200000000007'
+        }
+      })
+    })
+
     test('it saves a genetic dam left out as null', async () => {
       // Arrange
       const request = {

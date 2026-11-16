@@ -109,7 +109,11 @@ export const surrogateDamSubmitController = {
         .code(statusCodes.badRequest)
     }
 
-    const saved = registration.withAnswers(PAGE, animal, values)
+    // Saved as the holding's animal has it, however it was typed
+    const saved = registration.withAnswers(PAGE, animal, {
+      ...values,
+      surrogateDamEarTagNumber: dam.earTagNumber
+    })
     await animalClient.saveAnimal({ ...calf, values: saved })
 
     return h.redirect(pathAfterSave(request, PAGE, saved))

@@ -194,6 +194,29 @@ describe('geneticDamController', () => {
       })
     })
 
+    test("it saves the ear tag number as the holding's animal has it, however it was typed", async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: { geneticDamEarTagNumber: 'uk 200000 000008' }
+      }
+      const { h } = toolkit()
+      mocks.getDam.mockResolvedValueOnce({
+        earTagNumber: 'UK200000000008',
+        dateOfBirth: null,
+        calfDatesOfBirth: []
+      })
+
+      // Act
+      await geneticDamSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.saveAnimal).toHaveBeenCalledWith({
+        ...CALF,
+        values: { ...animal, geneticDamEarTagNumber: 'UK200000000008' }
+      })
+    })
+
     test.each([
       ['nothing', '', ''],
       ['only spaces', '   ', '']
