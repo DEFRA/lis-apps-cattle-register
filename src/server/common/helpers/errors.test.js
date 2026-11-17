@@ -4,6 +4,7 @@ import { logger } from '@defra/lis-hubs-infra-core'
 
 import { catchAll } from '@defra/lis-infra-ui-services/errors'
 import { createServer } from '../../server.js'
+import { spokeAuth } from '#test-helpers/spoke-auth.js'
 
 describe('#errors', () => {
   let server
@@ -18,11 +19,35 @@ describe('#errors', () => {
   })
 
   test('Should provide expected Not Found page', async () => {
+    // Arrange
+    const user = {
+      sub: 'test-user',
+      email: 'test.user@example.com',
+      firstName: 'Test',
+      lastName: 'User',
+      statements: [
+        {
+          role: 'lis-role-cattle-register-read',
+          cphs: '*',
+          permissions: ['lis-perm-cattle-register-read']
+        }
+      ],
+      serviceId: 'test-service'
+    }
+
+    // Act
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/non-existent-path'
+      url: '/non-existent-path',
+      headers: {
+        cookie:
+          'cookies_policy=%7B%22essential%22%3Atrue%2C%22analytics%22%3Atrue%7D'
+      },
+      auth: spokeAuth(user)
     })
 
+    // Assert
+    expect(result).not.toContain('govuk-cookie-banner')
     expect(result).toEqual(
       expect.stringContaining(
         'Page not found - Register for Cattle - Livestock Information'

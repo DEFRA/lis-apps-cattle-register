@@ -1,5 +1,5 @@
 /** @import { Server } from '@hapi/hapi' */
-import path from 'path'
+import path from 'node:path'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
 import { logger } from '@defra/lis-hubs-infra-core'
@@ -9,7 +9,10 @@ import { createNunjucksConfig } from '@defra/lis-infra-ui-services/nunjucks/plug
 import { router } from './plugins/router.js'
 import { config } from '#config/config.js'
 import { pulse } from './plugins/pulse.js'
-import { catchAll } from '@defra/lis-infra-ui-services/errors'
+import {
+  catchAll,
+  createNotFoundRoute
+} from '@defra/lis-infra-ui-services/errors'
 import { setupProxy } from '@defra/lis-infra-ui-services/proxy/setup-proxy'
 import { requestTracing } from './plugins/request-tracing.js'
 import { getCacheEngine } from '@defra/lis-infra-ui-services/session-cache/cache-engine'
@@ -119,6 +122,7 @@ export async function createServer() {
   ])
 
   server.decorate('server', 'dumpSupportedRoutes', dumpSupportedRoutes)
+  server.route(createNotFoundRoute())
   server.ext('onPreResponse', catchAll)
 
   return server

@@ -62,7 +62,7 @@ describe('#dumpSupportedRoutes', () => {
     const routes = server.dumpSupportedRoutes()
 
     // Assert
-    expect(routes.slice(0, 2)).toEqual([
+    expect(routes.filter(({ path }) => path === '/a-shared-path')).toEqual([
       { method: 'GET', path: '/a-shared-path' },
       { method: 'POST', path: '/a-shared-path' }
     ])

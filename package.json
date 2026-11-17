@@ -48,7 +48,7 @@
     "@defra/lis-hubs-infra-access": "^0.45.3",
     "@defra/lis-hubs-infra-core": "^0.34.0",
     "@defra/lis-hubs-infra-registry": "^0.13.3",
-    "@defra/lis-infra-ui-services": "^0.53.0",
+    "@defra/lis-infra-ui-services": "^0.54.0",
     "@defra/lis-species-cattle": "0.10.3",
     "@defra/lis-taxonomy-register": "0.8.3",
     "@hapi/boom": "10.0.1",
