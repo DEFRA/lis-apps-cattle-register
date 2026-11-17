@@ -1,7 +1,11 @@
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
+import * as submissionClient from '#server/services/be4fe/submission.js'
+import * as dataClient from '#server/services/be4fe/data.js'
 import { tagListController, tagListSubmitController } from './controller.js'
 
-vi.mock('#server/services/registration-client.js')
+vi.mock('#server/services/be4fe/animal.js')
+vi.mock('#server/services/be4fe/submission.js')
+vi.mock('#server/services/be4fe/data.js')
 
 const CPH = '10/081/1234'
 const SUBMISSION_ID = '7ZK-M3Q-A9D'
@@ -25,11 +29,18 @@ const unfinished = {
   breed: 'AA'
 }
 
+const DAM = {
+  earTagNumber: 'UK200000000007',
+  dateOfBirth: null,
+  calfDatesOfBirth: []
+}
+
 const mocks = {
-  getSubmission: vi.mocked(registrationClient.getSubmission),
-  getAnimal: vi.mocked(registrationClient.getAnimal),
-  getUnallocatedEarTags: vi.mocked(registrationClient.getUnallocatedEarTags),
-  getDamEarTags: vi.mocked(registrationClient.getDamEarTags)
+  getSubmission: vi.mocked(submissionClient.getSubmission),
+  getAnimal: vi.mocked(animalClient.getAnimal),
+  getUnallocatedEarTags: vi.mocked(dataClient.getUnallocatedEarTags),
+  getDamEarTags: vi.mocked(dataClient.getDamEarTags),
+  getDams: vi.mocked(dataClient.getDams)
 }
 
 /**
@@ -67,13 +78,13 @@ describe('tagListController', () => {
   beforeAll(() => {
     vi.setSystemTime(new Date('2026-11-05T10:00:00Z'))
     mocks.getUnallocatedEarTags.mockResolvedValue([])
-    mocks.getDamEarTags.mockResolvedValue(['UK200000000007'])
+    mocks.getDams.mockResolvedValue([DAM])
   })
 
   afterEach(() => {
     vi.resetAllMocks()
     mocks.getUnallocatedEarTags.mockResolvedValue([])
-    mocks.getDamEarTags.mockResolvedValue(['UK200000000007'])
+    mocks.getDams.mockResolvedValue([DAM])
   })
 
   afterAll(() => {
@@ -91,13 +102,11 @@ describe('tagListController', () => {
       const result = await tagListController.handler(request, h)
 
       // Assert
-      expect(mocks.getSubmission).toHaveBeenCalledWith({
-        submissionId: SUBMISSION_ID
-      })
+      expect(mocks.getSubmission).toHaveBeenCalledWith(SUBMISSION)
       expect(mocks.getUnallocatedEarTags).toHaveBeenCalledWith(SUBMISSION)
-      expect(mocks.getDamEarTags).toHaveBeenCalledWith({ cph: CPH })
+      expect(mocks.getDamEarTags).not.toHaveBeenCalled()
       expect(mocks.getAnimal).toHaveBeenCalledWith({
-        submissionId: SUBMISSION_ID,
+        ...SUBMISSION,
         animalId: 'UK123456301551'
       })
       expect(h.view).toHaveBeenCalledWith(
@@ -128,12 +137,44 @@ describe('tagListController', () => {
       const request = { params: SUBMISSION }
       const { h } = toolkit()
       givenCalves([complete])
-      mocks.getDamEarTags.mockResolvedValue([])
+      mocks.getDams.mockResolvedValueOnce([])
 
       // Act
       await tagListController.handler(request, h)
 
       // Assert
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          calves: [
+            expect.objectContaining({
+              href: `${SUBMISSION_PATH}/calves/UK123456301550/genetic-dam`,
+              isReady: false
+            })
+          ]
+        })
+      )
+    })
+
+    test('it lists a calf whose dam is ruled out by her age or calves as not ready, linking to that page', async () => {
+      // Arrange
+      const request = { params: SUBMISSION }
+      const { h } = toolkit()
+      givenCalves([complete])
+      mocks.getDams.mockResolvedValueOnce([
+        {
+          earTagNumber: complete.geneticDamEarTagNumber,
+          dateOfBirth: '2026-10-01',
+          calfDatesOfBirth: []
+        }
+      ])
+
+      // Act
+      await tagListController.handler(request, h)
+
+      // Assert
+      expect(mocks.getDams).toHaveBeenCalledTimes(1)
+      expect(mocks.getDams).toHaveBeenCalledWith({ cph: CPH })
       expect(h.view).toHaveBeenCalledWith(
         TEMPLATE,
         expect.objectContaining({

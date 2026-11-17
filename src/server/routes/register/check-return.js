@@ -4,7 +4,7 @@
  * the user off the service.
  */
 /** @import { Request } from '@hapi/hapi' */
-/** @import { DraftAnimal } from '#server/services/registration-client.js' */
+/** @import { DraftAnimal } from '#server/services/be4fe/animal.js' */
 import { calfPagePath } from './paths.js'
 import { registration } from '#server/journeys/register/registration.js'
 

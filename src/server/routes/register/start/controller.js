@@ -1,4 +1,4 @@
-import * as registrationClient from '#server/services/registration-client.js'
+import * as submissionClient from '#server/services/be4fe/submission.js'
 import { calfPagePath, newCalfPath } from '../paths.js'
 
 /** @import { Request, ResponseObject, ResponseToolkit } from '@hapi/hapi' */
@@ -13,8 +13,9 @@ export const startRegistrationController = {
    */
   async handler(request, h) {
     const { cph } = request.params
-    const { submissionId, animalId } =
-      await registrationClient.startRegistration({ cph })
+    const { submissionId, animalId } = await submissionClient.startRegistration(
+      { cph }
+    )
 
     return h.redirect(
       animalId

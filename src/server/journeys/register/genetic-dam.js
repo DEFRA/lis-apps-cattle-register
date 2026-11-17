@@ -6,6 +6,7 @@
 import Joi from 'joi'
 
 import { answer, REQUIRED } from './answer.js'
+import { DAM_MESSAGES, damThatCalved } from './dam-checks.js'
 
 /**
  * @typedef {object} GeneticDamAnswers
@@ -14,11 +15,8 @@ import { answer, REQUIRED } from './answer.js'
 
 /**
  * The genetic dam. Each rule's message is the code of its error, which the
- * page words in its messages.js. Validate it with, as context, `damEarTags`
- * (the ear tags of the holding's possible dams).
+ * page words in its messages.js. Validate it with the context dam-checks.js asks for.
  */
 export const geneticDamSchema = Joi.object({
-  geneticDamEarTagNumber: answer()
-    .valid(Joi.in('$damEarTags'))
-    .messages({ 'any.only': 'notOnHolding' })
+  geneticDamEarTagNumber: answer().custom(damThatCalved).messages(DAM_MESSAGES)
 }).messages({ 'any.required': REQUIRED })

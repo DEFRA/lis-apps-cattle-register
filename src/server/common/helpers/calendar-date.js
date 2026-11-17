@@ -6,6 +6,9 @@ const UK_TIME_ZONE = 'Europe/London'
 // without leading zeros, in date-fns format tokens
 export const DATE_FORMAT = 'd/M/yyyy'
 
+// A date as the BE4FE holds it: an ISO 8601 calendar date, with no time
+export const ISO_DATE_FORMAT = 'yyyy-MM-dd'
+
 /**
  * The given instant on the UK's clock. Keepers report dates in UK time, so a
  * server clock in UTC must not shift "today" around midnight during British

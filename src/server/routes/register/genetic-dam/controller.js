@@ -1,6 +1,7 @@
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
+import * as dataClient from '#server/services/be4fe/data.js'
 import { pathAfterSave } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
 import { trimAnswers } from '@defra/lis-infra-ui-services/journey'
@@ -23,8 +24,8 @@ export const geneticDamController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
     const [animal, earTagItems] = await Promise.all([
-      registrationClient.getAnimal({ submissionId, animalId }),
-      registrationClient.getDamEarTags({ cph })
+      animalClient.getAnimal({ cph, submissionId, animalId }),
+      dataClient.getDamEarTags({ cph })
     ])
     const owed = registration.pageOwed(PAGE, animal)
 
@@ -54,13 +55,18 @@ export const geneticDamSubmitController = {
    */
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
-    const calf = { submissionId, animalId }
+    const calf = { cph, submissionId, animalId }
     const values = trimAnswers({
       geneticDamEarTagNumber: request.payload.geneticDamEarTagNumber
     })
-    const [animal, earTagItems] = await Promise.all([
-      registrationClient.getAnimal(calf),
-      registrationClient.getDamEarTags({ cph })
+    const [animal, dam] = await Promise.all([
+      animalClient.getAnimal(calf),
+      values.geneticDamEarTagNumber
+        ? dataClient.getDam({
+            cph,
+            earTagNumber: values.geneticDamEarTagNumber
+          })
+        : undefined
     ])
     const owed = registration.pageOwed(PAGE, animal)
 
@@ -69,10 +75,12 @@ export const geneticDamSubmitController = {
     }
 
     const { errors } = registration.validateStep(PAGE, animal, values, {
-      damEarTags: earTagItems
+      dam
     })
 
     if (errors.length) {
+      const earTagItems = await dataClient.getDamEarTags({ cph })
+
       return h
         .view(
           TEMPLATE,
@@ -87,8 +95,12 @@ export const geneticDamSubmitController = {
         .code(statusCodes.badRequest)
     }
 
-    const saved = registration.withAnswers(PAGE, animal, values)
-    await registrationClient.saveAnimal({ ...calf, values: saved })
+    // Saved as the holding's animal has it, however it was typed
+    const saved = registration.withAnswers(PAGE, animal, {
+      ...values,
+      geneticDamEarTagNumber: dam.earTagNumber
+    })
+    await animalClient.saveAnimal({ ...calf, values: saved })
 
     return h.redirect(pathAfterSave(request, PAGE, saved))
   }

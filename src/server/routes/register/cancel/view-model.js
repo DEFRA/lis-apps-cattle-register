@@ -3,7 +3,7 @@ import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 import { CHECK_PAGE } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
 
-/** @import { DraftAnimal } from '#server/services/registration-client.js' */
+/** @import { DraftAnimal } from '#server/services/be4fe/animal.js' */
 
 const PAGE_TITLE = 'Are you sure you want to cancel this registration?'
 export const CANCEL_PAGE = 'cancel'

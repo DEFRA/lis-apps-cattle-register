@@ -1,15 +1,17 @@
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
+import * as dataClient from '#server/services/be4fe/data.js'
 import {
   checkCalfDetailsController,
   checkCalfDetailsSubmitController
 } from './controller.js'
 
-vi.mock('#server/services/registration-client.js')
+vi.mock('#server/services/be4fe/animal.js')
+vi.mock('#server/services/be4fe/data.js')
 
 const CPH = '10/081/1234'
 const SUBMISSION_ID = '7ZK-M3Q-A9D'
 const ANIMAL_ID = 'UK123456301550'
-const CALF = { submissionId: SUBMISSION_ID, animalId: ANIMAL_ID }
+const CALF = { cph: CPH, submissionId: SUBMISSION_ID, animalId: ANIMAL_ID }
 const TEMPLATE = 'register/check-calf-details/index'
 const SUBMISSION_PATH = `/holdings/10/081/1234/cattle/register/${SUBMISSION_ID}`
 const CALF_PATH = `${SUBMISSION_PATH}/calves/${ANIMAL_ID}`
@@ -24,10 +26,17 @@ const animal = {
   sireName: null
 }
 
+const DAM = {
+  earTagNumber: 'UK200000000007',
+  dateOfBirth: null,
+  calfDatesOfBirth: []
+}
+
 const mocks = {
-  getAnimal: vi.mocked(registrationClient.getAnimal),
-  getUnallocatedEarTags: vi.mocked(registrationClient.getUnallocatedEarTags),
-  getDamEarTags: vi.mocked(registrationClient.getDamEarTags)
+  getAnimal: vi.mocked(animalClient.getAnimal),
+  getUnallocatedEarTags: vi.mocked(dataClient.getUnallocatedEarTags),
+  getDamEarTags: vi.mocked(dataClient.getDamEarTags),
+  getDam: vi.mocked(dataClient.getDam)
 }
 
 /**
@@ -45,7 +54,7 @@ describe('checkCalfDetailsController', () => {
     vi.setSystemTime(new Date('2026-11-05T10:00:00Z'))
     mocks.getAnimal.mockResolvedValue(animal)
     mocks.getUnallocatedEarTags.mockResolvedValue([])
-    mocks.getDamEarTags.mockResolvedValue(['UK200000000007'])
+    mocks.getDam.mockResolvedValue(DAM)
   })
 
   afterEach(() => {
@@ -139,7 +148,7 @@ describe('checkCalfDetailsController', () => {
         cph: CPH,
         submissionId: SUBMISSION_ID
       })
-      expect(mocks.getDamEarTags).toHaveBeenCalledWith({ cph: CPH })
+      expect(mocks.getDamEarTags).not.toHaveBeenCalled()
       expect(h.redirect).toHaveBeenCalledWith(SUBMISSION_PATH)
       expect(result).toBe('redirected')
     })
@@ -148,12 +157,35 @@ describe('checkCalfDetailsController', () => {
       // Arrange
       const request = { params: { cph: CPH, ...CALF } }
       const h = toolkit()
-      mocks.getDamEarTags.mockResolvedValueOnce([])
+      mocks.getDam.mockResolvedValueOnce(undefined)
 
       // Act
       await checkCalfDetailsSubmitController.handler(request, h)
 
       // Assert
+      expect(h.redirect).toHaveBeenCalledWith(
+        `${CALF_PATH}/genetic-dam?return=check`
+      )
+    })
+
+    test('it sends the user to the dam page for a dam now ruled out by her age or calves, to return here', async () => {
+      // Arrange
+      const request = { params: { cph: CPH, ...CALF } }
+      const h = toolkit()
+      mocks.getDam.mockResolvedValueOnce({
+        earTagNumber: 'UK200000000007',
+        dateOfBirth: '2026-01-01',
+        calfDatesOfBirth: []
+      })
+
+      // Act
+      await checkCalfDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getDam).toHaveBeenCalledWith({
+        cph: CPH,
+        earTagNumber: 'UK200000000007'
+      })
       expect(h.redirect).toHaveBeenCalledWith(
         `${CALF_PATH}/genetic-dam?return=check`
       )
@@ -183,7 +215,7 @@ describe('checkCalfDetailsController', () => {
       const request = { params: { cph: CPH, ...CALF } }
       const h = toolkit()
       const failure = new Error('503 - Service unavailable')
-      mocks.getDamEarTags.mockRejectedValueOnce(failure)
+      mocks.getDam.mockRejectedValueOnce(failure)
 
       // Act
       let error

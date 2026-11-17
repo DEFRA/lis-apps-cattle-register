@@ -1,18 +1,23 @@
-import * as registrationClient from '#server/services/registration-client.js'
+import Boom from '@hapi/boom'
+import * as animalClient from '#server/services/be4fe/animal.js'
 import {
   cancelCalfController,
   cancelCalfSubmitController
 } from './controller.js'
 
-vi.mock('#server/services/registration-client.js')
+vi.mock('#server/services/be4fe/animal.js')
 
 const CPH = '10/081/1234'
-const CALF = { submissionId: '7ZK-M3Q-A9D', animalId: 'UK123456301551' }
+const CALF = {
+  cph: CPH,
+  submissionId: '7ZK-M3Q-A9D',
+  animalId: 'UK123456301551'
+}
 const SUBMISSION_PATH = '/holdings/10/081/1234/cattle/register/7ZK-M3Q-A9D'
 
 const mocks = {
-  getAnimal: vi.mocked(registrationClient.getAnimal),
-  removeAnimal: vi.mocked(registrationClient.removeAnimal)
+  getAnimal: vi.mocked(animalClient.getAnimal),
+  removeAnimal: vi.mocked(animalClient.removeAnimal)
 }
 
 /**
@@ -52,19 +57,24 @@ describe('cancelCalfController', () => {
       expect(result).toBe('viewed')
     })
 
-    test('it sends a calf with nothing saved to the list of calves', async () => {
+    test('it rethrows the client not found for a calf the registration does not have', async () => {
       // Arrange
       const request = { params: { cph: CPH, ...CALF } }
       const h = toolkit()
-      mocks.getAnimal.mockResolvedValueOnce({})
+      mocks.getAnimal.mockRejectedValueOnce(Boom.notFound())
 
       // Act
-      const result = await cancelCalfController.handler(request, h)
+      let error
+      try {
+        await cancelCalfController.handler(request, h)
+      } catch (e) {
+        error = e
+      }
 
       // Assert
-      expect(h.redirect).toHaveBeenCalledWith(SUBMISSION_PATH)
+      expect(error.output.statusCode).toBe(404)
       expect(h.view).not.toHaveBeenCalled()
-      expect(result).toBe('redirected')
+      expect(h.redirect).not.toHaveBeenCalled()
     })
 
     test('it rethrows a BE4FE failure, such as an unknown submission', async () => {

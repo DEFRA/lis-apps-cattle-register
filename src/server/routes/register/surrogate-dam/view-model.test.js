@@ -68,10 +68,7 @@ describe('buildViewModel()', () => {
       calfEarTagNumber: CALF_EAR_TAG,
       values: EMPTY,
       earTagItems: [],
-      errors: [
-        { field: 'geneticDamEarTagNumber', code: 'required' },
-        { field: 'surrogateDamEarTagNumber', code: 'required' }
-      ]
+      errors: [{ field: 'surrogateDamEarTagNumber', code: 'required' }]
     }
 
     // Act
@@ -81,18 +78,11 @@ describe('buildViewModel()', () => {
     expect(result.pageTitle).toBe('Error: Genetic and surrogate dam details')
     expect(result.errorList).toEqual([
       {
-        text: 'Enter the ear tag number of the genetic dam',
-        href: '#geneticDamEarTagNumber'
-      },
-      {
         text: 'Enter the ear tag number of the surrogate dam',
         href: '#surrogateDamEarTagNumber'
       }
     ])
     expect(result.fieldErrors).toEqual({
-      geneticDamEarTagNumber: {
-        text: 'Enter the ear tag number of the genetic dam'
-      },
       surrogateDamEarTagNumber: {
         text: 'Enter the ear tag number of the surrogate dam'
       }

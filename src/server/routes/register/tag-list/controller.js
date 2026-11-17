@@ -1,8 +1,12 @@
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
+import * as submissionClient from '#server/services/be4fe/submission.js'
+import * as dataClient from '#server/services/be4fe/data.js'
 import { CHECK_PAGE } from '../check-return.js'
 import { newCalfPath, submissionPagePath } from '../paths.js'
+import { damThatCalvedEarTag } from '../dam-that-calved.js'
+import { plainEarTag } from '#server/common/helpers/ear-tag.js'
 import { registration } from '#server/journeys/register/registration.js'
 import { MAX_CALVES } from './messages.js'
 import { buildViewModel } from './view-model.js'
@@ -10,12 +14,26 @@ import { buildViewModel } from './view-model.js'
 /**
  * @import { Request, ResponseObject, ResponseToolkit } from '@hapi/hapi'
  * @import { ListedCalf } from './view-model.js'
+ * @import { DraftAnimal } from '#server/services/be4fe/animal.js'
+ * @import { Dam } from '#server/services/be4fe/data.js'
  */
 
 const TEMPLATE = 'register/tag-list/index'
 // Not built yet: the prototype continues, once every calf is ready, with
 // the page that sends the registration.
 const SUBMIT_PAGE = 'submit'
+
+/**
+ * @param {DraftAnimal} animal
+ * @param {Dam[]} dams - the holding's possible dams
+ * @returns {Dam | undefined} the cow that calved; undefined while the calf
+ *   has none, or she is not one of the holding's dams
+ */
+function damThatCalved(animal, dams) {
+  const earTagNumber = plainEarTag(damThatCalvedEarTag(animal) ?? '')
+
+  return dams.find((dam) => dam.earTagNumber === earTagNumber)
+}
 
 /**
  * Each calf is judged whole against the holding's ear tags and dams as they
@@ -27,21 +45,22 @@ const SUBMIT_PAGE = 'submit'
  *   otherwise to the first page to finish
  */
 async function listCalves({ cph, submissionId }) {
-  const [submission, unallocatedEarTags, damEarTags] = await Promise.all([
-    registrationClient.getSubmission({ submissionId }),
-    registrationClient.getUnallocatedEarTags({ cph, submissionId }),
-    registrationClient.getDamEarTags({ cph })
+  // The dams in one call, however many calves there are
+  const [submission, unallocatedEarTags, dams] = await Promise.all([
+    submissionClient.getSubmission({ cph, submissionId }),
+    dataClient.getUnallocatedEarTags({ cph, submissionId }),
+    dataClient.getDams({ cph })
   ])
   const animals = await Promise.all(
     submission.animals.map(({ animalId }) =>
-      registrationClient.getAnimal({ submissionId, animalId })
+      animalClient.getAnimal({ cph, submissionId, animalId })
     )
   )
 
   return submission.animals.map(({ animalId }, index) => {
     const incomplete = registration.firstIncompleteStep(animals[index], {
       unallocatedEarTags,
-      damEarTags
+      dam: damThatCalved(animals[index], dams)
     })
 
     return {

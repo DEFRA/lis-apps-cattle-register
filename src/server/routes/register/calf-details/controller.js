@@ -1,7 +1,8 @@
-import Boom from '@hapi/boom'
 import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 
-import * as registrationClient from '#server/services/registration-client.js'
+import * as animalClient from '#server/services/be4fe/animal.js'
+import * as submissionClient from '#server/services/be4fe/submission.js'
+import * as dataClient from '#server/services/be4fe/data.js'
 import { trimAnswers } from '@defra/lis-infra-ui-services/journey'
 import { registration } from '#server/journeys/register/registration.js'
 import { pathAfterSave } from '../check-return.js'
@@ -10,42 +11,38 @@ import { MAX_CALVES } from '../tag-list/messages.js'
 import { buildViewModel, formValuesFrom } from './view-model.js'
 
 /** @import { Request, ResponseObject, ResponseToolkit } from '@hapi/hapi' */
-/** @import { DraftAnimal } from '#server/services/registration-client.js' */
+/** @import { DraftAnimal } from '#server/services/be4fe/animal.js' */
 
 const TEMPLATE = 'register/calf-details/index'
 const PAGE = 'calf-details'
 
 /**
- * @param {{ submissionId: string, animalId?: string }} calf
- * @returns {Promise<DraftAnimal>} the calf's answers: none for a
- *   calf the submission does not have yet
+ * @param {{ cph: string, submissionId: string, animalId?: string }} calf
+ * @returns {Promise<DraftAnimal>} the calf's answers: none for a new calf
  * @throws {Error} not found, for an id the submission has no calf under
  */
-async function answersOf({ submissionId, animalId }) {
+async function answersOf({ cph, submissionId, animalId }) {
   if (animalId === undefined) {
     return {}
   }
 
-  const animal = await registrationClient.getAnimal({ submissionId, animalId })
-
-  if (!Object.keys(animal).length) {
-    throw Boom.notFound()
-  }
-
-  return animal
+  return animalClient.getAnimal({ cph, submissionId, animalId })
 }
 
 /**
- * @param {{ submissionId: string, animalId?: string }} calf
+ * @param {{ cph: string, submissionId: string, animalId?: string }} calf
  * @returns {Promise<number | undefined>} how many calves the registration
  *   already has, for a new calf; undefined for one it has
  */
-async function calvesBeforeNew({ submissionId, animalId }) {
+async function calvesBeforeNew({ cph, submissionId, animalId }) {
   if (animalId !== undefined) {
     return undefined
   }
 
-  const { animals } = await registrationClient.getSubmission({ submissionId })
+  const { animals } = await submissionClient.getSubmission({
+    cph,
+    submissionId
+  })
 
   return animals.length
 }
@@ -71,9 +68,9 @@ export const calfDetailsController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
     const [animal, earTagItems, calvesBefore] = await Promise.all([
-      answersOf({ submissionId, animalId }),
-      registrationClient.getUnallocatedEarTags({ cph, submissionId }),
-      calvesBeforeNew({ submissionId, animalId })
+      answersOf({ cph, submissionId, animalId }),
+      dataClient.getUnallocatedEarTags({ cph, submissionId }),
+      calvesBeforeNew({ cph, submissionId, animalId })
     ])
 
     if (isFull(calvesBefore)) {
@@ -103,11 +100,11 @@ export const calfDetailsSubmitController = {
   async handler(request, h) {
     const { cph, submissionId, animalId } = request.params
     const { acknowledgedLateDateOfBirth, ...submitted } = request.payload
-    const calf = { submissionId, animalId }
+    const calf = { cph, submissionId, animalId }
     const values = trimAnswers(formValuesFrom(submitted))
     const [animal, earTagItems, calvesBefore] = await Promise.all([
       answersOf(calf),
-      registrationClient.getUnallocatedEarTags({ cph, submissionId }),
+      dataClient.getUnallocatedEarTags({ cph, submissionId }),
       calvesBeforeNew(calf)
     ])
 
@@ -153,7 +150,7 @@ export const calfDetailsSubmitController = {
     const saved = registration.withAnswers(PAGE, animal, values)
     // The calf's id follows its ear tag number, so it is the saved calf's id
     // that the next page is about
-    const { animalId: savedId } = await registrationClient.saveAnimal({
+    const { animalId: savedId } = await animalClient.saveAnimal({
       ...calf,
       values: saved
     })

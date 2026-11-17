@@ -10,15 +10,26 @@ import { sireDetailsSchema } from './sire-details.js'
 import { surrogateDamSchema } from './surrogate-dam.js'
 import { createJourney } from '@defra/lis-infra-ui-services/journey'
 /** @import { Step } from '@defra/lis-infra-ui-services/journey' */
-/** @import { DraftAnimal } from '#server/services/registration-client.js' */
+/** @import { DraftAnimal } from '#server/services/be4fe/animal.js' */
+/** @import { Dam } from '#server/services/be4fe/data.js' */
 
 /**
  * @typedef {object} Options - what the rules need beyond the animal
  * @property {string[]} unallocatedEarTags - the ear tags issued to the
  *   holding that are not on an animal, nor on another calf of the submission
- * @property {string[]} damEarTags - the ear tags of the holding's possible
- *   dams
+ * @property {Dam} [dam] - the holding's animal the calf's dam is; absent
+ *   when the BE4FE finds none, or finds a male
  */
+
+/**
+ * @param {Options} options
+ * @param {DraftAnimal} saved - the calf as it is saved
+ * @returns {{ dam?: Dam, calfDateOfBirth?: string }}
+ *   what the rules for the cow that calved are judged against
+ */
+function damContext({ dam }, saved) {
+  return { dam, calfDateOfBirth: saved.dateOfBirth }
+}
 
 /** @type {Step<DraftAnimal, Options>[]} */
 const steps = [
@@ -41,13 +52,13 @@ const steps = [
     page: 'genetic-dam',
     schema: geneticDamSchema,
     appliesTo: (animal) => animal.damType === 'genetic',
-    context: ({ damEarTags }) => ({ damEarTags })
+    context: damContext
   },
   {
     page: 'surrogate-dam',
     schema: surrogateDamSchema,
     appliesTo: (animal) => animal.damType === 'surrogate',
-    context: ({ damEarTags }) => ({ damEarTags })
+    context: damContext
   },
   {
     page: 'sire-details',

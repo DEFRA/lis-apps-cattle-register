@@ -3,15 +3,20 @@ import { describe, expect, test } from 'vitest'
 import { getMessage } from './messages.js'
 
 describe('getMessage()', () => {
-  test('gives the prototype text for geneticDamEarTagNumber required', () => {
+  test('gives the text for surrogateDamEarTagNumber sameAsGeneticDam', () => {
     // Arrange
-    const result = { field: 'geneticDamEarTagNumber', code: 'required' }
+    const result = {
+      field: 'surrogateDamEarTagNumber',
+      code: 'sameAsGeneticDam'
+    }
 
     // Act
     const text = getMessage(result)
 
     // Assert
-    expect(text).toBe('Enter the ear tag number of the genetic dam')
+    expect(text).toBe(
+      'The genetic dam and surrogate dam ear tag numbers cannot be the same'
+    )
   })
 
   test.each(['required', 'notOnHolding'])(
