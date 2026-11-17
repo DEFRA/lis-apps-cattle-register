@@ -1,5 +1,5 @@
 /** @import { Server } from '@hapi/hapi' */
-import path from 'path'
+import path from 'node:path'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
 import { logger } from '@defra/lis-hubs-infra-core'
