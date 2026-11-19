@@ -35,6 +35,10 @@ import {
   cancelCalfSubmitController
 } from './cancel/controller.js'
 import {
+  submitRegistrationController,
+  submitRegistrationSubmitController
+} from './submit/controller.js'
+import {
   tagListController,
   tagListSubmitController
 } from './tag-list/controller.js'
@@ -298,6 +302,24 @@ const routes = [
     ...cancelCalfSubmitController,
     options: {
       validate: calfParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/submit`,
+    ...submitRegistrationController,
+    options: {
+      validate: submissionParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'POST',
+    path: `${REGISTER_ROUTE}/{submissionId}/submit`,
+    ...submitRegistrationSubmitController,
+    options: {
+      validate: submissionParams,
       pre: [{ method: demandRegisterAccess }]
     }
   },

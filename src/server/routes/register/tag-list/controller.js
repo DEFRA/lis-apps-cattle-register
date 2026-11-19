@@ -8,6 +8,7 @@ import { newCalfPath, submissionPagePath } from '../paths.js'
 import { damThatCalvedEarTag } from '../dam-that-calved.js'
 import { plainEarTag } from '#server/common/helpers/ear-tag.js'
 import { registration } from '#server/journeys/register/registration.js'
+import { SUBMIT_PAGE } from '../submit/view-model.js'
 import { MAX_CALVES } from './messages.js'
 import { buildViewModel } from './view-model.js'
 
@@ -19,9 +20,6 @@ import { buildViewModel } from './view-model.js'
  */
 
 const TEMPLATE = 'register/tag-list/index'
-// Not built yet: the prototype continues, once every calf is ready, with
-// the page that sends the registration.
-const SUBMIT_PAGE = 'submit'
 
 /**
  * @param {DraftAnimal} animal
@@ -44,7 +42,7 @@ function damThatCalved(animal, dams) {
  *   they were added, each linking to check calf details once ready and
  *   otherwise to the first page to finish
  */
-async function listCalves({ cph, submissionId }) {
+export async function listCalves({ cph, submissionId }) {
   // The dams in one call, however many calves there are
   const [submission, unallocatedEarTags, dams] = await Promise.all([
     submissionClient.getSubmission({ cph, submissionId }),
