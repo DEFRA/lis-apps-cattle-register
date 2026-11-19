@@ -51,8 +51,13 @@ export function buildViewModel({
     text: getMessage(error),
     href: `#${error.field}`
   }))
+  // A warning is worded on its field as an error is, but is not listed in
+  // the error summary: the page can be continued from as it is.
   const fieldErrors = Object.fromEntries(
-    errors.map((error) => [error.field, { text: getMessage(error) }])
+    [...errors, ...warnings].map((problem) => [
+      problem.field,
+      { text: getMessage(problem) }
+    ])
   )
 
   return {
@@ -79,7 +84,6 @@ export function buildViewModel({
     maxDateOfBirth: format(toUkDate(new Date()), DATE_FORMAT),
     errorList,
     fieldErrors,
-    warnings: warnings.map(getMessage),
     acknowledgedLateDateOfBirth
   }
 }

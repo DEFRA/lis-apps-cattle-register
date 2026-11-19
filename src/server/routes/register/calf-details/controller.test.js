@@ -422,9 +422,11 @@ describe('calfDetailsController', () => {
         TEMPLATE,
         expect.objectContaining({
           errorList: [],
-          warnings: [
-            'Date of birth is over the 27-day deadline to report a calf birth.'
-          ],
+          fieldErrors: {
+            dateOfBirth: {
+              text: 'Date of birth is over the 27-day deadline to report a calf birth.'
+            }
+          },
           acknowledgedLateDateOfBirth: LATE_DATE
         })
       )

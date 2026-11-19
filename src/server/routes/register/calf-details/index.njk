@@ -96,13 +96,6 @@
           attributes: { maxlength: maxFieldLength }
         }) }}
 
-        {% for warning in warnings %}
-          {{ govukWarningText({
-            text: warning,
-            iconFallbackText: "Warning"
-          }) }}
-        {% endfor %}
-
         {% if acknowledgedLateDateOfBirth %}
           <input type="hidden" name="acknowledgedLateDateOfBirth" value="{{ acknowledgedLateDateOfBirth }}">
         {% endif %}

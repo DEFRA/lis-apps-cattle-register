@@ -94,7 +94,6 @@ describe('buildViewModel()', () => {
       maxFieldLength: 200,
       errorList: [],
       fieldErrors: {},
-      warnings: [],
       acknowledgedLateDateOfBirth: ''
     })
     expect(result.breedItems.length).toBeGreaterThan(1)
@@ -137,7 +136,7 @@ describe('buildViewModel()', () => {
     })
   })
 
-  test('it carries the warnings and the acknowledged date', () => {
+  test('it words a warning on its field without listing it as an error, and carries the acknowledged date', () => {
     // Arrange
     const options = {
       request,
@@ -151,9 +150,13 @@ describe('buildViewModel()', () => {
     const result = buildViewModel(options)
 
     // Assert
-    expect(result.warnings).toEqual([
-      'Date of birth is over the 27-day deadline to report a calf birth.'
-    ])
+    expect(result.fieldErrors).toEqual({
+      dateOfBirth: {
+        text: 'Date of birth is over the 27-day deadline to report a calf birth.'
+      }
+    })
+    expect(result.errorList).toEqual([])
+    expect(result.pageTitle).toBe('Calf details')
     expect(result.acknowledgedLateDateOfBirth).toBe('1/11/2026')
   })
 
