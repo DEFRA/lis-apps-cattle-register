@@ -34,6 +34,7 @@ import {
   cancelCalfController,
   cancelCalfSubmitController
 } from './cancel/controller.js'
+import { confirmationController } from './confirmation/controller.js'
 import {
   submitRegistrationController,
   submitRegistrationSubmitController
@@ -318,6 +319,15 @@ const routes = [
     method: 'POST',
     path: `${REGISTER_ROUTE}/{submissionId}/submit`,
     ...submitRegistrationSubmitController,
+    options: {
+      validate: submissionParams,
+      pre: [{ method: demandRegisterAccess }]
+    }
+  },
+  {
+    method: 'GET',
+    path: `${REGISTER_ROUTE}/{submissionId}/confirmation`,
+    ...confirmationController,
     options: {
       validate: submissionParams,
       pre: [{ method: demandRegisterAccess }]

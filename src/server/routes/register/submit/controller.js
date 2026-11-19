@@ -1,4 +1,5 @@
 import * as submissionClient from '#server/services/be4fe/submission.js'
+import { CONFIRMATION_PAGE } from '../confirmation/view-model.js'
 import { submissionPagePath, submissionPath } from '../paths.js'
 import { listCalves } from '../tag-list/controller.js'
 import { buildViewModel } from './view-model.js'
@@ -6,9 +7,6 @@ import { buildViewModel } from './view-model.js'
 /** @import { Request, ResponseObject, ResponseToolkit } from '@hapi/hapi' */
 
 const TEMPLATE = 'register/submit/index'
-// Not built yet: once sent, the registration continues with its
-// confirmation.
-const CONFIRMATION_PAGE = 'confirmation'
 
 /**
  * A registration is sent once, and only when every calf in it is ready.
