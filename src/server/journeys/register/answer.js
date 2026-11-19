@@ -8,6 +8,8 @@ export const TOO_LONG = 'tooLong'
 // The longest an ear tag number may be, not counting the spaces it is typed
 // with
 export const MAX_EAR_TAG_LENGTH = 15
+// The longest it may be as typed: a space after each of its characters
+const MAX_TYPED_EAR_TAG_LENGTH = 30
 // The longest a name may be
 export const MAX_NAME_LENGTH = 200
 
@@ -46,7 +48,8 @@ export function optionalEarTagNumber() {
   return Joi.string()
     .trim()
     .custom((value, helpers) =>
-      plainEarTag(value).length > MAX_EAR_TAG_LENGTH
+      plainEarTag(value).length > MAX_EAR_TAG_LENGTH ||
+      value.length > MAX_TYPED_EAR_TAG_LENGTH
         ? helpers.message(TOO_LONG)
         : value
     )

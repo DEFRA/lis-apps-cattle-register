@@ -88,4 +88,20 @@ describe('the sire details rules', () => {
     // Assert
     expect(result.errors).toEqual([])
   })
+
+  test('it refuses an ear tag number padded out with spaces', () => {
+    // Arrange
+    const answers = {
+      sireEarTagNumber: `UK${' '.repeat(500)}1`,
+      sireName: null
+    }
+
+    // Act
+    const result = registration.validateStep('sire-details', {}, answers)
+
+    // Assert
+    expect(result.errors).toEqual([
+      expect.objectContaining({ field: 'sireEarTagNumber', code: 'tooLong' })
+    ])
+  })
 })
