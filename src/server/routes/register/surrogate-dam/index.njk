@@ -35,8 +35,7 @@
           },
           errorMessage: fieldErrors.geneticDamEarTagNumber,
           spellcheck: false,
-          autocomplete: "off",
-          attributes: { maxlength: maxFieldLength }
+          autocomplete: "off"
         }) }}
 
         {{ appAutocomplete({
@@ -55,8 +54,7 @@
           errorMessage: fieldErrors.surrogateDamEarTagNumber,
           items: earTagItems,
           minLength: 1,
-          spellcheck: false,
-          attributes: { maxlength: maxFieldLength }
+          spellcheck: false
         }) }}
 
         {{ govukButton({

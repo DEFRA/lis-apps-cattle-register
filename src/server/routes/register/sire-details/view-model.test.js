@@ -31,7 +31,59 @@ describe('buildViewModel()', () => {
       backLinkHref: `${CALF_PATH}/surrogate-dam`,
       formAction: `${CALF_PATH}/sire-details`,
       values: { sireEarTagNumber: 'UK123456701300', sireName: 'Duke' },
-      maxFieldLength: 200
+      errorList: [],
+      fieldErrors: {}
+    })
+  })
+
+  test('it lists each error by field, marking the title', () => {
+    // Arrange
+    const options = {
+      request,
+      calfEarTagNumber: 'UK123456301550',
+      values: { sireEarTagNumber: '9'.repeat(26), sireName: 'Duke' },
+      backPage: 'genetic-dam',
+      errors: [{ field: 'sireEarTagNumber', code: 'tooLong' }]
+    }
+
+    // Act
+    const result = buildViewModel(options)
+
+    // Assert
+    expect(result.pageTitle).toBe('Error: Sire details')
+    expect(result.errorList).toEqual([
+      {
+        text: 'Sire ear tag number must be 15 characters or fewer',
+        href: '#sireEarTagNumber'
+      }
+    ])
+    expect(result.fieldErrors).toEqual({
+      sireEarTagNumber: {
+        text: 'Sire ear tag number must be 15 characters or fewer'
+      }
+    })
+  })
+
+  test('it does not show again an answer of more than 256 characters, but still words its error', () => {
+    // Arrange
+    const options = {
+      request,
+      calfEarTagNumber: 'UK123456301550',
+      values: { sireEarTagNumber: 'UK123456701300', sireName: 'D'.repeat(257) },
+      backPage: 'genetic-dam',
+      errors: [{ field: 'sireName', code: 'tooLong' }]
+    }
+
+    // Act
+    const result = buildViewModel(options)
+
+    // Assert
+    expect(result.values).toEqual({
+      sireEarTagNumber: 'UK123456701300',
+      sireName: ''
+    })
+    expect(result.fieldErrors).toEqual({
+      sireName: { text: 'Sire name must be 200 characters or fewer' }
     })
   })
 })

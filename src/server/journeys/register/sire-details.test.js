@@ -48,4 +48,60 @@ describe('the sire details rules', () => {
       { field: 'sireName', code: 'required' }
     ])
   })
+
+  test.each([
+    ['sireEarTagNumber', 15],
+    ['sireName', 200]
+  ])(
+    'it takes %s of up to %i characters and refuses a longer one',
+    (field, maxLength) => {
+      // Arrange
+      const answers = { sireEarTagNumber: null, sireName: null }
+
+      // Act
+      const atLimit = registration.validateStep(
+        'sire-details',
+        {},
+        { ...answers, [field]: 'A'.repeat(maxLength) }
+      )
+      const overLimit = registration.validateStep(
+        'sire-details',
+        {},
+        { ...answers, [field]: 'A'.repeat(maxLength + 1) }
+      )
+
+      // Assert
+      expect(atLimit.errors).toEqual([])
+      expect(overLimit.errors).toEqual([
+        expect.objectContaining({ field, code: 'tooLong' })
+      ])
+    }
+  )
+
+  test('it does not count the spaces an ear tag number is typed with', () => {
+    // Arrange
+    const answers = { sireEarTagNumber: 'UK 12 345 6701 300', sireName: null }
+
+    // Act
+    const result = registration.validateStep('sire-details', {}, answers)
+
+    // Assert
+    expect(result.errors).toEqual([])
+  })
+
+  test('it refuses an ear tag number padded out with spaces', () => {
+    // Arrange
+    const answers = {
+      sireEarTagNumber: `UK${' '.repeat(500)}1`,
+      sireName: null
+    }
+
+    // Act
+    const result = registration.validateStep('sire-details', {}, answers)
+
+    // Assert
+    expect(result.errors).toEqual([
+      expect.objectContaining({ field: 'sireEarTagNumber', code: 'tooLong' })
+    ])
+  })
 })

@@ -5,7 +5,6 @@ import { format } from 'date-fns'
 import { DATE_FORMAT, toUkDate } from '#server/common/helpers/calendar-date.js'
 import { backLinkPath, keepReturn } from '../check-return.js'
 import { calfPagePath, submissionPath, newCalfPath } from '../paths.js'
-import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { getMessage } from './messages.js'
 import { breedOptions } from '#server/journeys/register/calf-details.js'
 
@@ -47,16 +46,19 @@ export function buildViewModel({
   isFirstCalf = false
 }) {
   const { cph, submissionId, animalId } = request.params
-  const errorList = errors.map((error) => ({
-    text: getMessage(error),
-    href: `#${error.field}`
+  // A warning is shown as an error is, so that it is not missed; its page
+  // can be continued from as it is.
+  const problems = [...errors, ...warnings]
+  const errorList = problems.map((problem) => ({
+    text: getMessage(problem),
+    href: `#${problem.field}`
   }))
   const fieldErrors = Object.fromEntries(
-    errors.map((error) => [error.field, { text: getMessage(error) }])
+    problems.map((problem) => [problem.field, { text: getMessage(problem) }])
   )
 
   return {
-    pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
+    pageTitle: problems.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
     // The first calf is where the registration starts; any other is
     // reached from the list of calves.
@@ -75,11 +77,9 @@ export function buildViewModel({
     values,
     earTagItems,
     breedItems: breedOptions,
-    maxFieldLength: MAX_FIELD_LENGTH,
     maxDateOfBirth: format(toUkDate(new Date()), DATE_FORMAT),
     errorList,
     fieldErrors,
-    warnings: warnings.map(getMessage),
     acknowledgedLateDateOfBirth
   }
 }

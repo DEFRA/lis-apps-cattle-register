@@ -2,7 +2,6 @@ import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
 import { backLinkPath, keepReturn } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
-import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { getMessage } from './messages.js'
 
 const PAGE_TITLE = 'Genetic dam details'
@@ -46,7 +45,6 @@ export function buildViewModel({
     ),
     values: { geneticDamEarTagNumber },
     earTagItems,
-    maxFieldLength: MAX_FIELD_LENGTH,
     errorList,
     fieldErrors
   }

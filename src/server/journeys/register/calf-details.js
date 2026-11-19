@@ -34,8 +34,8 @@ export const breedOptions = Object.entries(breeds).map(([code, name]) => ({
  */
 
 /**
- * Follows the prototype: anything that is not three "/"-separated parts is
- * a missing date. Warns, without failing, about a birth reported after the
+ * Anything that is not a day, a month and a four digit year is not a real
+ * date. Warns, without failing, about a birth reported after the
  * deadline: provisional, and kept in one place so it can be removed.
  * @param {string} dateOfBirth - not blank
  * @param {object} helpers - Joi's
@@ -44,15 +44,14 @@ export const breedOptions = Object.entries(breeds).map(([code, name]) => ({
 function checkDateOfBirth(dateOfBirth, helpers) {
   const today = toUkDate(new Date())
   const parts = dateOfBirth.split('/')
-
-  if (parts.length !== DATE_PARTS || !parts.every(Boolean)) {
-    return helpers.message(REQUIRED)
-  }
-
   const birthDate = parse(dateOfBirth, DATE_FORMAT, today)
 
   // date-fns reads a shorter year as that year: 26 as the year 26
-  if (!isValid(birthDate) || parts.at(-1).length !== YEAR_DIGITS) {
+  if (
+    parts.length !== DATE_PARTS ||
+    parts.at(-1).length !== YEAR_DIGITS ||
+    !isValid(birthDate)
+  ) {
     return helpers.message('invalid')
   }
 

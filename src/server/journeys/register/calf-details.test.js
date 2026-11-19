@@ -97,15 +97,16 @@ describe('validateCalfDetails()', () => {
   })
 
   test.each([
-    ['not three parts', 'yesterday', 'required'],
-    ['four parts', '1/11/2026/1', 'required'],
-    ['missing its month', '1//2026', 'required'],
+    ['not three parts', 'yesterday', 'invalid'],
+    ['letters alone', 'ABCDEFG', 'invalid'],
+    ['four parts', '1/11/2026/1', 'invalid'],
+    ['missing its month', '1//2026', 'invalid'],
     ['three letters parts', 'a/b/c', 'invalid'],
     ['spaced around the slashes', '1 / 11 / 2026', 'invalid'],
     ['longer than 10 characters', '01/011/2026', 'invalid'],
     ['a 2 digit year', '1/11/26', 'invalid'],
     ['a 3 digit day', '001/1/2026', 'invalid'],
-    ['dashes instead of slashes', '1-11-2026', 'required'],
+    ['dashes instead of slashes', '1-11-2026', 'invalid'],
     ['an impossible day', '31/2/2026', 'invalid'],
     ['month 13', '1/13/2026', 'invalid'],
     ['tomorrow', '6/11/2026', 'future']

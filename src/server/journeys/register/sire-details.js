@@ -1,11 +1,16 @@
 /*
  * The rules for the sire details step. Both answers are optional and the
- * sire may be anywhere, so anything is taken for them: the step is complete
- * once its page has been saved.
+ * sire may be anywhere, so anything is taken for them, up to a length: the
+ * step is complete once its page has been saved.
  */
 import Joi from 'joi'
 
-import { optionalAnswer, REQUIRED } from './answer.js'
+import {
+  MAX_NAME_LENGTH,
+  optionalAnswer,
+  optionalEarTagNumber,
+  REQUIRED
+} from './answer.js'
 
 /**
  * @typedef {object} SireDetailsAnswers
@@ -14,6 +19,6 @@ import { optionalAnswer, REQUIRED } from './answer.js'
  */
 
 export const sireDetailsSchema = Joi.object({
-  sireEarTagNumber: optionalAnswer(),
-  sireName: optionalAnswer()
+  sireEarTagNumber: optionalEarTagNumber(),
+  sireName: optionalAnswer(MAX_NAME_LENGTH)
 }).messages({ 'any.required': REQUIRED })

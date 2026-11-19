@@ -19,6 +19,19 @@ describe('getMessage()', () => {
     )
   })
 
+  test('gives the text for geneticDamEarTagNumber tooLong', () => {
+    // Arrange
+    const result = { field: 'geneticDamEarTagNumber', code: 'tooLong' }
+
+    // Act
+    const text = getMessage(result)
+
+    // Assert
+    expect(text).toBe(
+      'Genetic dam ear tag number must be 15 characters or fewer'
+    )
+  })
+
   test.each(['required', 'notOnHolding'])(
     'gives the prototype text for surrogateDamEarTagNumber %s',
     (code) => {

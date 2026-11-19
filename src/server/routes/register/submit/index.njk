@@ -1,0 +1,30 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "form/macro.njk" import lisForm with context %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: backLinkHref
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">{{ heading }}</h1>
+
+      <p class="govuk-body">
+        By sending this cattle birth registration you are confirming that, to the best of your knowledge, the details you are providing are correct.
+      </p>
+
+      {% call lisForm({ action: formAction }) %}
+        {{ govukButton({
+          text: "Accept and send",
+          preventDoubleClick: true
+        }) }}
+      {% endcall %}
+    </div>
+  </div>
+{% endblock %}

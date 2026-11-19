@@ -158,4 +158,43 @@ describe('CattleRegisterBe4FeSubmissionClient', () => {
       expect(thrown.output.statusCode).toBe(NOT_FOUND)
     })
   })
+
+  describe('submitRegistration()', () => {
+    test('it sends the submission by posting to it', async () => {
+      // Arrange
+      const post = service.post.mockResolvedValueOnce(response(undefined))
+
+      // Act
+      await client.submitRegistration({
+        cph: '10/081/1234',
+        submissionId: '7ZK-M3Q-A9D'
+      })
+
+      // Assert
+      expect(post).toHaveBeenCalledWith(
+        'submission/10/081/1234/7ZK-M3Q-A9D',
+        {}
+      )
+    })
+
+    test('it rethrows a failure to send', async () => {
+      // Arrange
+      const unavailable = failure(503)
+      service.post.mockRejectedValueOnce(unavailable)
+
+      // Act
+      let thrown
+      try {
+        await client.submitRegistration({
+          cph: '10/081/1234',
+          submissionId: '7ZK-M3Q-A9D'
+        })
+      } catch (error) {
+        thrown = error
+      }
+
+      // Assert
+      expect(thrown).toBe(unavailable)
+    })
+  })
 })

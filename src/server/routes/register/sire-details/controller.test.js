@@ -193,6 +193,35 @@ describe('sireDetailsController', () => {
       expect(result).toBe('redirected')
     })
 
+    test('it shows the page again with what was typed for an answer that is too long, saving nothing', async () => {
+      // Arrange
+      const sireName = 'D'.repeat(201)
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: { sireEarTagNumber: 'UK123456701300', sireName }
+      }
+      const response = { code: vi.fn().mockReturnValue('viewed with a code') }
+      const h = { ...toolkit(), view: vi.fn().mockReturnValue(response) }
+
+      // Act
+      const result = await sireDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.saveAnimal).not.toHaveBeenCalled()
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          pageTitle: 'Error: Sire details',
+          values: { sireEarTagNumber: 'UK123456701300', sireName },
+          fieldErrors: {
+            sireName: { text: 'Sire name must be 200 characters or fewer' }
+          }
+        })
+      )
+      expect(response.code).toHaveBeenCalledWith(400)
+      expect(result).toBe('viewed with a code')
+    })
+
     test('it saves blank answers as null, so the step counts as done', async () => {
       // Arrange
       const request = {

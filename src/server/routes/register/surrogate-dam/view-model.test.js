@@ -34,7 +34,6 @@ describe('buildViewModel()', () => {
         '/holdings/10/081/1234/cattle/register/7ZK-M3Q-A9D/calves/UK123456301550/surrogate-dam',
       values: EMPTY,
       earTagItems: [],
-      maxFieldLength: 200,
       errorList: [],
       fieldErrors: {}
     })
@@ -86,6 +85,29 @@ describe('buildViewModel()', () => {
       surrogateDamEarTagNumber: {
         text: 'Enter the ear tag number of the surrogate dam'
       }
+    })
+  })
+
+  test('it does not show again a genetic dam ear tag number of more than 256 characters', () => {
+    // Arrange
+    const options = {
+      request,
+      calfEarTagNumber: CALF_EAR_TAG,
+      values: {
+        geneticDamEarTagNumber: '9'.repeat(257),
+        surrogateDamEarTagNumber: 'UK200000000007'
+      },
+      earTagItems: [],
+      errors: [{ field: 'geneticDamEarTagNumber', code: 'tooLong' }]
+    }
+
+    // Act
+    const result = buildViewModel(options)
+
+    // Assert
+    expect(result.values).toEqual({
+      geneticDamEarTagNumber: '',
+      surrogateDamEarTagNumber: 'UK200000000007'
     })
   })
 })

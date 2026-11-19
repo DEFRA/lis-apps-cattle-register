@@ -33,7 +33,6 @@ describe('buildViewModel()', () => {
         '/holdings/10/081/1234/cattle/register/7ZK-M3Q-A9D/calves/UK123456301550/genetic-dam',
       values: { geneticDamEarTagNumber: '' },
       earTagItems: [],
-      maxFieldLength: 200,
       errorList: [],
       fieldErrors: {}
     })

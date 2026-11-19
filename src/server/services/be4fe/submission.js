@@ -17,6 +17,9 @@ import {
  *   last saved
  */
 
+// The status of a submission that has been sent
+export const SUBMITTED_STATUS = 'SUBMITTED'
+
 /**
  * Starts the holding's registration, or continues the one it has not
  * submitted.
@@ -56,4 +59,16 @@ export async function getSubmission({ cph, submissionId }) {
       earTagNumber: animal['animal-id']
     }))
   }
+}
+
+/**
+ * Sends the registration: the BE4FE passes its calves on to be registered,
+ * and keeps it unsent if it cannot.
+ * @param {{ cph: string, submissionId: string }} submission
+ * @returns {Promise<void>}
+ * @throws {Boom.Boom} not found, for a submission the BE4FE does not hold
+ *   under the holding
+ */
+export async function submitRegistration({ cph, submissionId }) {
+  await be4fe.post(submissionPath({ cph, submissionId }), {})
 }

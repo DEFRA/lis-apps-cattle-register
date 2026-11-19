@@ -91,10 +91,8 @@ describe('buildViewModel()', () => {
         '/holdings/10/081/1234/cattle/register/7ZK-M3Q-A9D/calves/UK123456301550/calf-details',
       values,
       earTagItems: [],
-      maxFieldLength: 200,
       errorList: [],
       fieldErrors: {},
-      warnings: [],
       acknowledgedLateDateOfBirth: ''
     })
     expect(result.breedItems.length).toBeGreaterThan(1)
@@ -137,7 +135,7 @@ describe('buildViewModel()', () => {
     })
   })
 
-  test('it carries the warnings and the acknowledged date', () => {
+  test('it shows a warning as an error, on its field and in the summary, and carries the acknowledged date', () => {
     // Arrange
     const options = {
       request,
@@ -151,9 +149,18 @@ describe('buildViewModel()', () => {
     const result = buildViewModel(options)
 
     // Assert
-    expect(result.warnings).toEqual([
-      'Date of birth is over the 27-day deadline to report a calf birth.'
+    expect(result.fieldErrors).toEqual({
+      dateOfBirth: {
+        text: 'Date of birth is over the 27-day deadline to report a calf birth. Check the date, or select Continue to register the birth anyway.'
+      }
+    })
+    expect(result.errorList).toEqual([
+      {
+        text: 'Date of birth is over the 27-day deadline to report a calf birth. Check the date, or select Continue to register the birth anyway.',
+        href: '#dateOfBirth'
+      }
     ])
+    expect(result.pageTitle).toBe('Error: Calf details')
     expect(result.acknowledgedLateDateOfBirth).toBe('1/11/2026')
   })
 

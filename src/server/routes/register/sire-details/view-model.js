@@ -1,8 +1,9 @@
 import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
 import { backLinkPath, keepReturn } from '../check-return.js'
+import { echoed } from '../form-limits.js'
 import { calfPagePath } from '../paths.js'
-import { MAX_FIELD_LENGTH } from '../form-limits.js'
+import { getMessage } from './messages.js'
 
 /** @import { SireDetailsAnswers } from '#server/journeys/register/sire-details.js' */
 
@@ -26,18 +27,20 @@ export function formValuesFrom(answers) {
  * @param {string} options.calfEarTagNumber - the calf's saved ear tag number
  * @param {Required<SireDetailsAnswers>} options.values
  * @param {string} options.backPage - the dam page the calf came through
+ * @param {{ field: string, code: string }[]} [options.errors]
  * @returns {object} the sire details view model
  */
 export function buildViewModel({
   request,
   calfEarTagNumber,
   values,
-  backPage
+  backPage,
+  errors = []
 }) {
   const { cph, submissionId, animalId } = request.params
 
   return {
-    pageTitle: PAGE_TITLE,
+    pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
     calfEarTagNumber: formatEarTag(calfEarTagNumber),
     backLinkHref: backLinkPath(
@@ -48,7 +51,16 @@ export function buildViewModel({
       request,
       calfPagePath(cph, submissionId, animalId, 'sire-details')
     ),
-    values,
-    maxFieldLength: MAX_FIELD_LENGTH
+    values: {
+      sireEarTagNumber: echoed(values.sireEarTagNumber),
+      sireName: echoed(values.sireName)
+    },
+    errorList: errors.map((error) => ({
+      text: getMessage(error),
+      href: `#${error.field}`
+    })),
+    fieldErrors: Object.fromEntries(
+      errors.map((error) => [error.field, { text: getMessage(error) }])
+    )
   }
 }
