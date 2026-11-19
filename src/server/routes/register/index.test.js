@@ -1,7 +1,7 @@
 import { register } from './index.js'
 import { demandRegisterAccess } from './holding-access.js'
 import { redirectOnSaveConflict } from './save-conflict.js'
-import { MAX_FIELD_LENGTH } from './form-limits.js'
+import { MAX_ECHO_LENGTH } from './form-limits.js'
 
 vi.mock('#server/services/be4fe/animal.js')
 vi.mock('#server/services/be4fe/submission.js')
@@ -152,7 +152,7 @@ describe('register routes', () => {
     expect(error).toBeDefined()
   })
 
-  test('every route that takes a form refuses a field that is not one string, or is too long', () => {
+  test('every route that takes a form refuses a field that is not one string', () => {
     // Arrange
     const forms = registeredRoutes().filter(
       ({ options }) => options.validate.payload
@@ -164,7 +164,7 @@ describe('register routes', () => {
       const fields = Object.keys(schema.describe().keys)
 
       return fields.flatMap((field) =>
-        [['a', 'b'], 'a'.repeat(MAX_FIELD_LENGTH + 1)]
+        [['a', 'b']]
           .filter((value) => !schema.validate({ [field]: value }).error)
           .map((value) => `${path} ${field} ${JSON.stringify(value)}`)
       )
@@ -173,6 +173,48 @@ describe('register routes', () => {
     // Assert
     expect(forms.length).toBeGreaterThan(0)
     expect(accepted).toEqual([])
+  })
+
+  test('every route that takes a form takes an answer too long to show again as not given, but keeps one that may be left out', () => {
+    // Arrange
+    const tooLong = 'a'.repeat(MAX_ECHO_LENGTH + 1)
+    const optional = ['geneticDamEarTagNumber', 'sireEarTagNumber', 'sireName']
+    const forms = registeredRoutes().filter(
+      ({ path, options }) =>
+        options.validate.payload && !path.endsWith('/genetic-dam')
+    )
+
+    // Act
+    const taken = forms.flatMap(({ options }) => {
+      const schema = options.validate.payload
+
+      return Object.keys(schema.describe().keys).map((field) => [
+        field,
+        schema.validate({ [field]: tooLong }).value[field]
+      ])
+    })
+
+    // Assert
+    expect(taken.length).toBeGreaterThan(0)
+    expect(taken).toEqual(
+      taken.map(([field]) => [field, optional.includes(field) ? tooLong : ''])
+    )
+  })
+
+  test('the genetic dam page, where she must be given, takes an ear tag number too long to show again as not given', () => {
+    // Arrange
+    const [form] = registeredRoutes().filter(
+      ({ path, options }) =>
+        options.validate.payload && path.endsWith('/genetic-dam')
+    )
+
+    // Act
+    const { value } = form.options.validate.payload.validate({
+      geneticDamEarTagNumber: 'a'.repeat(MAX_ECHO_LENGTH + 1)
+    })
+
+    // Assert
+    expect(value).toEqual({ geneticDamEarTagNumber: '' })
   })
 
   test('every route that takes a form gives a missing field as blank, and drops one it does not know', () => {

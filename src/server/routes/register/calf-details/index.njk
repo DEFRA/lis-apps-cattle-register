@@ -40,8 +40,7 @@
           errorMessage: fieldErrors.earTagNumber,
           items: earTagItems,
           minLength: 1,
-          spellcheck: false,
-          attributes: { maxlength: maxFieldLength }
+          spellcheck: false
         }) }}
 
         {{ lisDatePicker({
@@ -56,8 +55,7 @@
             text: "Select from the calendar or enter manually, for example 27/3/2026"
           },
           errorMessage: fieldErrors.dateOfBirth,
-          maxDate: maxDateOfBirth,
-          attributes: { maxlength: maxFieldLength }
+          maxDate: maxDateOfBirth
         }) }}
 
         {{ govukRadios({
@@ -92,8 +90,7 @@
           },
           errorMessage: fieldErrors.breed,
           items: breedItems,
-          minLength: 1,
-          attributes: { maxlength: maxFieldLength }
+          minLength: 1
         }) }}
 
         {% if acknowledgedLateDateOfBirth %}

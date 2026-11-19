@@ -209,4 +209,25 @@ describe('the genetic and surrogate dam rules', () => {
       { field: 'surrogateDamEarTagNumber', code: 'notOnHolding' }
     ])
   })
+
+  test('it refuses a genetic dam ear tag number of more than 15 characters', () => {
+    // Arrange
+    const answers = {
+      geneticDamEarTagNumber: '9'.repeat(16),
+      surrogateDamEarTagNumber: 'UK200000000007'
+    }
+
+    // Act
+    const result = registration.validateStep('surrogate-dam', {}, answers, {
+      dam: dam('UK200000000007')
+    })
+
+    // Assert
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        field: 'geneticDamEarTagNumber',
+        code: 'tooLong'
+      })
+    ])
+  })
 })

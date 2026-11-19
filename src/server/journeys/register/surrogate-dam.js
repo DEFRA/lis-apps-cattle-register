@@ -9,7 +9,7 @@ import Joi from 'joi'
 
 import { plainEarTag } from '#server/common/helpers/ear-tag.js'
 
-import { answer, optionalAnswer, REQUIRED } from './answer.js'
+import { answer, optionalEarTagNumber, REQUIRED } from './answer.js'
 import { DAM_MESSAGES, damThatCalved } from './dam-checks.js'
 
 /** @import { CustomHelpers, ErrorReport } from 'joi' */
@@ -55,7 +55,7 @@ function surrogateDam(value, helpers) {
  * messages.js. Validate it with the context dam-checks.js asks for.
  */
 export const surrogateDamSchema = Joi.object({
-  geneticDamEarTagNumber: optionalAnswer(),
+  geneticDamEarTagNumber: optionalEarTagNumber(),
   surrogateDamEarTagNumber: answer()
     .custom(surrogateDam)
     .messages({ ...DAM_MESSAGES, 'any.invalid': 'sameAsGeneticDam' })

@@ -1,3 +1,5 @@
+import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
+
 import * as animalClient from '#server/services/be4fe/animal.js'
 import { pathAfterSave } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
@@ -62,8 +64,25 @@ export const sireDetailsSubmitController = {
       return h.redirect(calfPagePath(cph, submissionId, animalId, owed))
     }
 
-    // Both answers are optional and anything is taken for them, so there is
-    // nothing to refuse.
+    // Both answers are optional and anything is taken for them, up to a
+    // length.
+    const { errors } = registration.validateStep(PAGE, animal, values)
+
+    if (errors.length) {
+      return h
+        .view(
+          TEMPLATE,
+          buildViewModel({
+            request,
+            calfEarTagNumber: animal.earTagNumber,
+            values: formValuesFrom(request.payload),
+            backPage: registration.previousPage(PAGE, animal),
+            errors
+          })
+        )
+        .code(statusCodes.badRequest)
+    }
+
     const saved = registration.withAnswers(PAGE, animal, values)
     await animalClient.saveAnimal({ ...calf, values: saved })
 

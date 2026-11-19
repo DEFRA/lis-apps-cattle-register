@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import { REGISTER_ROUTE } from './paths.js'
-import { MAX_FIELD_LENGTH } from './form-limits.js'
+import { echoed } from './form-limits.js'
 import { demandRegisterAccess } from './holding-access.js'
 import { redirectOnSaveConflict } from './save-conflict.js'
 import { startRegistrationController } from './start/controller.js'
@@ -60,7 +60,7 @@ const submissionId = Joi.string()
 
 /**
  * A malformed path parameter is a page that does not exist; a malformed
- * form post (a field sent twice, or too long) is a bad request.
+ * form post (a field sent twice) is a bad request.
  * @param {object} _request
  * @param {object} _h
  * @param {Error & { output?: object }} error
@@ -97,7 +97,13 @@ const calfParams = {
   failAction: failValidation
 }
 
-const formField = Joi.string().max(MAX_FIELD_LENGTH).allow('').default('')
+// An answer too long to show again is taken as not given, so its page asks
+// for it and nothing is looked up by it
+const formField = Joi.string().allow('').default('').custom(echoed)
+
+// An answer that may be left out is kept whole, so its page can say it is
+// too long rather than take it as left out
+const optionalFormField = Joi.string().allow('').default('')
 
 const calfDetailsPayload = Joi.object({
   earTagNumber: formField,
@@ -116,7 +122,7 @@ const geneticDamPayload = Joi.object({
 }).options({ stripUnknown: true })
 
 const surrogateDamPayload = Joi.object({
-  geneticDamEarTagNumber: formField,
+  geneticDamEarTagNumber: optionalFormField,
   surrogateDamEarTagNumber: formField
 }).options({ stripUnknown: true })
 
@@ -125,8 +131,8 @@ const tagListPayload = Joi.object({
 }).options({ stripUnknown: true })
 
 const sireDetailsPayload = Joi.object({
-  sireEarTagNumber: formField,
-  sireName: formField
+  sireEarTagNumber: optionalFormField,
+  sireName: optionalFormField
 }).options({ stripUnknown: true })
 
 // A calf has no id until its details, and so its ear tag number, are saved

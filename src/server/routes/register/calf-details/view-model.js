@@ -5,7 +5,6 @@ import { format } from 'date-fns'
 import { DATE_FORMAT, toUkDate } from '#server/common/helpers/calendar-date.js'
 import { backLinkPath, keepReturn } from '../check-return.js'
 import { calfPagePath, submissionPath, newCalfPath } from '../paths.js'
-import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { getMessage } from './messages.js'
 import { breedOptions } from '#server/journeys/register/calf-details.js'
 
@@ -80,7 +79,6 @@ export function buildViewModel({
     values,
     earTagItems,
     breedItems: breedOptions,
-    maxFieldLength: MAX_FIELD_LENGTH,
     maxDateOfBirth: format(toUkDate(new Date()), DATE_FORMAT),
     errorList,
     fieldErrors,

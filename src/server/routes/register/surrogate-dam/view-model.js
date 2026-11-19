@@ -1,8 +1,8 @@
 import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
 import { backLinkPath, keepReturn } from '../check-return.js'
+import { echoed } from '../form-limits.js'
 import { calfPagePath } from '../paths.js'
-import { MAX_FIELD_LENGTH } from '../form-limits.js'
 import { getMessage } from './messages.js'
 
 const PAGE_TITLE = 'Genetic and surrogate dam details'
@@ -44,9 +44,11 @@ export function buildViewModel({
       request,
       calfPagePath(cph, submissionId, animalId, 'surrogate-dam')
     ),
-    values,
+    values: {
+      ...values,
+      geneticDamEarTagNumber: echoed(values.geneticDamEarTagNumber)
+    },
     earTagItems,
-    maxFieldLength: MAX_FIELD_LENGTH,
     errorList,
     fieldErrors
   }

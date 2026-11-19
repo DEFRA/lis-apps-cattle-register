@@ -2,6 +2,9 @@
 // one of the holding's dams shows the field's error too, until design words
 // that case.
 const MESSAGES = {
+  geneticDamEarTagNumber: {
+    tooLong: 'Genetic dam ear tag number must be 15 characters or fewer'
+  },
   surrogateDamEarTagNumber: {
     required: 'Enter the ear tag number of the surrogate dam',
     notOnHolding: 'Enter the ear tag number of the surrogate dam',

@@ -91,7 +91,6 @@ describe('buildViewModel()', () => {
         '/holdings/10/081/1234/cattle/register/7ZK-M3Q-A9D/calves/UK123456301550/calf-details',
       values,
       earTagItems: [],
-      maxFieldLength: 200,
       errorList: [],
       fieldErrors: {},
       acknowledgedLateDateOfBirth: ''
