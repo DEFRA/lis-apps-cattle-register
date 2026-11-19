@@ -273,7 +273,7 @@ describe('geneticDamController', () => {
           earTagItems: DAMS,
           errorList: [
             {
-              text: ERROR_TEXT,
+              text: 'Enter the ear tag number of a dam on this holding',
               href: '#geneticDamEarTagNumber'
             }
           ]
@@ -281,6 +281,35 @@ describe('geneticDamController', () => {
       )
       expect(response.code).toHaveBeenCalledWith(400)
       expect(result).toBe(response)
+    })
+
+    test('it says an ear tag number is too long without looking it up or showing it again past 256 characters', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: { geneticDamEarTagNumber: '9'.repeat(257) }
+      }
+      const { h, response } = toolkit()
+
+      // Act
+      await geneticDamSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getDam).not.toHaveBeenCalled()
+      expect(mocks.saveAnimal).not.toHaveBeenCalled()
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          values: { geneticDamEarTagNumber: '' },
+          errorList: [
+            {
+              text: 'Genetic dam ear tag number must be 15 characters or fewer',
+              href: '#geneticDamEarTagNumber'
+            }
+          ]
+        })
+      )
+      expect(response.code).toHaveBeenCalledWith(400)
     })
 
     test("it looks up one of the holding's dams, and re-renders with what rules her out, saving nothing", async () => {

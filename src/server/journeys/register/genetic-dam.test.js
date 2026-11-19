@@ -118,4 +118,20 @@ describe('the genetic dam rules', () => {
     // Assert
     expect(result.errors).toEqual([])
   })
+
+  test('it refuses an ear tag number that is too long for its length, before asking whether it is a dam', () => {
+    // Arrange
+    const answers = { geneticDamEarTagNumber: '9'.repeat(16) }
+
+    // Act
+    const result = registration.validateStep('genetic-dam', {}, answers, {})
+
+    // Assert
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        field: 'geneticDamEarTagNumber',
+        code: 'tooLong'
+      })
+    ])
+  })
 })

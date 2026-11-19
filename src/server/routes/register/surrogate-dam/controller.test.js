@@ -295,11 +295,47 @@ describe('surrogateDamController', () => {
         TEMPLATE,
         expect.objectContaining({
           earTagItems: DAMS,
-          errorList: [SURROGATE_ERROR]
+          errorList: [
+            {
+              text: 'Enter the ear tag number of a dam on this holding',
+              href: '#surrogateDamEarTagNumber'
+            }
+          ]
         })
       )
       expect(response.code).toHaveBeenCalledWith(400)
       expect(result).toBe(response)
+    })
+
+    test('it says a surrogate dam ear tag number is too long without looking it up', async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...CALF },
+        payload: {
+          geneticDamEarTagNumber: '',
+          surrogateDamEarTagNumber: '9'.repeat(16)
+        }
+      }
+      const { h, response } = toolkit()
+
+      // Act
+      await surrogateDamSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.getDam).not.toHaveBeenCalled()
+      expect(mocks.saveAnimal).not.toHaveBeenCalled()
+      expect(h.view).toHaveBeenCalledWith(
+        TEMPLATE,
+        expect.objectContaining({
+          errorList: [
+            {
+              text: 'Surrogate dam ear tag number must be 15 characters or fewer',
+              href: '#surrogateDamEarTagNumber'
+            }
+          ]
+        })
+      )
+      expect(response.code).toHaveBeenCalledWith(400)
     })
 
     test('it looks up the surrogate dam alone, and re-renders with what rules her out, saving nothing', async () => {

@@ -4,9 +4,13 @@ import { format } from 'date-fns'
 
 import { DATE_FORMAT, toUkDate } from '#server/common/helpers/calendar-date.js'
 import { backLinkPath, keepReturn } from '../check-return.js'
+import { echoed } from '../form-limits.js'
 import { calfPagePath, submissionPath, newCalfPath } from '../paths.js'
 import { getMessage } from './messages.js'
-import { breedOptions } from '#server/journeys/register/calf-details.js'
+import {
+  breedOptions,
+  breedText
+} from '#server/journeys/register/calf-details.js'
 
 /** @import { CalfDetailsAnswers } from '#server/journeys/register/calf-details.js' */
 
@@ -74,9 +78,15 @@ export function buildViewModel({
           calfPagePath(cph, submissionId, animalId, 'calf-details')
         )
       : newCalfPath(cph, submissionId),
-    values,
+    values: {
+      ...values,
+      earTagNumber: echoed(values.earTagNumber),
+      breed: breedText(echoed(values.breed))
+    },
     earTagItems,
-    breedItems: breedOptions,
+    // The breed list as text, so that a breed typed some other way reaches
+    // the server as typed
+    breedItems: breedOptions.map(({ text }) => text),
     maxDateOfBirth: format(toUkDate(new Date()), DATE_FORMAT),
     errorList,
     fieldErrors,

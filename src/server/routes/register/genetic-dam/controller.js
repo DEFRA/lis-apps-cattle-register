@@ -5,6 +5,7 @@ import * as dataClient from '#server/services/be4fe/data.js'
 import { pathAfterSave } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
 import { trimAnswers } from '@defra/lis-infra-ui-services/journey'
+import { isTooLongEarTagNumber } from '#server/journeys/register/answer.js'
 import { registration } from '#server/journeys/register/registration.js'
 import { buildViewModel } from './view-model.js'
 
@@ -61,7 +62,9 @@ export const geneticDamSubmitController = {
     })
     const [animal, dam] = await Promise.all([
       animalClient.getAnimal(calf),
-      values.geneticDamEarTagNumber
+      // No animal has an ear tag number that is too long to be one
+      values.geneticDamEarTagNumber &&
+      !isTooLongEarTagNumber(values.geneticDamEarTagNumber)
         ? dataClient.getDam({
             cph,
             earTagNumber: values.geneticDamEarTagNumber

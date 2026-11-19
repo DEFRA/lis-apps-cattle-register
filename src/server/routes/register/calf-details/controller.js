@@ -4,6 +4,7 @@ import * as animalClient from '#server/services/be4fe/animal.js'
 import * as submissionClient from '#server/services/be4fe/submission.js'
 import * as dataClient from '#server/services/be4fe/data.js'
 import { trimAnswers } from '@defra/lis-infra-ui-services/journey'
+import { asHeld } from '#server/journeys/register/calf-details.js'
 import { registration } from '#server/journeys/register/registration.js'
 import { pathAfterSave } from '../check-return.js'
 import { submissionPath } from '../paths.js'
@@ -101,7 +102,7 @@ export const calfDetailsSubmitController = {
     const { cph, submissionId, animalId } = request.params
     const { acknowledgedLateDateOfBirth, ...submitted } = request.payload
     const calf = { cph, submissionId, animalId }
-    const values = trimAnswers(formValuesFrom(submitted))
+    const values = asHeld(trimAnswers(formValuesFrom(submitted)))
     const [animal, earTagItems, calvesBefore] = await Promise.all([
       answersOf(calf),
       dataClient.getUnallocatedEarTags({ cph, submissionId }),

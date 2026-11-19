@@ -230,4 +230,23 @@ describe('the genetic and surrogate dam rules', () => {
       })
     ])
   })
+
+  test('it refuses a surrogate dam ear tag number that is too long for its length, before asking whether it is a dam', () => {
+    // Arrange
+    const answers = {
+      geneticDamEarTagNumber: null,
+      surrogateDamEarTagNumber: '9'.repeat(16)
+    }
+
+    // Act
+    const result = registration.validateStep('surrogate-dam', {}, answers, {})
+
+    // Assert
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        field: 'surrogateDamEarTagNumber',
+        code: 'tooLong'
+      })
+    ])
+  })
 })

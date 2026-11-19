@@ -40,19 +40,48 @@ export function answer() {
 }
 
 /**
+ * @param {string} typed - an ear tag number as typed
+ * @returns {boolean} true for one too long to be an ear tag number, however
+ *   it is spaced
+ */
+export function isTooLongEarTagNumber(typed) {
+  return (
+    plainEarTag(typed).length > MAX_EAR_TAG_LENGTH ||
+    typed.length > MAX_TYPED_EAR_TAG_LENGTH
+  )
+}
+
+/**
+ * A Joi rule for the length of an ear tag number.
+ * @param {string} value
+ * @param {Joi.CustomHelpers} helpers
+ * @returns {string | Joi.ErrorReport} the value, for one that is not too
+ *   long
+ */
+function notTooLong(value, helpers) {
+  return isTooLongEarTagNumber(value) ? helpers.message(TOO_LONG) : value
+}
+
+/**
  * @returns {Joi.StringSchema} an ear tag number that may be left empty and
  *   is taken as typed, not looked up: anything, up to the length of an ear
  *   tag number, however it is spaced
  */
 export function optionalEarTagNumber() {
-  return Joi.string()
-    .trim()
-    .custom((value, helpers) =>
-      plainEarTag(value).length > MAX_EAR_TAG_LENGTH ||
-      value.length > MAX_TYPED_EAR_TAG_LENGTH
-        ? helpers.message(TOO_LONG)
-        : value
-    )
-    .allow(null)
-    .required()
+  return Joi.string().trim().custom(notTooLong).allow(null).required()
+}
+
+/**
+ * @param {Joi.CustomValidator<string>} whichAnimal - a Joi rule for which
+ *   animal's ear tag number it may be
+ * @returns {Joi.StringSchema} an ear tag number that must be given. One too
+ *   long is refused for its length alone, without asking which animal it
+ *   is.
+ */
+export function earTagNumber(whichAnimal) {
+  return answer().custom((value, helpers) =>
+    isTooLongEarTagNumber(value)
+      ? helpers.message(TOO_LONG)
+      : whichAnimal(value, helpers)
+  )
 }

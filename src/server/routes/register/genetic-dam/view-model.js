@@ -1,6 +1,7 @@
 import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
 import { backLinkPath, keepReturn } from '../check-return.js'
+import { echoed } from '../form-limits.js'
 import { calfPagePath } from '../paths.js'
 import { getMessage } from './messages.js'
 
@@ -43,7 +44,7 @@ export function buildViewModel({
       request,
       calfPagePath(cph, submissionId, animalId, 'genetic-dam')
     ),
-    values: { geneticDamEarTagNumber },
+    values: { geneticDamEarTagNumber: echoed(geneticDamEarTagNumber) },
     earTagItems,
     errorList,
     fieldErrors

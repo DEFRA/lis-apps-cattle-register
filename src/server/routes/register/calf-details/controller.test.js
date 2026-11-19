@@ -80,7 +80,10 @@ describe('calfDetailsController', () => {
       expect(mocks.getAnimal).toHaveBeenCalledWith(CALF)
       expect(h.view).toHaveBeenCalledWith(
         TEMPLATE,
-        expect.objectContaining({ values: validAnswers, errorList: [] })
+        expect.objectContaining({
+          values: { ...validAnswers, breed: 'Aberdeen Angus (AA)' },
+          errorList: []
+        })
       )
     })
 
@@ -224,6 +227,29 @@ describe('calfDetailsController', () => {
       expect(result).toBe('redirected')
     })
 
+    test("it saves a breed typed by its name, in any case and with X for Cross, as the breed's code", async () => {
+      // Arrange
+      const request = {
+        params: { cph: CPH, ...NEW_CALF },
+        payload: {
+          ...validAnswers,
+          breed: 'aberdeen angus x',
+          acknowledgedLateDateOfBirth: ''
+        }
+      }
+      const { h } = toolkit()
+
+      // Act
+      await calfDetailsSubmitController.handler(request, h)
+
+      // Assert
+      expect(mocks.saveAnimal).toHaveBeenCalledWith({
+        ...NEW_CALF,
+        values: { ...validAnswers, breed: 'AAX' }
+      })
+      expect(h.redirect).toHaveBeenCalledWith(`${CALF_PATH}/dam-details`)
+    })
+
     test('it rejects an ear tag number the holding cannot give the calf, saving nothing', async () => {
       // Arrange
       const request = {
@@ -241,11 +267,11 @@ describe('calfDetailsController', () => {
       expect(h.view).toHaveBeenCalledWith(
         TEMPLATE,
         expect.objectContaining({
-          values: validAnswers,
+          values: { ...validAnswers, breed: 'Aberdeen Angus (AA)' },
           earTagItems: ['UK324537100001'],
           errorList: [
             {
-              text: 'Enter the last 6 digits of the animal ear tag number you are registering',
+              text: 'Enter an ear tag number that is available on this holding',
               href: '#earTagNumber'
             }
           ]
@@ -364,7 +390,7 @@ describe('calfDetailsController', () => {
             },
             { text: 'Select if the animal is male or female', href: '#sex' },
             {
-              text: 'Enter the animal breed or breed code into the text box and select the correct one from the suggested options',
+              text: 'Enter the animal breed or breed code',
               href: '#breed'
             }
           ]

@@ -5,7 +5,7 @@
  */
 import Joi from 'joi'
 
-import { answer, REQUIRED } from './answer.js'
+import { earTagNumber, REQUIRED } from './answer.js'
 import { DAM_MESSAGES, damThatCalved } from './dam-checks.js'
 
 /**
@@ -18,5 +18,5 @@ import { DAM_MESSAGES, damThatCalved } from './dam-checks.js'
  * page words in its messages.js. Validate it with the context dam-checks.js asks for.
  */
 export const geneticDamSchema = Joi.object({
-  geneticDamEarTagNumber: answer().custom(damThatCalved).messages(DAM_MESSAGES)
+  geneticDamEarTagNumber: earTagNumber(damThatCalved).messages(DAM_MESSAGES)
 }).messages({ 'any.required': REQUIRED })

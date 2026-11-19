@@ -88,6 +88,22 @@ describe('buildViewModel()', () => {
     })
   })
 
+  test('it does not show again a surrogate dam ear tag number of more than 256 characters', () => {
+    // Arrange
+    const options = {
+      request,
+      calfEarTagNumber: CALF_EAR_TAG,
+      values: { ...EMPTY, surrogateDamEarTagNumber: '9'.repeat(257) },
+      earTagItems: []
+    }
+
+    // Act
+    const result = buildViewModel(options)
+
+    // Assert
+    expect(result.values.surrogateDamEarTagNumber).toBe('')
+  })
+
   test('it does not show again a genetic dam ear tag number of more than 256 characters', () => {
     // Arrange
     const options = {

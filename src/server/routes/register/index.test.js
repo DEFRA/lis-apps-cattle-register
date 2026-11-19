@@ -175,13 +175,19 @@ describe('register routes', () => {
     expect(accepted).toEqual([])
   })
 
-  test('every route that takes a form takes an answer too long to show again as not given, but keeps one that may be left out', () => {
+  test('every route that takes a form takes an answer too long to show again as not given, but keeps whole an ear tag number, a breed or an answer that may be left out', () => {
     // Arrange
     const tooLong = 'a'.repeat(MAX_ECHO_LENGTH + 1)
-    const optional = ['geneticDamEarTagNumber', 'sireEarTagNumber', 'sireName']
+    const whole = [
+      'earTagNumber',
+      'breed',
+      'geneticDamEarTagNumber',
+      'surrogateDamEarTagNumber',
+      'sireEarTagNumber',
+      'sireName'
+    ]
     const forms = registeredRoutes().filter(
-      ({ path, options }) =>
-        options.validate.payload && !path.endsWith('/genetic-dam')
+      ({ options }) => options.validate.payload
     )
 
     // Act
@@ -197,24 +203,8 @@ describe('register routes', () => {
     // Assert
     expect(taken.length).toBeGreaterThan(0)
     expect(taken).toEqual(
-      taken.map(([field]) => [field, optional.includes(field) ? tooLong : ''])
+      taken.map(([field]) => [field, whole.includes(field) ? tooLong : ''])
     )
-  })
-
-  test('the genetic dam page, where she must be given, takes an ear tag number too long to show again as not given', () => {
-    // Arrange
-    const [form] = registeredRoutes().filter(
-      ({ path, options }) =>
-        options.validate.payload && path.endsWith('/genetic-dam')
-    )
-
-    // Act
-    const { value } = form.options.validate.payload.validate({
-      geneticDamEarTagNumber: 'a'.repeat(MAX_ECHO_LENGTH + 1)
-    })
-
-    // Assert
-    expect(value).toEqual({ geneticDamEarTagNumber: '' })
   })
 
   test('every route that takes a form gives a missing field as blank, and drops one it does not know', () => {
