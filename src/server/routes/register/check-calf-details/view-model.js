@@ -4,7 +4,7 @@ import { format, parse } from 'date-fns'
 import { DATE_FORMAT } from '#server/common/helpers/calendar-date.js'
 import { CHECK_PAGE, withReturnToCheck } from '../check-return.js'
 import { calfPagePath } from '../paths.js'
-import { breedOptions } from '#server/journeys/register/calf-details.js'
+import { breedText } from '#server/journeys/register/calf-details.js'
 
 /** @import { DraftAnimal } from '#server/services/be4fe/animal.js' */
 
@@ -20,14 +20,6 @@ const DAM_TYPE_TEXT = { genetic: 'Genetic', surrogate: 'Surrogate' }
  */
 function formatDateOfBirth(dateOfBirth) {
   return format(parse(dateOfBirth, DATE_FORMAT, new Date()), SHOWN_DATE_FORMAT)
-}
-
-/**
- * @param {string} code - the breed code, as saved
- * @returns {string} the breed as its autocomplete shows it
- */
-function breedText(code) {
-  return breedOptions.find(({ value }) => value === code)?.text ?? code
 }
 
 /**

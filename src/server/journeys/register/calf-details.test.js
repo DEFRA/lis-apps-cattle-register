@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
+import { asHeld, breedCode } from './calf-details.js'
 import { registration } from './registration.js'
 
 /**
@@ -197,5 +198,126 @@ describe('validateCalfDetails()', () => {
 
     // Assert
     expect(result.errors).toEqual([{ field: 'breed', code: 'unknown' }])
+  })
+
+  test('it refuses an ear tag number that is too long for its length, before asking whether it is available', () => {
+    // Arrange
+    const answers = { ...validAnswers, earTagNumber: '9'.repeat(16) }
+
+    // Act
+    const result = validateCalfDetails(answers, [])
+
+    // Assert
+    expect(result.errors).toEqual([
+      expect.objectContaining({ field: 'earTagNumber', code: 'tooLong' })
+    ])
+  })
+
+  test('it does not count the spaces a breed is typed with towards its length', () => {
+    // Arrange
+    const answers = { ...validAnswers, breed: `Not${' '.repeat(60)}a breed` }
+
+    // Act
+    const result = validateCalfDetails(answers, [validAnswers.earTagNumber])
+
+    // Assert
+    expect(result.errors).toEqual([
+      expect.objectContaining({ field: 'breed', code: 'unknown' })
+    ])
+  })
+
+  test('it refuses a breed that is too long for its length, before asking whether it is a breed', () => {
+    // Arrange
+    const answers = { ...validAnswers, breed: 'a'.repeat(51) }
+
+    // Act
+    const result = validateCalfDetails(answers, [validAnswers.earTagNumber])
+
+    // Assert
+    expect(result.errors).toEqual([
+      expect.objectContaining({ field: 'breed', code: 'tooLong' })
+    ])
+  })
+})
+
+describe('breedCode()', () => {
+  test.each([
+    ['its code', 'AA', 'AA'],
+    ['its code in lower case', 'aa', 'AA'],
+    ['its name', 'Aberdeen Angus', 'AA'],
+    ['its name in any case and spacing', '  aberdeen   ANGUS ', 'AA'],
+    [
+      'its name and code, as the breed list shows it',
+      'Aberdeen Angus (AA)',
+      'AA'
+    ],
+    ['a cross by its name', 'Aberdeen Angus Cross', 'AAX'],
+    ['a cross with X for Cross', 'Aberdeen Angus X', 'AAX'],
+    ['a cross with a lower case x', 'aberdeen angus x', 'AAX'],
+    ['a name typed with a straight apostrophe', "Blonde D'Aquitaine", 'BA'],
+    ['a name typed with a curly apostrophe', 'Blonde D’Aquitaine', 'BA'],
+    ['a name typed with an opening quote mark', 'Blonde D‘Aquitaine', 'BA'],
+    [
+      'a cross with X for Cross before its code',
+      'Aberdeen Angus X (AAX)',
+      'AAX'
+    ],
+    ['its name and code with no space between', 'Aberdeen Angus(AA)', 'AA']
+  ])(
+    'it gives the code of a breed typed as %s',
+    (_description, typed, code) => {
+      // Arrange
+      // Act
+      const result = breedCode(typed)
+
+      // Assert
+      expect(result).toBe(code)
+    }
+  )
+
+  test.each(['', 'Not a breed', 'Aberdeen', 'X'])(
+    'it gives nothing for %j, which names no breed',
+    (typed) => {
+      // Arrange
+      // Act
+      const result = breedCode(typed)
+
+      // Assert
+      expect(result).toBeUndefined()
+    }
+  )
+})
+
+describe('asHeld()', () => {
+  test('it gives the ear tag number in capitals with no spaces and the breed as its code', () => {
+    // Arrange
+    const answers = {
+      earTagNumber: 'uk 324537 100001',
+      dateOfBirth: '1/11/2026',
+      sex: 'female',
+      breed: 'aberdeen angus'
+    }
+
+    // Act
+    const result = asHeld(answers)
+
+    // Assert
+    expect(result).toEqual({
+      earTagNumber: 'UK324537100001',
+      dateOfBirth: '1/11/2026',
+      sex: 'female',
+      breed: 'AA'
+    })
+  })
+
+  test('it leaves as typed an ear tag number that is too long and a breed that names none', () => {
+    // Arrange
+    const answers = { earTagNumber: 'uk 32453710000199', breed: 'Not a breed' }
+
+    // Act
+    const result = asHeld(answers)
+
+    // Assert
+    expect(result).toEqual(answers)
   })
 })

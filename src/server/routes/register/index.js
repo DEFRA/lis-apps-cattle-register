@@ -101,15 +101,15 @@ const calfParams = {
 // for it and nothing is looked up by it
 const formField = Joi.string().allow('').default('').custom(echoed)
 
-// An answer that may be left out is kept whole, so its page can say it is
-// too long rather than take it as left out
-const optionalFormField = Joi.string().allow('').default('')
+// An ear tag number, a breed, or an answer that may be left out, is kept
+// whole, so its page can say it is too long rather than take it as not given
+const wholeFormField = Joi.string().allow('').default('')
 
 const calfDetailsPayload = Joi.object({
-  earTagNumber: formField,
+  earTagNumber: wholeFormField,
   dateOfBirth: formField,
   sex: formField,
-  breed: formField,
+  breed: wholeFormField,
   acknowledgedLateDateOfBirth: formField
 }).options({ stripUnknown: true })
 
@@ -118,12 +118,12 @@ const damDetailsPayload = Joi.object({
 }).options({ stripUnknown: true })
 
 const geneticDamPayload = Joi.object({
-  geneticDamEarTagNumber: formField
+  geneticDamEarTagNumber: wholeFormField
 }).options({ stripUnknown: true })
 
 const surrogateDamPayload = Joi.object({
-  geneticDamEarTagNumber: optionalFormField,
-  surrogateDamEarTagNumber: formField
+  geneticDamEarTagNumber: wholeFormField,
+  surrogateDamEarTagNumber: wholeFormField
 }).options({ stripUnknown: true })
 
 const tagListPayload = Joi.object({
@@ -131,8 +131,8 @@ const tagListPayload = Joi.object({
 }).options({ stripUnknown: true })
 
 const sireDetailsPayload = Joi.object({
-  sireEarTagNumber: optionalFormField,
-  sireName: optionalFormField
+  sireEarTagNumber: wholeFormField,
+  sireName: wholeFormField
 }).options({ stripUnknown: true })
 
 // A calf has no id until its details, and so its ear tag number, are saved

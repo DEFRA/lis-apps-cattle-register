@@ -1,16 +1,15 @@
 const BREED_MESSAGE =
   'Enter the animal breed or breed code into the text box and select the correct one from the suggested options'
 
-// The prototype words one ear tag error. A tag that is not one the holding
-// can give the calf shows it too, as the prototype only takes a tag from its
-// list.
+// The prototype's ear tag error, for an ear tag number that is not given
 const EAR_TAG_MESSAGE =
   'Enter the last 6 digits of the animal ear tag number you are registering'
 
 const MESSAGES = {
   earTagNumber: {
     required: EAR_TAG_MESSAGE,
-    notAvailable: EAR_TAG_MESSAGE
+    tooLong: 'Animal ear tag number must be 15 characters or fewer',
+    notAvailable: 'Enter an ear tag number that is available on this holding'
   },
   dateOfBirth: {
     required: 'Enter the date the animal was born',
@@ -23,7 +22,8 @@ const MESSAGES = {
     required: 'Select if the animal is male or female'
   },
   breed: {
-    required: BREED_MESSAGE,
+    required: 'Enter the animal breed or breed code',
+    tooLong: 'Breed must be 50 characters or fewer',
     unknown: BREED_MESSAGE
   }
 }

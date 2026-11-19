@@ -46,7 +46,8 @@ export function buildViewModel({
     ),
     values: {
       ...values,
-      geneticDamEarTagNumber: echoed(values.geneticDamEarTagNumber)
+      geneticDamEarTagNumber: echoed(values.geneticDamEarTagNumber),
+      surrogateDamEarTagNumber: echoed(values.surrogateDamEarTagNumber)
     },
     earTagItems,
     errorList,

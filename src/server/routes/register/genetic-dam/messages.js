@@ -1,9 +1,8 @@
-// The prototype words one error for this page. A tag that is not one of the
-// holding's dams shows it too, until design words that case.
 const MESSAGES = {
   geneticDamEarTagNumber: {
     required: 'Enter the ear tag number of the genetic dam',
-    notOnHolding: 'Enter the ear tag number of the genetic dam',
+    tooLong: 'Genetic dam ear tag number must be 15 characters or fewer',
+    notOnHolding: 'Enter the ear tag number of a dam on this holding',
     under15Months: 'The genetic dam appears to be under 15-months old',
     over20Years: 'The genetic dam appears to be over 20 years old',
     calvedIn240Days:

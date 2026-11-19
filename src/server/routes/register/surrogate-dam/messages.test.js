@@ -32,19 +32,20 @@ describe('getMessage()', () => {
     )
   })
 
-  test.each(['required', 'notOnHolding'])(
-    'gives the prototype text for surrogateDamEarTagNumber %s',
-    (code) => {
-      // Arrange
-      const result = { field: 'surrogateDamEarTagNumber', code }
+  test.each([
+    ['required', 'Enter the ear tag number of the surrogate dam'],
+    ['notOnHolding', 'Enter the ear tag number of a dam on this holding'],
+    ['tooLong', 'Surrogate dam ear tag number must be 15 characters or fewer']
+  ])('gives the text for surrogateDamEarTagNumber %s', (code, expected) => {
+    // Arrange
+    const result = { field: 'surrogateDamEarTagNumber', code }
 
-      // Act
-      const text = getMessage(result)
+    // Act
+    const text = getMessage(result)
 
-      // Assert
-      expect(text).toBe('Enter the ear tag number of the surrogate dam')
-    }
-  )
+    // Assert
+    expect(text).toBe(expected)
+  })
 
   test.each([
     ['an unknown code', { field: 'surrogateDamEarTagNumber', code: 'unknown' }],

@@ -89,17 +89,14 @@ describe('buildViewModel()', () => {
       backLinkHref: '/holdings/10/081/1234/cattle',
       formAction:
         '/holdings/10/081/1234/cattle/register/7ZK-M3Q-A9D/calves/UK123456301550/calf-details',
-      values,
+      values: { ...values, breed: 'Aberdeen Angus (AA)' },
       earTagItems: [],
       errorList: [],
       fieldErrors: {},
       acknowledgedLateDateOfBirth: ''
     })
     expect(result.breedItems.length).toBeGreaterThan(1)
-    expect(result.breedItems).toContainEqual({
-      value: 'AA',
-      text: 'Aberdeen Angus (AA)'
-    })
+    expect(result.breedItems).toContain('Aberdeen Angus (AA)')
     expect(result.maxDateOfBirth).toMatch(/^\d{1,2}\/\d{1,2}\/\d{4}$/)
   })
 
@@ -162,6 +159,40 @@ describe('buildViewModel()', () => {
     ])
     expect(result.pageTitle).toBe('Error: Calf details')
     expect(result.acknowledgedLateDateOfBirth).toBe('1/11/2026')
+  })
+
+  test('it shows a breed that is not a code as it was typed', () => {
+    // Arrange
+    const options = {
+      request,
+      values: { ...values, breed: 'Not a breed' },
+      earTagItems: []
+    }
+
+    // Act
+    const result = buildViewModel(options)
+
+    // Assert
+    expect(result.values.breed).toBe('Not a breed')
+  })
+
+  test('it does not show again an ear tag number or breed far too long', () => {
+    // Arrange
+    const options = {
+      request,
+      values: {
+        ...values,
+        earTagNumber: '9'.repeat(257),
+        breed: 'b'.repeat(257)
+      },
+      earTagItems: []
+    }
+
+    // Act
+    const result = buildViewModel(options)
+
+    // Assert
+    expect(result.values).toMatchObject({ earTagNumber: '', breed: '' })
   })
 
   test('it offers the ear tags', () => {
