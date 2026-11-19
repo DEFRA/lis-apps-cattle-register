@@ -135,7 +135,7 @@ describe('buildViewModel()', () => {
     })
   })
 
-  test('it words a warning on its field without listing it as an error, and carries the acknowledged date', () => {
+  test('it shows a warning as an error, on its field and in the summary, and carries the acknowledged date', () => {
     // Arrange
     const options = {
       request,
@@ -151,11 +151,16 @@ describe('buildViewModel()', () => {
     // Assert
     expect(result.fieldErrors).toEqual({
       dateOfBirth: {
-        text: 'Date of birth is over the 27-day deadline to report a calf birth.'
+        text: 'Date of birth is over the 27-day deadline to report a calf birth. Check the date, or select Continue to register the birth anyway.'
       }
     })
-    expect(result.errorList).toEqual([])
-    expect(result.pageTitle).toBe('Calf details')
+    expect(result.errorList).toEqual([
+      {
+        text: 'Date of birth is over the 27-day deadline to report a calf birth. Check the date, or select Continue to register the birth anyway.',
+        href: '#dateOfBirth'
+      }
+    ])
+    expect(result.pageTitle).toBe('Error: Calf details')
     expect(result.acknowledgedLateDateOfBirth).toBe('1/11/2026')
   })
 

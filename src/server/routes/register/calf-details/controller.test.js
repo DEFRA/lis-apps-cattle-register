@@ -421,10 +421,10 @@ describe('calfDetailsController', () => {
       expect(h.view).toHaveBeenCalledWith(
         TEMPLATE,
         expect.objectContaining({
-          errorList: [],
+          pageTitle: 'Error: Calf details',
           fieldErrors: {
             dateOfBirth: {
-              text: 'Date of birth is over the 27-day deadline to report a calf birth.'
+              text: 'Date of birth is over the 27-day deadline to report a calf birth. Check the date, or select Continue to register the birth anyway.'
             }
           },
           acknowledgedLateDateOfBirth: LATE_DATE

@@ -17,7 +17,7 @@ const MESSAGES = {
     invalid: 'Date of birth must be a real date, for example 01/05/2026',
     future: 'Date of birth must be today or in the past',
     overDeadline:
-      'Date of birth is over the 27-day deadline to report a calf birth.'
+      'Date of birth is over the 27-day deadline to report a calf birth. Check the date, or select Continue to register the birth anyway.'
   },
   sex: {
     required: 'Select if the animal is male or female'

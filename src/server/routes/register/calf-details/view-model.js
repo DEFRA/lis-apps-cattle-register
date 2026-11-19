@@ -46,21 +46,19 @@ export function buildViewModel({
   isFirstCalf = false
 }) {
   const { cph, submissionId, animalId } = request.params
-  const errorList = errors.map((error) => ({
-    text: getMessage(error),
-    href: `#${error.field}`
+  // A warning is shown as an error is, so that it is not missed; its page
+  // can be continued from as it is.
+  const problems = [...errors, ...warnings]
+  const errorList = problems.map((problem) => ({
+    text: getMessage(problem),
+    href: `#${problem.field}`
   }))
-  // A warning is worded on its field as an error is, but is not listed in
-  // the error summary: the page can be continued from as it is.
   const fieldErrors = Object.fromEntries(
-    [...errors, ...warnings].map((problem) => [
-      problem.field,
-      { text: getMessage(problem) }
-    ])
+    problems.map((problem) => [problem.field, { text: getMessage(problem) }])
   )
 
   return {
-    pageTitle: errors.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
+    pageTitle: problems.length ? `Error: ${PAGE_TITLE}` : PAGE_TITLE,
     heading: PAGE_TITLE,
     // The first calf is where the registration starts; any other is
     // reached from the list of calves.
