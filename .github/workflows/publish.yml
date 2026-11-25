@@ -17,5 +17,5 @@ permissions:
 jobs:
   publish:
     name: 'Publish'
-    uses: DEFRA/lis-github-actions/.github/workflows/container-publish.yml@0.8.1
+    uses: DEFRA/lis-github-actions/.github/workflows/container-publish.yml@0.10.0
     secrets: inherit
