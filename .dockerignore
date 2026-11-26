@@ -3,7 +3,6 @@ coverage
 .git
 Dockerfile
 .cache
-.cake
 .env
 .env.*
 .github
