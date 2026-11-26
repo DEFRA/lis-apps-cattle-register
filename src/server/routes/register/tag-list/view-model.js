@@ -1,5 +1,6 @@
 import { formatEarTag } from '@defra/lis-infra-ui-services/nunjucks/filters'
 
+import { CHECK_PAGE } from '../check-return.js'
 import { calfPagePath, newCalfPath, submissionPath } from '../paths.js'
 import { getMessage } from './messages.js'
 
@@ -9,7 +10,6 @@ const PAGE_TITLE = 'Register new cattle births'
  * @typedef {object} ListedCalf
  * @property {string} animalId
  * @property {string} earTagNumber - as saved
- * @property {string} page - where its row links to
  * @property {boolean} isReady - whether it is ready to send
  */
 
@@ -28,10 +28,12 @@ export function buildViewModel({
   errors = []
 }) {
   const { cph, submissionId } = request.params
-  const items = calves.map(({ animalId, earTagNumber, page, isReady }) => ({
+  const items = calves.map(({ animalId, earTagNumber, isReady }) => ({
     id: `calf-${animalId}`,
     earTagNumber: formatEarTag(earTagNumber),
-    href: calfPagePath(cph, submissionId, animalId, page),
+    // As designed, every calf opens its check calf details, which goes on to
+    // the first page left to answer
+    href: calfPagePath(cph, submissionId, animalId, CHECK_PAGE),
     isReady
   }))
   const firstNotReady = items.find((item) => !item.isReady)

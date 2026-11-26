@@ -3,7 +3,6 @@ import { statusCodes } from '@defra/lis-infra-ui-services/status-codes'
 import * as animalClient from '#server/services/be4fe/animal.js'
 import * as submissionClient from '#server/services/be4fe/submission.js'
 import * as dataClient from '#server/services/be4fe/data.js'
-import { CHECK_PAGE } from '../check-return.js'
 import { newCalfPath, submissionPagePath } from '../paths.js'
 import { damThatCalvedEarTag } from '../dam-that-calved.js'
 import { plainEarTag } from '#server/common/helpers/ear-tag.js'
@@ -39,8 +38,7 @@ function damThatCalved(animal, dams) {
  * answered and still holds.
  * @param {{ cph: string, submissionId: string }} submission
  * @returns {Promise<ListedCalf[]>} the submission's calves, in the order
- *   they were added, each linking to check calf details once ready and
- *   otherwise to the first page to finish
+ *   they were added
  */
 export async function listCalves({ cph, submissionId }) {
   // The dams in one call, however many calves there are
@@ -64,7 +62,6 @@ export async function listCalves({ cph, submissionId }) {
     return {
       animalId,
       earTagNumber: animals[index].earTagNumber,
-      page: incomplete?.page ?? CHECK_PAGE,
       isReady: !incomplete
     }
   })

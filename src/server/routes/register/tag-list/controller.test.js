@@ -122,7 +122,7 @@ describe('tagListController', () => {
             {
               id: 'calf-UK123456301551',
               earTagNumber: 'UK 123456 301551',
-              href: `${SUBMISSION_PATH}/calves/UK123456301551/dam-details`,
+              href: `${SUBMISSION_PATH}/calves/UK123456301551/check-calf-details`,
               isReady: false
             }
           ],
@@ -132,7 +132,7 @@ describe('tagListController', () => {
       expect(result).toBe(response)
     })
 
-    test('it lists a calf whose dam has left the holding as not ready, linking to that page', async () => {
+    test('it lists a calf whose dam has left the holding as not ready', async () => {
       // Arrange
       const request = { params: SUBMISSION }
       const { h } = toolkit()
@@ -148,7 +148,7 @@ describe('tagListController', () => {
         expect.objectContaining({
           calves: [
             expect.objectContaining({
-              href: `${SUBMISSION_PATH}/calves/UK123456301550/genetic-dam`,
+              href: `${SUBMISSION_PATH}/calves/UK123456301550/check-calf-details`,
               isReady: false
             })
           ]
@@ -156,7 +156,7 @@ describe('tagListController', () => {
       )
     })
 
-    test('it lists a calf whose dam is ruled out by her age or calves as not ready, linking to that page', async () => {
+    test('it lists a calf whose dam is ruled out by her age or calves as not ready', async () => {
       // Arrange
       const request = { params: SUBMISSION }
       const { h } = toolkit()
@@ -180,7 +180,7 @@ describe('tagListController', () => {
         expect.objectContaining({
           calves: [
             expect.objectContaining({
-              href: `${SUBMISSION_PATH}/calves/UK123456301550/genetic-dam`,
+              href: `${SUBMISSION_PATH}/calves/UK123456301550/check-calf-details`,
               isReady: false
             })
           ]
