@@ -5,18 +5,16 @@ const SUBMISSION_PATH = '/holdings/10/081/1234/cattle/register/7ZK-M3Q-A9D'
 const ready = {
   animalId: 'UK123456301550',
   earTagNumber: 'UK123456301550',
-  page: 'check-calf-details',
   isReady: true
 }
 const unfinished = {
   animalId: 'UK123456301551',
   earTagNumber: 'UK123456301551',
-  page: 'dam-details',
   isReady: false
 }
 
 describe('buildViewModel()', () => {
-  test('it lists the calves with where each row links to, going back to the last', () => {
+  test('it lists the calves, each linking to its check calf details, going back to the last', () => {
     // Arrange
     const options = { request, calves: [ready, unfinished] }
 
@@ -27,7 +25,7 @@ describe('buildViewModel()', () => {
     expect(result).toEqual({
       pageTitle: 'Register new cattle births',
       heading: 'Register new cattle births',
-      backLinkHref: `${SUBMISSION_PATH}/calves/UK123456301551/dam-details`,
+      backLinkHref: `${SUBMISSION_PATH}/calves/UK123456301551/check-calf-details`,
       formAction: SUBMISSION_PATH,
       calves: [
         {
@@ -39,7 +37,7 @@ describe('buildViewModel()', () => {
         {
           id: 'calf-UK123456301551',
           earTagNumber: 'UK 123456 301551',
-          href: `${SUBMISSION_PATH}/calves/UK123456301551/dam-details`,
+          href: `${SUBMISSION_PATH}/calves/UK123456301551/check-calf-details`,
           isReady: false
         }
       ],
