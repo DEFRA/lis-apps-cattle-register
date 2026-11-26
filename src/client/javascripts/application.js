@@ -9,6 +9,7 @@ import { errorPageComponents } from '@defra/lis-infra-ui-services/components/err
 import { layoutComponents } from '@defra/lis-infra-ui-services/components/layout'
 import { initAllAutocompletes } from '@defra/lis-infra-ui-services/components/autocomplete'
 import { DatePicker } from '@defra/lis-infra-ui-services/components/date-picker'
+import { ScrollablePane } from '@defra/lis-infra-ui-services/components/scrollable-pane'
 
 for (const component of new Set([
   ...layoutComponents,
@@ -17,7 +18,8 @@ for (const component of new Set([
   Checkboxes,
   DatePicker,
   ErrorSummary,
-  Radios
+  Radios,
+  ScrollablePane
 ])) {
   createAll(component)
 }

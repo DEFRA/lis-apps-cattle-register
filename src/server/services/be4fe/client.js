@@ -5,7 +5,7 @@
  * its answers before asking for a save.
  */
 import Boom from '@hapi/boom'
-import { createServiceClient } from '@defra/lis-hubs-infra-core'
+import { createSubmissionClient } from '@defra/lis-hubs-infra-core'
 
 import { config } from '#config/config.js'
 
@@ -15,7 +15,8 @@ const localPort = 8089
 
 const NOT_FOUND = 404
 
-const service = createServiceClient({
+// The BE4FE's submission endpoints, and the service client's own verbs
+export const submissions = createSubmissionClient({
   environment: config.get('environment'),
   serviceName: 'lis-be4fe-cattle-register',
   port: localPort,
@@ -44,24 +45,13 @@ async function notFoundAsBoom(call) {
   }
 }
 
-// Every call to the BE4FE is made through here
+// Every data call to the BE4FE is made through here
 export const be4fe = {
   /**
    * @param {string} path
    * @returns {Promise<{ payload: any }>} the BE4FE's answer
    */
-  get: (path) => notFoundAsBoom(service.get(path)),
-  /**
-   * @param {string} path
-   * @param {object} options - the request options, with its payload
-   * @returns {Promise<{ payload: any }>} the BE4FE's answer
-   */
-  post: (path, options) => notFoundAsBoom(service.post(path, options)),
-  /**
-   * @param {string} path
-   * @returns {Promise<{ payload: any }>} the BE4FE's answer
-   */
-  delete: (path) => notFoundAsBoom(service.delete(path))
+  get: (path) => notFoundAsBoom(submissions.get(path))
 }
 
 /**
@@ -70,30 +60,6 @@ export const be4fe = {
  */
 function encodeCph(cph) {
   return cph.split('/').map(encodeURIComponent).join('/')
-}
-
-/**
- * @param {string} cph - as 12/345/6789
- * @returns {string} the path of the holding's submissions
- */
-export function holdingPath(cph) {
-  return `submission/${encodeCph(cph)}`
-}
-
-/**
- * @param {{ cph: string, submissionId: string }} submission
- * @returns {string} the path of the submission, under its holding
- */
-export function submissionPath({ cph, submissionId }) {
-  return `${holdingPath(cph)}/${encodeURIComponent(submissionId)}`
-}
-
-/**
- * @param {{ cph: string, submissionId: string, animalId: string }} calf
- * @returns {string} the path of the calf in its submission
- */
-export function animalPath({ cph, submissionId, animalId }) {
-  return `${submissionPath({ cph, submissionId })}/${encodeURIComponent(animalId)}`
 }
 
 /**
