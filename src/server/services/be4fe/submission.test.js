@@ -1,54 +1,23 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
+import { submissions } from '#server/services/be4fe/client.js'
 import * as client from './submission.js'
 
-const service = vi.hoisted(() => ({
-  get: vi.fn(),
-  post: vi.fn(),
-  put: vi.fn(),
-  patch: vi.fn(),
-  delete: vi.fn()
-}))
+vi.mock('#server/services/be4fe/client.js')
 
-vi.mock('@defra/lis-hubs-infra-core', () => ({
-  createServiceClient: vi.fn(() => service)
-}))
-
-const OK = 200
 const NOT_FOUND = 404
 
 /**
- * @param {object} payload
- * @returns {{ res: { statusCode: number }, payload: object }} as the service client
- *   resolves a call
- */
-function response(payload) {
-  return { res: { statusCode: OK }, payload }
-}
-
-/**
- * @param {number} statusCode
- * @returns {Error & { statusCode: number }} as the service client throws for
- *   a call the service answers with an error status
- */
-function failure(statusCode) {
-  return Object.assign(new Error(`Request failed - ${statusCode}`), {
-    statusCode
-  })
-}
-
-/**
- * @param {object[]} animals - the submission's calves, as the BE4FE lists
- *   them
- * @returns {object} a submission as the BE4FE answers it
+ * @param {object[]} animals - the submission's calves, as the shared client
+ *   lists them
+ * @returns {object} a submission as the shared client gives it
  */
 function submission(animals) {
   return {
-    'submission-id': '7ZK-M3Q-A9D',
-    'animal-count': animals.length,
-    animals,
+    submissionId: '7ZK-M3Q-A9D',
     status: 'DRAFT',
-    'created-date': '2026-11-01T09:00:00Z'
+    createdDate: '2026-11-01T09:00:00Z',
+    animals
   }
 }
 
@@ -58,15 +27,19 @@ describe('CattleRegisterBe4FeSubmissionClient', () => {
   })
 
   describe('startRegistration()', () => {
-    test("it starts the holding's registration, with the CPH as path segments", async () => {
+    test("it starts the holding's registration", async () => {
       // Arrange
-      const get = service.get.mockResolvedValueOnce(response(submission([])))
+      vi.mocked(submissions.startSubmission).mockResolvedValueOnce(
+        submission([])
+      )
 
       // Act
       const result = await client.startRegistration({ cph: '10/081/0001' })
 
       // Assert
-      expect(get).toHaveBeenCalledWith('submission/10/081/0001/start')
+      expect(submissions.startSubmission).toHaveBeenCalledWith({
+        cph: '10/081/0001'
+      })
       expect(result).toEqual({
         submissionId: '7ZK-M3Q-A9D',
         animalId: undefined
@@ -75,13 +48,11 @@ describe('CattleRegisterBe4FeSubmissionClient', () => {
 
     test("it continues the holding's registration with its first calf", async () => {
       // Arrange
-      service.get.mockResolvedValueOnce(
-        response(
-          submission([
-            { 'animal-id': 'UK123456301550', status: 'draft' },
-            { 'animal-id': 'UK123456301551', status: 'draft' }
-          ])
-        )
+      vi.mocked(submissions.startSubmission).mockResolvedValueOnce(
+        submission([
+          { animalId: 'UK123456301550', status: 'draft' },
+          { animalId: 'UK123456301551', status: 'draft' }
+        ])
       )
 
       // Act
@@ -98,13 +69,11 @@ describe('CattleRegisterBe4FeSubmissionClient', () => {
   describe('getSubmission()', () => {
     test('it gives the submission with the id and ear tag of each calf, in its order', async () => {
       // Arrange
-      const get = service.get.mockResolvedValueOnce(
-        response(
-          submission([
-            { 'animal-id': 'UK123456301551', status: 'draft' },
-            { 'animal-id': 'UK123456301550', status: 'draft' }
-          ])
-        )
+      vi.mocked(submissions.getSubmission).mockResolvedValueOnce(
+        submission([
+          { animalId: 'UK123456301551', status: 'draft' },
+          { animalId: 'UK123456301550', status: 'draft' }
+        ])
       )
 
       // Act
@@ -114,7 +83,10 @@ describe('CattleRegisterBe4FeSubmissionClient', () => {
       })
 
       // Assert
-      expect(get).toHaveBeenCalledWith('submission/10/081/1234/7ZK-M3Q-A9D')
+      expect(submissions.getSubmission).toHaveBeenCalledWith({
+        cph: '10/081/1234',
+        submissionId: '7ZK-M3Q-A9D'
+      })
       expect(result).toEqual({
         submissionId: '7ZK-M3Q-A9D',
         status: 'DRAFT',
@@ -125,23 +97,12 @@ describe('CattleRegisterBe4FeSubmissionClient', () => {
       })
     })
 
-    test('it reaches the submission through the encoded holding', async () => {
+    test('it passes on not found for a submission the BE4FE does not hold', async () => {
       // Arrange
-      const get = service.get.mockResolvedValueOnce(response(submission([])))
-
-      // Act
-      await client.getSubmission({
-        cph: '10/08 1/1234',
-        submissionId: '7ZK-M3Q-A9D'
+      const notFound = Object.assign(new Error('Not Found'), {
+        statusCode: NOT_FOUND
       })
-
-      // Assert
-      expect(get).toHaveBeenCalledWith('submission/10/08%201/1234/7ZK-M3Q-A9D')
-    })
-
-    test('it answers not found for a submission the BE4FE does not hold', async () => {
-      // Arrange
-      service.get.mockRejectedValueOnce(failure(NOT_FOUND))
+      vi.mocked(submissions.getSubmission).mockRejectedValueOnce(notFound)
 
       // Act
       let thrown
@@ -155,14 +116,14 @@ describe('CattleRegisterBe4FeSubmissionClient', () => {
       }
 
       // Assert
-      expect(thrown.output.statusCode).toBe(NOT_FOUND)
+      expect(thrown).toBe(notFound)
     })
   })
 
   describe('submitRegistration()', () => {
-    test('it sends the submission by posting to it', async () => {
+    test('it sends the submission', async () => {
       // Arrange
-      const post = service.post.mockResolvedValueOnce(response(undefined))
+      vi.mocked(submissions.submit).mockResolvedValueOnce(undefined)
 
       // Act
       await client.submitRegistration({
@@ -171,16 +132,18 @@ describe('CattleRegisterBe4FeSubmissionClient', () => {
       })
 
       // Assert
-      expect(post).toHaveBeenCalledWith(
-        'submission/10/081/1234/7ZK-M3Q-A9D',
-        {}
-      )
+      expect(submissions.submit).toHaveBeenCalledWith({
+        cph: '10/081/1234',
+        submissionId: '7ZK-M3Q-A9D'
+      })
     })
 
     test('it rethrows a failure to send', async () => {
       // Arrange
-      const unavailable = failure(503)
-      service.post.mockRejectedValueOnce(unavailable)
+      const unavailable = Object.assign(new Error('Request failed - 503'), {
+        statusCode: 503
+      })
+      vi.mocked(submissions.submit).mockRejectedValueOnce(unavailable)
 
       // Act
       let thrown
@@ -195,6 +158,13 @@ describe('CattleRegisterBe4FeSubmissionClient', () => {
 
       // Assert
       expect(thrown).toBe(unavailable)
+    })
+  })
+
+  describe('SUBMITTED_STATUS', () => {
+    test('it is the status of a submission that has been sent', () => {
+      // Arrange / Act / Assert
+      expect(client.SUBMITTED_STATUS).toBe('SUBMITTED')
     })
   })
 })

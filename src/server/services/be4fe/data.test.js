@@ -3,13 +3,11 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import * as client from './data.js'
 
 const service = vi.hoisted(() => ({
-  get: vi.fn(),
-  post: vi.fn(),
-  delete: vi.fn()
+  get: vi.fn()
 }))
 
 vi.mock('@defra/lis-hubs-infra-core', () => ({
-  createServiceClient: vi.fn(() => service)
+  createSubmissionClient: vi.fn(() => service)
 }))
 
 const OK = 200

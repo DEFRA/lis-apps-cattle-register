@@ -10,7 +10,7 @@ import {
   ISO_DATE_FORMAT
 } from '#server/common/helpers/calendar-date.js'
 import { plainEarTag } from '#server/common/helpers/ear-tag.js'
-import { animalPath, be4fe, isNotFound } from '#server/services/be4fe/client.js'
+import { submissions } from '#server/services/be4fe/client.js'
 
 /** @import Boom from '@hapi/boom' */
 
@@ -40,15 +40,6 @@ import { animalPath, be4fe, isNotFound } from '#server/services/be4fe/client.js'
  * @property {string} key - the answer's name: the DraftAnimal property
  * @property {string | null} value - null for an answer given as nothing
  * @property {string} type - STRING, DATE, INT, NUMBER or BOOL
- */
-
-/**
- * @typedef {{ 'animal-id': string, status: string, data: DataItem[] }} AnimalResponse
- *   a calf as the BE4FE answers it
- */
-/**
- * @typedef {{ status: string, data: DataItem[] }} AnimalRequest
- *   a calf as the BE4FE takes it, replacing whatever it held
  */
 
 // Completing a calf is not built yet: every save leaves it a draft
@@ -116,12 +107,13 @@ function fromDataItems(data) {
  *   answers for a submission it does not hold under the holding, too
  */
 export async function getAnimal({ cph, submissionId, animalId }) {
-  /** @type {{ payload: AnimalResponse }} */
-  const { payload } = await be4fe.get(
-    animalPath({ cph, submissionId, animalId })
-  )
+  const { data } = await submissions.getAnimal({
+    cph,
+    submissionId,
+    animalId
+  })
 
-  return fromDataItems(payload.data ?? [])
+  return fromDataItems(data)
 }
 
 /**
@@ -139,18 +131,15 @@ export async function saveAnimal({ cph, submissionId, animalId, values }) {
   const savedId = values.earTagNumber
     ? plainEarTag(values.earTagNumber)
     : animalId
-  /** @type {AnimalRequest} */
-  const body = { status: DRAFT_STATUS, data: toDataItems(values) }
 
-  await be4fe.post(animalPath({ cph, submissionId, animalId: savedId }), {
-    payload: body
+  await submissions.saveAnimal({
+    cph,
+    submissionId,
+    animalId: savedId,
+    previousAnimalId: animalId,
+    status: DRAFT_STATUS,
+    data: toDataItems(values)
   })
-
-  // One after the other: the BE4FE turns away a second write to a
-  // submission that overlaps the first
-  if (animalId !== undefined && animalId !== savedId) {
-    await removeAnimal({ cph, submissionId, animalId })
-  }
 
   return { animalId: savedId }
 }
@@ -163,11 +152,5 @@ export async function saveAnimal({ cph, submissionId, animalId, values }) {
  * @returns {Promise<void>}
  */
 export async function removeAnimal({ cph, submissionId, animalId }) {
-  try {
-    await be4fe.delete(animalPath({ cph, submissionId, animalId }))
-  } catch (error) {
-    if (!isNotFound(error)) {
-      throw error
-    }
-  }
+  await submissions.removeAnimal({ cph, submissionId, animalId })
 }

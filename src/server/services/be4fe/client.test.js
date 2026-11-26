@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-import { createServiceClient } from '@defra/lis-hubs-infra-core'
+import { createSubmissionClient } from '@defra/lis-hubs-infra-core'
 
 const service = vi.hoisted(() => ({
   get: vi.fn(),
@@ -11,7 +11,7 @@ const service = vi.hoisted(() => ({
 }))
 
 vi.mock('@defra/lis-hubs-infra-core', () => ({
-  createServiceClient: vi.fn(() => service)
+  createSubmissionClient: vi.fn(() => service)
 }))
 
 describe('CattleRegisterBe4FeClient', () => {
@@ -26,11 +26,11 @@ describe('CattleRegisterBe4FeClient', () => {
     vi.resetModules()
 
     // Act
-    vi.mocked(createServiceClient).mockReturnValue(service)
+    vi.mocked(createSubmissionClient).mockReturnValue(service)
     await import('./client.js')
 
     // Assert
-    expect(vi.mocked(createServiceClient)).toHaveBeenLastCalledWith(
+    expect(vi.mocked(createSubmissionClient)).toHaveBeenLastCalledWith(
       expect.objectContaining({
         apiKey: 'test-api-key',
         serviceName: 'lis-be4fe-cattle-register'
@@ -49,11 +49,11 @@ describe('CattleRegisterBe4FeClient', () => {
       vi.resetModules()
 
       // Act
-      vi.mocked(createServiceClient).mockReturnValue(service)
+      vi.mocked(createSubmissionClient).mockReturnValue(service)
       await import('./client.js')
 
       // Assert
-      expect(vi.mocked(createServiceClient)).toHaveBeenLastCalledWith(
+      expect(vi.mocked(createSubmissionClient)).toHaveBeenLastCalledWith(
         expect.objectContaining({ timeout: expected })
       )
     }

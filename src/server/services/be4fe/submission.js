@@ -1,24 +1,8 @@
-import {
-  be4fe,
-  holdingPath,
-  submissionPath
-} from '#server/services/be4fe/client.js'
+import { submissions } from '#server/services/be4fe/client.js'
 
 /** @import Boom from '@hapi/boom' */
 
-/**
- * @typedef {{ 'animal-id': string, status: string }} AnimalSummaryResponse
- *   a calf as the BE4FE lists it in its submission
- */
-
-/**
- * @typedef {{ 'submission-id': string, 'animal-count': number, animals: AnimalSummaryResponse[], status: string, 'created-date': string }} SubmissionResponse
- *   a submission as the BE4FE answers it; animals in the order they were
- *   last saved
- */
-
-// The status of a submission that has been sent
-export const SUBMITTED_STATUS = 'SUBMITTED'
+export { SUBMITTED_STATUS } from '@defra/lis-hubs-infra-core'
 
 /**
  * Starts the holding's registration, or continues the one it has not
@@ -29,14 +13,9 @@ export const SUBMITTED_STATUS = 'SUBMITTED'
  *   no calf yet has no animalId
  */
 export async function startRegistration({ cph }) {
-  /** @type {{ payload: SubmissionResponse }} */
-  const { payload } = await be4fe.get(`${holdingPath(cph)}/start`)
-  const [first] = payload.animals ?? []
+  const { submissionId, animals } = await submissions.startSubmission({ cph })
 
-  return {
-    submissionId: payload['submission-id'],
-    animalId: first?.['animal-id']
-  }
+  return { submissionId, animalId: animals[0]?.animalId }
 }
 
 /**
@@ -48,15 +27,14 @@ export async function startRegistration({ cph }) {
  *   under the holding
  */
 export async function getSubmission({ cph, submissionId }) {
-  /** @type {{ payload: SubmissionResponse }} */
-  const { payload } = await be4fe.get(submissionPath({ cph, submissionId }))
+  const submission = await submissions.getSubmission({ cph, submissionId })
 
   return {
-    submissionId: payload['submission-id'],
-    status: payload.status,
-    animals: (payload.animals ?? []).map((animal) => ({
-      animalId: animal['animal-id'],
-      earTagNumber: animal['animal-id']
+    submissionId: submission.submissionId,
+    status: submission.status,
+    animals: submission.animals.map(({ animalId }) => ({
+      animalId,
+      earTagNumber: animalId
     }))
   }
 }
@@ -70,5 +48,5 @@ export async function getSubmission({ cph, submissionId }) {
  *   under the holding
  */
 export async function submitRegistration({ cph, submissionId }) {
-  await be4fe.post(submissionPath({ cph, submissionId }), {})
+  await submissions.submit({ cph, submissionId })
 }
