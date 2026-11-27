@@ -76,8 +76,8 @@ cp .env.example .env
 
 `.env` is loaded when running standalone, and also by a sideloaded `npm run dev` for variables that
 compose does not set. It sets `PORT=3201` (the lis-dev port), the lis-dev API key for
-`lis-be4fe-cattle-register` and the public local development `HUB_JWT_SECRET` that the lis-dev hubs
-use.
+`lis-be4fe-cattle-register`, the public local development `HUB_JWT_SECRET` that the lis-dev hubs
+use, and the fake STS values `CDP_JWT_ISSUER` and `CDP_JWT_JWKS_URI` (lis-dev's `lis-fake-sts`).
 
 Tests use [Vitest](https://vitest.dev/). There are no tools to install beyond `npm install`.
 
