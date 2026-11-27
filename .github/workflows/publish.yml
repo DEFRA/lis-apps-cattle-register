@@ -13,6 +13,8 @@ permissions:
   actions: read
   contents: read
   id-token: write
+  # The image lookup lists a release commit's merged pull requests
+  pull-requests: read
 
 jobs:
   publish:
